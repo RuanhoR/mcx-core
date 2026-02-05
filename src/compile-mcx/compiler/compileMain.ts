@@ -1,5 +1,5 @@
 import { CompileOpt } from "../types";
-import { join } from "./../../../utils"
+import { join } from "node:path"
 import * as CompileData from "./compileData"
 import * as compiler from "./"
 import { readFile } from "node:fs/promises";

@@ -10,8 +10,6 @@ import type {
   SpreadElement,
   ArgumentPlaceholder
 } from "@babel/types"
-import { JsCompileData } from "./compiler/compileData";
-import { Component } from "@minecraft/server";
 interface callList {
   source: Expression
   arguments: Array<SpreadElement | Expression | ArgumentPlaceholder>

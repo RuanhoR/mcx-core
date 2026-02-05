@@ -1,8 +1,15 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import type { JsCompileData, MCXCompileData } from "../compiler/compileData";
 import { compileJSFn, compileMCXFn } from "../compiler";
-import { FileExsit } from "../../../utils";
+async function FileExsit(filePath: string): Promise<boolean> {
+  try {
+    await access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 class Utils {
   public CheckPath(filePath: string): string {

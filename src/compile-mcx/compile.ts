@@ -4,7 +4,6 @@ import type {
 } from "./types.js"
 import Utils from "./../utils.js"
 import CompileMain from "./compiler/compileMain.js"
-/*import _compile from "./_compile.js"*/
 /**
  * @description - this is a function factory to generate mcxProject
  */

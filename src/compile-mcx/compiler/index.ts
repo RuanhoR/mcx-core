@@ -112,8 +112,9 @@ export class CompileJS {
       identifiers.push(...this.extractIdentifierNames(node.test));
       identifiers.push(...this.extractIdentifierNames(node.consequent));
       identifiers.push(...this.extractIdentifierNames(node.alternate));
+    } else if (t.isImport(node)) {
+      identifiers.push("import");
     }
-
     return identifiers;
   }
   private writeBuildCache() {
@@ -164,6 +165,7 @@ export class CompileJS {
     node: t.Expression,
     thisContext: Context,
     remove: () => void,
+    set: (exp: t.Expression) => boolean,
   ): void {
     // If identifier, mark it
     if (t.isIdentifier(node)) {
@@ -183,7 +185,7 @@ export class CompileJS {
 
     if (node.type == "ArrowFunctionExpression") {
       if (t.isExpression(node.body)) {
-        this.conditionalInTempImport(node.body, thisContext, remove);
+        this.conditionalInTempImport(node.body, thisContext, remove, set);
       } else {
         this.tre(node.body);
       }
@@ -204,9 +206,10 @@ export class CompileJS {
         node.object as t.Expression,
         thisContext,
         remove,
+        set,
       );
       if (t.isExpression(node.property))
-        this.conditionalInTempImport(node.property, thisContext, remove);
+        this.conditionalInTempImport(node.property, thisContext, remove, set);
       return;
     }
 
@@ -217,6 +220,13 @@ export class CompileJS {
     ) {
       this.CompileData.BuildCache.call.push({
         source: node.callee,
+        set(callExp: t.CallExpression): boolean {
+          if (callExp.callee.type == "V8IntrinsicIdentifier") return false;
+          this.source = callExp.callee;
+          this.arguments = callExp.arguments;
+          set(callExp);
+          return true;
+        },
         arguments: node.arguments,
         remove,
       });
@@ -225,10 +235,11 @@ export class CompileJS {
         node.callee as t.Expression,
         thisContext,
         remove,
+        set,
       );
       for (const arg of node.arguments) {
         if (t.isExpression(arg))
-          this.conditionalInTempImport(arg, thisContext, remove);
+          this.conditionalInTempImport(arg, thisContext, remove, set);
       }
       return;
     }
@@ -255,6 +266,7 @@ export class CompileJS {
         node.body.splice(index, 1);
         index--;
       };
+      const set = (t: any) => (node.body[index] = t);
       if (!item) continue;
       if (item.type == "ImportDeclaration") {
         if (!isTop)
@@ -277,7 +289,15 @@ export class CompileJS {
         this.tre(item.block, currenyContext);
       } else if (item.type == "IfStatement") {
         const If = item.test;
-        this.conditionalInTempImport(If, currenyContext, remove);
+        this.conditionalInTempImport(
+          If,
+          currenyContext,
+          remove,
+          (t: t.Expression) => {
+            item.test = t;
+            return true;
+          },
+        );
         const nodes: t.Statement[] = [item.consequent];
         if (item.alternate) nodes.push(item.alternate);
         // if ... else ... make one by one
@@ -330,7 +350,15 @@ export class CompileJS {
         }
       } else if (item.type == "DoWhileStatement") {
         this.tre(t.blockStatement([item.body]));
-        this.conditionalInTempImport(item.test, currenyContext, remove);
+        this.conditionalInTempImport(
+          item.test,
+          currenyContext,
+          remove,
+          (t: t.Expression) => {
+            item.test = t;
+            return true;
+          },
+        );
       } else if (item.type == "VariableDeclaration") {
         const declaration = item.declarations;
         for (const varDef of declaration) {
@@ -349,7 +377,7 @@ export class CompileJS {
       } else if (item.type == "ReturnStatement") {
         const body = item.argument;
         if (!body) continue;
-        this.conditionalInTempImport(body, currenyContext, remove);
+        this.conditionalInTempImport(body, currenyContext, remove, set);
       } else if (
         item.type == "ExportAllDeclaration" ||
         item.type == "ExportDefaultDeclaration" ||
@@ -362,15 +390,31 @@ export class CompileJS {
         remove();
       } else if (item.type == "SwitchStatement") {
         const vaule = item.discriminant;
-        this.conditionalInTempImport(vaule, currenyContext, remove);
+        this.conditionalInTempImport(vaule, currenyContext, remove, set);
         for (const caseItem of item.cases) {
           if (caseItem.test) {
-            this.conditionalInTempImport(caseItem.test, currenyContext, remove);
+            this.conditionalInTempImport(
+              caseItem.test,
+              currenyContext,
+              remove,
+              (t: t.Expression) => {
+                caseItem.test = t;
+                return true;
+              },
+            );
           }
           this.tre(t.blockStatement(caseItem.consequent), currenyContext);
         }
       } else if (item.type == "ExpressionStatement") {
-        this.conditionalInTempImport(item.expression, currenyContext, remove);
+        this.conditionalInTempImport(
+          item.expression,
+          currenyContext,
+          remove,
+          (t: t.Expression) => {
+            item.expression = t;
+            return true;
+          },
+        );
       } else if (item.type == "FunctionDeclaration") {
         const funcBody = item.body;
         this.tre(funcBody, currenyContext);
@@ -461,7 +505,8 @@ class CompileMCX {
     for (const node of this.mcxCode || []) {
       if (!MCXUtils.isTagNode(node)) continue;
       if (node.name == "script") {
-        temp.script = node.content.length == 0 ? "" : this.commonTagNodeContent(node);
+        temp.script =
+          node.content.length == 0 ? "" : this.commonTagNodeContent(node);
       } else if (node.name == "Event") {
         temp.Event = node;
       } else if (node.name == "Component") {
@@ -473,13 +518,22 @@ class CompileMCX {
     if (temp.Event) {
       const on = this.getEventOn(temp.Event);
       const content = temp.Event.content;
-      if (content.length == 0 || content.length > 1 || !MCXUtils.isTagContentNode(content[0]))
+      if (
+        content.length == 0 ||
+        content.length > 1 ||
+        !MCXUtils.isTagContentNode(content[0])
+      )
         throw new Error("[compile error]: Event node has invalid content");
       const subscribeData = content[0].data.trim();
       this.tempLoc.Event = {
         on: on,
-        subscribe: Object.fromEntries(PropParser(subscribeData).map((item) => [item.key, item.value.toString()])),
-      }
+        subscribe: Object.fromEntries(
+          PropParser(subscribeData).map((item) => [
+            item.key,
+            item.value.toString(),
+          ]),
+        ),
+      };
     }
     if (component) {
       for (const subNode of component.content || []) {

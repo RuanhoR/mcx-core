@@ -8,10 +8,12 @@ import type {
   ExportNamedDeclaration,
   Expression,
   SpreadElement,
-  ArgumentPlaceholder
+  ArgumentPlaceholder,
+  CallExpression
 } from "@babel/types"
 interface callList {
   source: Expression
+  set: (callEXp: CallExpression) => boolean
   arguments: Array<SpreadElement | Expression | ArgumentPlaceholder>
   remove: () => void
 }
@@ -60,6 +62,7 @@ export type {
   ImportList,
   ImportListImport,
   CompileOpt,
+  callList,
   MCXstructureLoc,
   MCXstructureLocComponentType
 }

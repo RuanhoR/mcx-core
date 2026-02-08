@@ -485,6 +485,7 @@ class CompileMCX {
       on: "after",
       subscribe: {},
       loc: { line: -1, pos: -1 },
+      isLoad: false,
     },
     Component: {},
   };
@@ -542,11 +543,29 @@ class CompileMCX {
     for (const node of this.mcxCode || []) {
       if (!MCXUtils.isTagNode(node)) continue;
       if (node.name == "script") {
+        if (temp.script)
+          throw makeError("[compile error]: duplicate script node", node);
         temp.script =
           node.content.length == 0 ? "" : this.commonTagNodeContent(node);
       } else if (node.name == "Event") {
+        if (temp.Event)
+          throw makeError("[compile error]: duplicate Event node", node);
+        // if Component already discovered, report error
+        if (component)
+          throw makeError(
+            "[compile error]: Event node cannot appear after Component",
+            node,
+          );
         temp.Event = node;
       } else if (node.name == "Component") {
+        if (component)
+          throw makeError("[compile error]: duplicate Component node", node);
+        // if Event already discovered, report error
+        if (temp.Event)
+          throw makeError(
+            "[compile error]: Component node cannot appear after Event",
+            node,
+          );
         component = node;
       }
     }
@@ -571,6 +590,7 @@ class CompileMCX {
           ]),
         ),
         loc: extractLoc(temp.Event),
+        isLoad: true,
       };
     }
     if (component) {
@@ -618,7 +638,7 @@ class CompileMCX {
         this.tempLoc.Component[`${name}/${id}`] = {
           type: subName,
           useExpore: useExpore,
-          loc: extractLoc(subNode),
+          loc: extractLoc(subNode)
         };
       }
     }

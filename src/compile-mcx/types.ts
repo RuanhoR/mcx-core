@@ -52,6 +52,7 @@ interface MCXstructureLoc {
     on: "after" | "before"
     subscribe: Record<string, string>
     loc: { line: number; pos: number }
+    isLoad: boolean
   }
   Component: Record<string, {
     type: MCXstructureLocComponentType

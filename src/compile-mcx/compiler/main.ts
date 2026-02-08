@@ -13,7 +13,7 @@ import type { MCXCompileData } from "./compileData";
 function mcxPlugn(): Plugin {
   return {
     name: "mbler-mcx-core",
-    transform(code, id, options): TransformResult | Promise<TransformResult> {
+    async transform(code, id, options): Promise<TransformResult> {
       const ext = extname(id).slice(1);
       if (ext == "mcx") {
         let compileData: MCXCompileData;
@@ -26,12 +26,14 @@ function mcxPlugn(): Plugin {
               column: error.loc.pos,
               line: error.loc.line,
             });
-          }
+          };
           this.error(err.message);
           return;
         }
         compileData.setFilePath(id);
-        return transform(compileData);
+        return {
+          code: await transform(compileData)
+        };
       }
       return null;
     },

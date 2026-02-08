@@ -1,7 +1,4 @@
-import type {
-  PropNode,
-  PropValue
-} from "../types.js";
+import type { PropNode, PropValue } from "../types.js";
 
 const STATUS = [0, 1]; // 0: 搜集 key，1: 搜集 value
 
@@ -13,7 +10,7 @@ export class Lexer {
   }
 
   // 对外暴露的 tokenize 方法（生成器函数）
-  * tokenize(): IterableIterator < PropNode > {
+  *tokenize(): IterableIterator<PropNode> {
     let currStatus = STATUS[0]; // 0: key，1: value
     let key = "";
     let value = "";
@@ -21,15 +18,16 @@ export class Lexer {
 
     for (const char of this.code) {
       if (/\s/.test(char)) {
-        if (char === '\n') {
+        if (char === "\n") {
           if (currStatus === STATUS[1] && key && value) {
             const propNode: PropNode = {
               key,
               value: this.HandlerValue(value),
-              type: "PropChar"
-            }
+              type: "PropChar",
+            };
             yield propNode;
-          } else if (currStatus === STATUS[0] && key) {}
+          } else if (currStatus === STATUS[0] && key) {
+          }
           key = "";
           value = "";
           hasEquals = false;
@@ -38,7 +36,7 @@ export class Lexer {
         continue; // 跳过所有空白字符
       }
 
-      if (char === '=') {
+      if (char === "=") {
         if (currStatus === STATUS[0]) {
           currStatus = STATUS[1]; // 切换到 value 状态
           hasEquals = true;
@@ -55,19 +53,20 @@ export class Lexer {
       const propNode: PropNode = {
         key,
         value: this.HandlerValue(value),
-        type: "PropChar"
-      }
+        type: "PropChar",
+      };
       yield propNode;
     }
   }
   HandlerValue(value: string): PropValue {
-    try {
-      const num = Number(value);
-      if (!Number.isNaN(num)) return num;
-      if (["[", "{"].includes(value.slice(0, 1)) && ["]", "}"].includes(value.slice(-1))) {
-        return JSON.parse(value)
-      }
-    } catch {}
+    const num = Number(value);
+    if (!Number.isNaN(num)) return num;
+    if (
+      ["[", "{"].includes(value.slice(0, 1)) &&
+      ["]", "}"].includes(value.slice(-1))
+    ) {
+      return JSON.parse(value);
+    }
     return value;
   }
 }

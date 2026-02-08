@@ -11,6 +11,7 @@ import type {
   ArgumentPlaceholder,
   CallExpression
 } from "@babel/types"
+import { RollupOptions } from "rollup";
 interface callList {
   source: Expression
   set: (callEXp: CallExpression) => boolean
@@ -50,10 +51,12 @@ interface MCXstructureLoc {
   Event: {
     on: "after" | "before"
     subscribe: Record<string, string>
+    loc: { line: number; pos: number }
   }
   Component: Record<string, {
     type: MCXstructureLocComponentType
     useExpore: string
+    loc: { line: number; pos: number }
   }>
 }
 export type {
@@ -68,7 +71,7 @@ export type {
 }
 interface CompileUserConfig {
   babelParser ?: ParserOptions
-  useTS ?: boolean
+  rollupOptions ?: RollupOptions 
 }
 interface CompileOpt {
   cacheDir: string

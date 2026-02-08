@@ -11,8 +11,41 @@ import Utils from "./utils";
 import { parse } from "@babel/parser";
 import { ParsedTagContentNode, ParsedTagNode } from "../../types";
 import McxAst, { MCXUtils } from "../../ast/tag";
-import { subscribe } from "node:diagnostics_channel";
 import PropParser from "../../ast/prop";
+export class CompileError extends Error {
+  public loc: { line: number; pos: number };
+  constructor(message: string, loc: { line: number; pos: number }) {
+    super(message);
+    this.name = "CompileError";
+    this.loc = loc || { line: -1, pos: -1 };
+  }
+}
+
+function extractLoc(node: any): { line: number; pos: number } {
+  if (!node) return { line: -1, pos: -1 };
+  // Node with loc.start (Babel or MCX): prefer column, fallback to index
+  if (node.loc && node.loc.start) {
+    const line = typeof node.loc.start.line === "number" ? node.loc.start.line : -1;
+    const pos = typeof node.loc.start.column === "number"
+      ? node.loc.start.column
+      : typeof node.loc.start.index === "number"
+      ? node.loc.start.index
+      : -1;
+    return { line, pos };
+  }
+  // Our token shape from Lexer: startLine / startIndex
+  if (typeof node.startLine === "number" || typeof node.startIndex === "number") {
+    const line = typeof node.startLine === "number" ? node.startLine : -1;
+    const pos = typeof node.startIndex === "number" ? node.startIndex : -1;
+    return { line, pos };
+  }
+  // (handled above) MCX ParsedTagNode loc: { start: { line, index } }
+  return { line: -1, pos: -1 };
+}
+
+function makeError(msg: string, node?: any) {
+  return new CompileError(msg, extractLoc(node));
+}
 interface ImportTemp extends ImportListImport {
   source: string;
   as: never;
@@ -29,7 +62,7 @@ type MemberItem =
 export class CompileJS {
   constructor(public node: t.Program) {
     if (!t.isProgram(node))
-      throw new Error("[compile error]: jsCompile can't work in a not program");
+      throw makeError("[compile error]: jsCompile can't work in a not program", node);
     this.CompileData = new CompileData.JsCompileData(node);
     this.run();
     this.writeBuildCache();
@@ -47,7 +80,7 @@ export class CompileJS {
   }
   private takeInnerMost(node: t.MemberExpression): MemberItem {
     if (!t.isMemberExpression(node))
-      throw new Error("[take item}: must MemberExpression");
+      throw makeError("[take item}: must MemberExpression", node);
     let current: t.Node | t.Expression | t.V8IntrinsicIdentifier = node;
     while (true) {
       if (t.isMemberExpression(current)) {
@@ -139,7 +172,7 @@ export class CompileJS {
           }
         }
         if (!isFound)
-          throw new Error("[mcx compoiler]: internal error: unexpected source");
+          throw makeError("[mcx compoiler]: internal error: unexpected source");
       } else {
         build.push({
           source: data.source,
@@ -257,7 +290,7 @@ export class CompileJS {
   }
   private tre(node: t.Block, ExtendContext: Context = {}): void {
     if (!t.isBlock(node))
-      throw new Error("[compile error]: can't for in not block node");
+      throw makeError("[compile error]: can't for in not block node", node);
     const isTop: boolean = t.isProgram(node);
     const currenyContext: Context = isTop ? this.TopContext : ExtendContext;
     for (let index = 0; index < node.body.length; index++) {
@@ -270,8 +303,9 @@ export class CompileJS {
       if (!item) continue;
       if (item.type == "ImportDeclaration") {
         if (!isTop)
-          throw new Error(
+          throw makeError(
             "[compile node]: import declaration must use in top.",
+            item,
           );
         this.push(Utils.ImportToCache(item));
         remove();
@@ -339,8 +373,9 @@ export class CompileJS {
             superClass.type == "DecimalLiteral" ||
             superClass.type == "BindExpression"
           )
-            throw new Error(
+            throw makeError(
               "[compilr error]: class can't extends a not constructor or null",
+              superClass,
             );
           if (superId) {
             if (this.indexTemp[superId]) {
@@ -370,7 +405,7 @@ export class CompileJS {
                 status: "wait",
               };
             if (!init)
-              throw new Error("[compilr node]: 'const' must has a init");
+                throw makeError("[compilr node]: 'const' must has a init", varDef);
             currenyContext[id.name] = init;
           }
         }
@@ -384,7 +419,7 @@ export class CompileJS {
         item.type == "ExportNamedDeclaration"
       ) {
         if (!isTop) {
-          throw new Error("[compiler]: export node can't in not top");
+          throw makeError("[compiler]: export node can't in not top", item);
         }
         this.CompileData.BuildCache.export.push(item);
         remove();
@@ -423,7 +458,7 @@ export class CompileJS {
   }
   run() {
     if (!t.isBlock(this.node))
-      throw new Error("[compile error]: can't for a not block");
+      throw makeError("[compile error]: can't for a not block", this.node);
     this.tre(this.node);
   }
 }
@@ -431,7 +466,7 @@ class CompileMCX {
   constructor(public code: string) {
     const mcxCode = new McxAst(code).parseAST();
     if (!MCXUtils.isParseNode(mcxCode))
-      throw new Error(
+      throw makeError(
         "[compile error]: mcxCompile can't work in a not mcxNode",
       );
     this.mcxCode = mcxCode;
@@ -449,6 +484,7 @@ class CompileMCX {
     Event: {
       on: "after",
       subscribe: {},
+      loc: { line: -1, pos: -1 },
     },
     Component: {},
   };
@@ -475,17 +511,18 @@ class CompileMCX {
     if (MCXUtils.isTagNode(node)) {
       return node.content.map((sub) => this.commonTagNodeContent(sub)).join("");
     }
-    throw new Error("[mcx compile]: internal error: unknown node type");
+    throw makeError("[mcx compile]: internal error: unknown node type", node);
   }
   private getEventOn(node: ParsedTagNode): "before" | "after" {
     if (!MCXUtils.isTagNode(node))
-      throw new Error("[mcx compile]: internal error: not tag node");
+      throw makeError("[mcx compile]: internal error: not tag node", node);
     let on: "before" | "after" = "after";
     const isAfter = typeof node.arr["@after"] == "string";
     const isBefore = typeof node.arr["@before"] == "string";
     if (isAfter && isBefore)
-      throw new Error(
+      throw makeError(
         "[mcx compile]: Event node can't has both @after and @before",
+        node,
       );
     if (isAfter) on = "after";
     if (isBefore) on = "before";
@@ -513,7 +550,7 @@ class CompileMCX {
         component = node;
       }
     }
-    if (!temp.script) throw new Error("[compile error]: mcx must has a script");
+    if (!temp.script) throw makeError("[compile error]: mcx must has a script");
     this.tempLoc.script = temp.script;
     if (temp.Event) {
       const on = this.getEventOn(temp.Event);
@@ -523,7 +560,7 @@ class CompileMCX {
         content.length > 1 ||
         !MCXUtils.isTagContentNode(content[0])
       )
-        throw new Error("[compile error]: Event node has invalid content");
+        throw makeError("[compile error]: Event node has invalid content", temp.Event);
       const subscribeData = content[0].data.trim();
       this.tempLoc.Event = {
         on: on,
@@ -533,6 +570,7 @@ class CompileMCX {
             item.value.toString(),
           ]),
         ),
+        loc: extractLoc(temp.Event),
       };
     }
     if (component) {
@@ -548,35 +586,39 @@ class CompileMCX {
   private handlerChildComponent(node: ParsedTagNode): void {
     const name = node.name;
     if (!this.checkComponentParentName(name))
-      throw new Error(`[compile error]: invalid component name: ${name}`);
+      throw makeError(`[compile error]: invalid component name: ${name}`, node);
     const content = node.content;
     if (!content || content.length == 0)
-      throw new Error(`[compile error]: component ${name} has no content`);
+      throw makeError(`[compile error]: component ${name} has no content`, node);
     for (const subNode of content) {
       if (!MCXUtils.isTagNode(subNode)) continue;
       const subName = subNode.name;
       const _id = subNode.arr.id;
       if (!_id || typeof _id != "string" || _id.trim() == "") {
-        throw new Error(
+        throw makeError(
           `[compile error]: component ${name} child component ${subName} has no id`,
+          subNode,
         );
       }
       const id = _id.trim();
       const content = subNode.content;
       if (content.length == 0) {
-        throw new Error(
+        throw makeError(
           `[compile error]: component ${name} child component ${subName} has no content`,
+          subNode,
         );
       }
       if (!content[0] || !MCXUtils.isTagContentNode(content[0]))
-        throw new Error(
+        throw makeError(
           `[compile error]: component ${name} child component ${subName} has invalid content`,
+          subNode,
         );
       const useExpore = content[0].data.trim();
       if (subName == _MCXstructureLocComponentTypes[name]) {
         this.tempLoc.Component[`${name}/${id}`] = {
           type: subName,
           useExpore: useExpore,
+          loc: extractLoc(subNode),
         };
       }
     }
@@ -584,7 +626,7 @@ class CompileMCX {
   private CompileData: CompileData.MCXCompileData;
   private genenrateJSIR(): CompileData.JsCompileData {
     if (!this.tempLoc.script.trim())
-      throw new Error("[compile error]: mcx must has a script");
+      throw makeError("[compile error]: mcx must has a script");
     const comiler = compileJSFn(this.tempLoc.script);
     return comiler;
   }

@@ -8,19 +8,21 @@ const main = {
   input: "src/index.ts", // 入口文件
   output: [
     {
-      file: "dist/index.cjs.js", // CommonJS
+      file: "dist/index.js", // CommonJS
       format: "cjs",
-      sourcemap: false,
+      sourcemap: true,
     },
   ],
   plugins: [resolve(), json(), commonjs(), ts()],
   external: [
-    "node:fs/promises",
-    "node:path",
-    "node:os",
-    "@babel/types",
-    "typescript",
+    "@babel/generator",
     "@babel/parser",
+    "@babel/types",
+    "@rollup/plugin-commonjs",
+    "@rollup/plugin-json",
+    "@rollup/plugin-node-resolve",
+    "@rollup/plugin-typescript",
+    "rollup",
   ],
 };
 const Dts = {
@@ -31,7 +33,4 @@ const Dts = {
   },
   plugins: [dts()],
 };
-export default [
-  main,
-  Dts
-];
+export default [main, Dts];

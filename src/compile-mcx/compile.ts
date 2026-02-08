@@ -3,7 +3,8 @@ import type {
   CompileOpt
 } from "./types.js"
 import Utils from "./../utils.js"
-import CompileMain from "./compiler/compileMain.js"
+import CompileMain from "./compiler/main.js"
+import rollup from "rollup";
 /**
  * @description - this is a function factory to generate mcxProject
  */
@@ -24,7 +25,6 @@ class Compile {
     };
   }
   async start(): Promise<void> {
-    const compileMain = new CompileMain(this.BuildOpt);
-    await compileMain.start();
+    await CompileMain(this.BuildOpt);
   }
 }

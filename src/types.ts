@@ -50,7 +50,7 @@ export interface ParseReadFileOpt {
   want: 'string' | 'object';
 }
 export type ReadFileOpt = Partial<ParseReadFileOpt>;
-
+export type mcxType = "component" | "event" | "app"
 export type {
   Token,
   ContentToken,

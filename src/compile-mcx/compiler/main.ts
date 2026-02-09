@@ -9,6 +9,7 @@ import module_resolve from "@rollup/plugin-node-resolve";
 import { CompileError, compileMCXFn } from ".";
 import { transform } from "../../transforms";
 import type { MCXCompileData } from "./compileData";
+import { rm } from "node:fs/promises";
 
 function mcxPlugn(): Plugin {
   return {
@@ -48,5 +49,12 @@ export default async function CompileProject(opt: CompileOpt) {
     external: ["@minecraft/server", "@minecraft/server-ui"],
     plugins: [mcxPlugn(), commjs(), json(), module_resolve()],
   });
-  
+  await rm(opt.output, {
+    recursive: true
+  });
+  await rollupResult.write({
+    file: AbsoluteJoin(opt.output, "./index.js"),
+    format: "esm",
+    sourcemap: true
+  });
 }

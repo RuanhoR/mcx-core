@@ -39,7 +39,7 @@ export const _MCXstructureLocComponentTypes = {
   "items": "item",
   "blocks": "block",
   "entities": "entity"
-} as const
+} as const;
 type MCXstructureLocComponentType = typeof _MCXstructureLocComponentTypes[keyof typeof _MCXstructureLocComponentTypes]
 interface MCXstructureLoc {
   script: string

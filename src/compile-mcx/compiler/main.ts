@@ -43,13 +43,10 @@ function AbsoluteJoin(base: string, dir: string): string {
   return isAbsolute(dir) ? dir : join(base, dir);
 }
 export default async function CompileProject(opt: CompileOpt) {
-  await rollup({
+  const rollupResult = await rollup({
     input: AbsoluteJoin(opt.ProjectDir, opt.main),
-    output: {
-      file: join(opt.output, "index.js"),
-      format: "esm",
-    },
     external: ["@minecraft/server", "@minecraft/server-ui"],
     plugins: [mcxPlugn(), commjs(), json(), module_resolve()],
   });
+  
 }

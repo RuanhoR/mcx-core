@@ -11,7 +11,9 @@ import type {
   ArgumentPlaceholder,
   CallExpression
 } from "@babel/types"
-import { RollupOptions } from "rollup";
+import {
+  CompileOpt
+} from "@mbler/mcx-types"
 interface callList {
   source: Expression
   set: (callEXp: CallExpression) => boolean
@@ -32,13 +34,6 @@ interface BuildCache {
   call: callList[]
   import: ImportList[]
   export: Array<ExportNamedDeclaration | ExportAllDeclaration | ExportDefaultDeclaration>
-}
-type MCX_INFO = {
-  author: "github@RuanhoR"
-  buildSystem: string
-  buildSystemVersion: string
-  // time
-  buildTime: number
 }
 export const _MCXstructureLocComponentTypes = {
   "items": "item",
@@ -62,25 +57,10 @@ interface MCXstructureLoc {
 }
 export type {
   BuildCache,
-  MCX_INFO,
   ImportList,
   ImportListImport,
-  CompileOpt,
   callList,
+  CompileOpt,
   MCXstructureLoc,
   MCXstructureLocComponentType
-}
-interface CompileUserConfig {
-  babelParser ?: ParserOptions
-  rollupOptions ?: RollupOptions 
-}
-interface CompileOpt {
-  cacheDir: string
-  main: string
-  ProjectDir: string
-  moduleDir: string
-  moduleList: string[]
-  output: string
-  isCache: boolean
-  config: Partial<CompileUserConfig>
 }

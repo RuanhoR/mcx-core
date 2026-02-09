@@ -9,7 +9,7 @@ function addImport(
 ) {
   statement.unshift(t.importDeclaration(importArray, t.stringLiteral(source)));
 }
-async function compileComponent(component: MCXCompileData) {
+async function compileComponent(compileData: MCXCompileData) {
   // TODO
 }
 function loadEvent() {}
@@ -25,4 +25,5 @@ export async function transform(compileData: MCXCompileData): Promise<string> {
   if (Object.keys(compileData.strLoc.Component).length >= 1) {
     compileComponent(compileData);
   }
+  return ""
 }

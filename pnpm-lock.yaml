@@ -17,7 +17,6 @@ importers:
       '@babel/types':
         specifier: 7.28.6
         version: 7.28.6
-    devDependencies:
       '@rollup/plugin-commonjs':
         specifier: ^29.0.0
         version: 29.0.0(rollup@4.57.1)
@@ -30,15 +29,19 @@ importers:
       '@rollup/plugin-typescript':
         specifier: ^12.3.0
         version: 12.3.0(rollup@4.57.1)(tslib@2.8.1)(typescript@5.9.3)
+      rollup:
+        specifier: ^4.57.1
+        version: 4.57.1
+    devDependencies:
+      '@mbler/mcx-types':
+        specifier: latest
+        version: 0.0.1-alpha.r1
       '@types/babel__generator':
         specifier: ^7.27.0
         version: 7.27.0
       '@types/node':
         specifier: ^25.2.0
         version: 25.2.0
-      rollup:
-        specifier: ^4.57.1
-        version: 4.57.1
       rollup-plugin-dts:
         specifier: ^6.3.0
         version: 6.3.0(rollup@4.57.1)(typescript@5.9.3)
@@ -85,6 +88,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@mbler/mcx-types@0.0.1-alpha.r1':
+    resolution: {integrity: sha512-1ljrY0CcrtNBKuIHc3l/0sogvCJgWNhz6/Ys8bxsq0LyNz8SwV4gwZiVeFRdq0jCzGPfM1iJCP8yQvOgpEagXw==}
 
   '@rollup/plugin-commonjs@29.0.0':
     resolution: {integrity: sha512-U2YHaxR2cU/yAiwKJtJRhnyLk7cifnQw0zUpISsocBDoHDJn+HTV74ABqnwr5bEgWUwFZC9oFL6wLe21lHu5eQ==}
@@ -422,6 +428,11 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@mbler/mcx-types@0.0.1-alpha.r1':
+    dependencies:
+      '@babel/parser': 7.28.5
+      '@babel/types': 7.28.6
 
   '@rollup/plugin-commonjs@29.0.0(rollup@4.57.1)':
     dependencies:

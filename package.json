@@ -4,7 +4,7 @@
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {
-    "test": "node __test__/index.js",
+    "test": "cd __test__ && npm run test",
     "build": "rollup -c"
   },
   "keywords": [
@@ -26,8 +26,7 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE",
-    "__test__"
+    "LICENSE"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

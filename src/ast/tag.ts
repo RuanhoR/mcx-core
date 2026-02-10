@@ -72,7 +72,7 @@ class Lexer {
         const nextIndex = i + 1;
         const nextChar =
           nextIndex < tagContent.length ? tagContent[nextIndex] : ' ';
-        quoteChar = (nextChar === '"' || nextChar === "'") ? nextChar : null;
+        quoteChar = null;
       } else if (char === ' ' && inKey && currentKey) {
         attributes[currentKey.trim()] = 'true';
         currentKey = '';

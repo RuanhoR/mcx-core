@@ -3,7 +3,7 @@ import {
   MCXCompileData,
 } from "../compile-mcx/compiler/compileData";
 import * as t from "@babel/types";
-import generate from "@babel/generator";
+import * as generator from "@babel/generator";
 import { MCXstructureLoc } from "../compile-mcx/types";
 import { generateMain } from "./utils";
 import config from "./config";
@@ -49,7 +49,7 @@ export async function transform(compileData: MCXCompileData): Promise<string> {
   const mcxModule = "@mbler/mcx";
   // first compile script
   const statement: t.Statement[] = generateMain(compileData.JSIR);
-  const exportIndex: t.ObjectProperty[] = [];
+  const exportIndex: Array<t.ExportSpecifier> = [];
   let mcxtype: mcxType | null = null;
   if (compileData.strLoc.Event.isLoad) {
     mcxtype = "event";
@@ -61,17 +61,25 @@ export async function transform(compileData: MCXCompileData): Promise<string> {
     ]);
     loadEvent(compileData.strLoc.Event, statement);
     exportIndex.push(
-      t.objectProperty(
-        t.identifier("event"),
+      t.exportSpecifier(
         t.identifier(config.eventVarName),
+        t.identifier("event"),
       ),
     );
   }
   if (Object.keys(compileData.strLoc.Component).length >= 1) {
-    if (mcxtype == "event") throw new Error("[compile component]: a mcx must event or component, can't both")
+    if (mcxtype == "event")
+      throw new Error(
+        "[compile component]: a mcx must event or component, can't both",
+      );
     compileComponent(compileData);
     // component 是宏，不必参与编译
-    return "export {}";
+    return "export default {use(){}}";
   }
-  return generate(t.program(statement)).code;
+  exportIndex.push(
+    t.exportSpecifier(t.identifier("__main"), t.identifier("default")),
+  );
+  statement.push(t.exportNamedDeclaration(null, exportIndex));
+  return generator.generate(t.program(statement)).code;
 }
+

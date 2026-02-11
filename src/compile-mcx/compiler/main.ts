@@ -34,7 +34,7 @@ function mcxPlugn(): Plugin {
         }
         compileData.setFilePath(id);
         return {
-          code: await transform(compileData, cache)
+          code: await transform(compileData, cache, id, this)
         };
       }
       return null;

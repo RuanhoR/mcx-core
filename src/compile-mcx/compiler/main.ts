@@ -10,7 +10,7 @@ import { CompileError, compileMCXFn } from ".";
 import { transform } from "../../transforms";
 import type { MCXCompileData } from "./compileData";
 import { rm } from "node:fs/promises";
-
+const cache: Map<string, MCXCompileData> = new Map()
 function mcxPlugn(): Plugin {
   return {
     name: "mbler-mcx-core",
@@ -19,7 +19,8 @@ function mcxPlugn(): Plugin {
       if (ext == "mcx") {
         let compileData: MCXCompileData;
         try {
-          compileData = compileMCXFn(code);
+          compileData = cache.has(id) ? cache.get(id) as MCXCompileData : compileMCXFn(code);
+          cache.set(id, compileData)
         } catch (err: any) {
           if (err instanceof CompileError) {
             const error: CompileError = err;
@@ -33,7 +34,7 @@ function mcxPlugn(): Plugin {
         }
         compileData.setFilePath(id);
         return {
-          code: await transform(compileData)
+          code: await transform(compileData, cache)
         };
       }
       return null;

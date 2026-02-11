@@ -47,7 +47,7 @@ const allKeys = ((): ((node: t.Declaration) => string[]) => {
     return result;
   };
 })();
-const generateTempId = ((): (() => string) => {
+export const generateTempId = ((): (() => string) => {
   let num = 0;
   return () => {
     num++;

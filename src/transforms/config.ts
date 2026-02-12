@@ -4,4 +4,4 @@ export default {
   // use event tag , import event as 
   eventImported: "__mcx__event",
   eventVarName: "__use_event"
-} as const
+} as const;

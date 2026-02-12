@@ -10,11 +10,13 @@ import { CompileError, compileMCXFn } from ".";
 import { transform } from "../../transforms";
 import type { MCXCompileData } from "./compileData";
 import { rm } from "node:fs/promises";
+import MagicString from "magic-string";
 const cache: Map<string, MCXCompileData> = new Map()
 function mcxPlugn(): Plugin {
   return {
     name: "mbler-mcx-core",
     async transform(code, id, options): Promise<TransformResult> {
+      const magic = new MagicString(code);
       const ext = extname(id).slice(1);
       if (ext == "mcx") {
         let compileData: MCXCompileData;
@@ -34,7 +36,8 @@ function mcxPlugn(): Plugin {
         }
         compileData.setFilePath(id);
         return {
-          code: await transform(compileData, cache, id, this)
+          code: await transform(compileData, cache, id, this),
+          map: magic.generateMap({ hires: true, source: id})
         };
       }
       return null;

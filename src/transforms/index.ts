@@ -108,7 +108,7 @@ export async function transform(
     mcxtype = "app";
     for (const imp of compileData.JSIR.BuildCache.import || []) {
       if (path.parse(imp.source).dir == "") continue;
-      const source = path.join(id, imp.source);
+      const source = path.join(path.dirname(id), imp.source);
       if (!source.endsWith(".mcx")) continue;
 
       let moduleData: MCXCompileData;

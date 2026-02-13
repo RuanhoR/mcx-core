@@ -51,7 +51,9 @@ export default async function CompileProject(opt: CompileOpt) {
   const rollupResult = await rollup({
     input: AbsoluteJoin(opt.ProjectDir, opt.main),
     external: ["@minecraft/server", "@minecraft/server-ui"],
-    plugins: [mcxPlugn(), commjs(), json(), module_resolve()],
+    plugins: [mcxPlugn(), commjs(), json(), module_resolve({
+      modulePaths: [opt.moduleDir]
+    })],
   });
   await rm(opt.output, {
     recursive: true

@@ -63,6 +63,7 @@ export async function transform(
 
   // detect imported mcx modules that are events by checking cache or compiling
   const eventImportIds: (t.Identifier | t.MemberExpression)[] = [];
+  // build default export object: { type: <mcxtype>, setup: __main, ...(event?) }
 
   // event MCX
   if (compileData.strLoc.Event.isLoad) {
@@ -75,12 +76,6 @@ export async function transform(
     ]);
     loadEvent(compileData.strLoc.Event, statement);
     // export named event object
-    exportIndex.push(
-      t.exportSpecifier(
-        t.identifier(config.eventVarName),
-        t.identifier("event"),
-      ),
-    );
   }
 
   // component MCX
@@ -110,15 +105,17 @@ export async function transform(
       if (path.parse(imp.source).dir == "") continue;
       const source = path.join(path.dirname(id), imp.source);
       if (!source.endsWith(".mcx")) continue;
-
+      // generate code;
       let moduleData: MCXCompileData;
-      if (cache.has(source)) moduleData = cache.get(source) as MCXCompileData;
-      else {
+      if (cache.has(source)) {
+        moduleData = cache.get(source) as MCXCompileData;
+      } else {
         let code: string;
         try {
           code = await readFile(source, "utf-8");
         } catch (err: any) {
-          context.error("import '" + source + "' not exsit");
+          context.warn("import '" + source + "' not exsit");
+          continue;
         }
         moduleData = compileMCXFn(code);
         cache.set(source, moduleData);
@@ -132,22 +129,23 @@ export async function transform(
       }
     }
   }
-  // build default export object: { type: <mcxtype>, setup: __main, ...(event?) }
+
   const props: t.ObjectProperty[] = [
     t.objectProperty(t.identifier("type"), t.stringLiteral(mcxtype)),
-    t.objectProperty(
-      t.identifier("setup"),
-      t.identifier(config.scriptCompileFn),
-    ),
+    t.objectProperty(t.identifier("setup"), t.objectExpression([])),
   ];
-
   // if this app imports an event mcx, attach it under `event` property
   if (mcxtype === "app" && eventImportIds.length > 0) {
     // prefer first discovered event import id
     props.push(
       t.objectProperty(
-        t.identifier("event"),
-        eventImportIds[0] as t.Identifier | t.MemberExpression,
+        t.identifier("app"),
+        t.objectExpression([
+          t.objectProperty(
+            t.identifier("event"),
+            eventImportIds[0] as t.Identifier | t.MemberExpression,
+          ),
+        ]),
       ),
     );
   }
@@ -155,11 +153,14 @@ export async function transform(
   // if this is an event mcx we still need to provide named export 'event'
   if (mcxtype === "event") {
     // ensure default export still includes type and setup
+    props.push(
+      t.objectProperty(
+        t.identifier("event"),
+        t.identifier(config.eventVarName),
+      ),
+    );
     const defObj = t.objectExpression(props);
     statement.push(t.exportDefaultDeclaration(defObj));
-    // add named exports (e.g., export { __use_event as event })
-    if (exportIndex.length > 0)
-      statement.push(t.exportNamedDeclaration(null, exportIndex));
     return generator.generate(t.program(statement)).code;
   }
 

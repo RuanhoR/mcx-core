@@ -19,7 +19,9 @@ function mcxPlugn(opt: CompileOpt): Plugin {
     name: "mbler-mcx-core",
     async resolveId(id, imp) {
       const i = path.parse(id);
+      // if is not a file path
       if (!i.root && !i.dir.startsWith(".")) {
+        // read module package.json
         const d = path.join(opt.moduleDir, id);
         let pkgJson: any;
         try {

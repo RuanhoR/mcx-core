@@ -123,8 +123,8 @@ export async function transform(
       for (const item of imp.imported) {
         const base = t.identifier(item.as);
         if (item.isAll)
-          eventImportIds.push(t.memberExpression(base, t.identifier("event")));
-        else if (item.import == "event") eventImportIds.push(base);
+          eventImportIds.push(t.memberExpression(t.memberExpression(base, t.identifier("default")), t.identifier("event")));
+        else if (item.import == "default") eventImportIds.push(t.memberExpression(base, t.identifier("event")));
       }
     }
   }

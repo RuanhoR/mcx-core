@@ -21,10 +21,23 @@ function mcxPlugn(opt: CompileOpt): Plugin {
       const i = path.parse(id);
       if (!i.root && !i.dir.startsWith(".")) {
         const d = path.join(opt.moduleDir, id);
-        const code = JSON.parse(
-          await readFile(path.join(d, "package.json"), "utf-8"),
-        );
-        return path.join(d, code.main);
+        let pkgJson: any;
+        try {
+          pkgJson = JSON.parse(
+            await readFile(path.join(d, "package.json"), "utf-8"),
+          );
+        } catch (err: any) {
+          if (err.code === "ENOENT") {
+            throw new Error(
+              `[mcx resolveId]\: package.json not found for '${id}'`,
+            );
+          } else {
+            throw new Error(
+              `[mcx resolveId]\: invalid package.json for '${id}'`,
+            );
+          }
+        }
+        return path.join(d, pkgJson.main);
       } else if (imp) {
         return path.join(path.dirname(imp), id);
       }

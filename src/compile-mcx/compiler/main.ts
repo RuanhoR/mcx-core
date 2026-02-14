@@ -67,7 +67,6 @@ function mcxPlugn(opt: CompileOpt): Plugin {
             });
           }
           this.error(err.message);
-          return;
         }
         compileData.setFilePath(id);
         return {

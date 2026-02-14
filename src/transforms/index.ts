@@ -5,22 +5,20 @@ import {
 import * as t from "@babel/types";
 import * as generator from "@babel/generator";
 import { compileMCXFn } from "../compile-mcx/compiler";
-import { MCXstructureLoc } from "../compile-mcx/types";
+import { CompileOpt, MCXstructureLoc } from "../compile-mcx/types";
 import { generateMain } from "./utils";
 import config from "./config";
 import { mcxType } from "../types";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { TransformPluginContext } from "rollup";
+import type { TransformPluginContext } from "rollup";
+import { compileComponent } from "../compile-component";
 function addImport(
   statement: t.Statement[],
   source: string,
   importArray: t.ImportSpecifier[],
 ) {
   statement.unshift(t.importDeclaration(importArray, t.stringLiteral(source)));
-}
-async function compileComponent(compileData: MCXCompileData) {
-  // TODO
 }
 function loadEvent(event: MCXstructureLoc["Event"], body: t.Statement[]): void {
   const subscribeBody: t.ObjectProperty[] = [];
@@ -54,6 +52,7 @@ export async function transform(
   cache: Map<string, MCXCompileData>,
   id: string,
   context: TransformPluginContext,
+  opt: CompileOpt
 ): Promise<string> {
   const mcxModule = "@mbler/mcx";
   // first compile script
@@ -85,7 +84,7 @@ export async function transform(
         "[compile component]: a mcx must event or component, can't both",
       );
     // leave placeholder for component compilation
-    await compileComponent(compileData);
+    await compileComponent(compileData, opt);
     // export a MCXFile-like default for components
     const defObj = t.objectExpression([
       t.objectProperty(t.identifier("type"), t.stringLiteral("component")),

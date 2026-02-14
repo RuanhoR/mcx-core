@@ -15,5 +15,10 @@ export default {
 }
 
 export {
-  PUBTYPE
+  PUBTYPE,
+  compiler as compile,
+  AST,
+  Compiler,
+  utils,
+  transform
 };

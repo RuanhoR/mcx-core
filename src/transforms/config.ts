@@ -3,5 +3,6 @@ export default {
   scriptCompileFn: "__main",
   // use event tag , import event as 
   eventImported: "__mcx__event",
-  eventVarName: "__use_event"
+  eventVarName: "__use_event",
+  eventExtendsName: "McxExtendsBy"
 } as const;

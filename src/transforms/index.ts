@@ -4,12 +4,12 @@ import {
 } from "../compile-mcx/compiler/compileData";
 import * as t from "@babel/types";
 import * as generator from "@babel/generator";
-import { compileMCXFn } from "../compile-mcx/compiler";
+import { CompileError, compileMCXFn } from "../compile-mcx/compiler";
 import { CompileOpt, MCXstructureLoc } from "../compile-mcx/types";
-import { generateMain } from "./utils";
+import { generateMain, generateTempId } from "./utils";
 import config from "./config";
 import { mcxType } from "../types";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import type { TransformPluginContext } from "rollup";
 import { compileComponent } from "../compile-component";
@@ -20,9 +20,18 @@ function addImport(
 ) {
   statement.unshift(t.importDeclaration(importArray, t.stringLiteral(source)));
 }
-function loadEvent(event: MCXstructureLoc["Event"], body: t.Statement[]): void {
+async function loadEvent(
+  compileData: MCXCompileData,
+  body: t.Statement[],
+  id: string,
+  context: TransformPluginContext,
+): Promise<void> {
+  const event = compileData.strLoc.Event;
   const subscribeBody: t.ObjectProperty[] = [];
   for (const [name, useExport] of Object.entries(event.subscribe)) {
+    if (name == config.eventExtendsName) {
+      continue;
+    }
     subscribeBody.push(
       t.objectProperty(
         t.identifier(name),
@@ -32,11 +41,55 @@ function loadEvent(event: MCXstructureLoc["Event"], body: t.Statement[]): void {
         ),
       ),
     );
-  }
-  const armg = t.objectExpression([
+  };
+ const armg = t.objectExpression([
     t.objectProperty(t.identifier("on"), t.stringLiteral(event.on)),
     t.objectProperty(t.identifier("data"), t.objectExpression(subscribeBody)),
   ]);
+  const node = compileData.raw.find(item => item.name == "Event");
+  if (node && node?.arr) {
+    const arr = node.arr;
+    if (typeof arr.tick == "string") {
+      const num = parseFloat(arr.tick);
+      if (!Number.isNaN(num)) {
+        armg.properties.push(t.objectProperty(t.identifier("tick"), t.numericLiteral(num)))
+      }
+    };
+  }
+ 
+  if (event.subscribe[config.eventExtendsName]) {
+    const imp = event.subscribe[config.eventExtendsName];
+    const extendArr: t.Expression[] = [];
+    if (!imp) return;
+    for (const pkg of imp.split(",")) {
+      const pkgDir = path.join(path.dirname(id), pkg.trim());
+      let st;
+      try {
+        st = await stat(pkgDir);
+        if (!st.isFile()) throw new Error("Not File");
+      } catch (err: any) {
+        context.error(
+          `[event node]: extends ${pkg} error: ${err.message} code: ${err.code} file: ${id}`,
+        );
+      }
+      const impId = generateTempId()
+      body.unshift(
+        t.importDeclaration(
+          [
+            t.importDefaultSpecifier(
+              t.identifier(
+                impId
+              ),
+            ),
+          ],
+          t.stringLiteral(pkg),
+        ),
+      );
+      extendArr.push(t.identifier(impId));
+    }
+    armg.properties.push(t.objectProperty(t.identifier("extends"), t.arrayExpression(extendArr)))
+  }
+
   body.push(
     t.variableDeclaration("const", [
       t.variableDeclarator(
@@ -52,12 +105,11 @@ export async function transform(
   cache: Map<string, MCXCompileData>,
   id: string,
   context: TransformPluginContext,
-  opt: CompileOpt
+  opt: CompileOpt,
 ): Promise<string> {
   const mcxModule = "@mbler/mcx";
   // first compile script
   const statement: t.Statement[] = generateMain(compileData.JSIR);
-  const exportIndex: Array<t.ExportSpecifier> = [];
   let mcxtype: mcxType | null = null;
 
   // detect imported mcx modules that are events by checking cache or compiling
@@ -73,7 +125,7 @@ export async function transform(
         t.identifier("Event"),
       ),
     ]);
-    loadEvent(compileData.strLoc.Event, statement);
+    await loadEvent(compileData, statement, id, context);
     // export named event object
   }
 
@@ -123,8 +175,14 @@ export async function transform(
       for (const item of imp.imported) {
         const base = t.identifier(item.as);
         if (item.isAll)
-          eventImportIds.push(t.memberExpression(t.memberExpression(base, t.identifier("default")), t.identifier("event")));
-        else if (item.import == "default") eventImportIds.push(t.memberExpression(base, t.identifier("event")));
+          eventImportIds.push(
+            t.memberExpression(
+              t.memberExpression(base, t.identifier("default")),
+              t.identifier("event"),
+            ),
+          );
+        else if (item.import == "default")
+          eventImportIds.push(t.memberExpression(base, t.identifier("event")));
       }
     }
   }

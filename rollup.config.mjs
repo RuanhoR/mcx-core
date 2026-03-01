@@ -23,6 +23,7 @@ const main = {
     "@rollup/plugin-node-resolve",
     "@rollup/plugin-typescript",
     "rollup",
+    "magic-string"
   ],
 };
 const Dts = {

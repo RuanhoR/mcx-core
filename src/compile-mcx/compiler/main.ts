@@ -14,7 +14,7 @@ import MagicString from "magic-string";
 import path from "node:path";
 const cache: Map<string, MCXCompileData> = new Map();
 
-function mcxPlugn(opt: CompileOpt): Plugin {
+export function mcxPlugn(opt: CompileOpt): Plugin {
   return {
     name: "mbler-mcx-core",
     async resolveId(id, imp) {

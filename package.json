@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-core",
-  "version": "0.0.2",
+  "version": "0.0.3-alpha.r202603291200",
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {
@@ -16,12 +16,7 @@
     "@babel/generator": "7.28.5",
     "@babel/parser": "7.28.5",
     "@babel/types": "7.28.6",
-    "@rollup/plugin-commonjs": "^29.0.0",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^16.0.3",
-    "@rollup/plugin-typescript": "^12.3.0",
-    "magic-string": "^0.30.21",
-    "rollup": "^4.57.1"
+    "magic-string": "^0.30.21"
   },
   "module": "commjs",
   "files": [
@@ -38,8 +33,13 @@
   "license": "MIT",
   "devDependencies": {
     "@mbler/mcx-types": "latest",
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
     "@types/babel__generator": "^7.27.0",
     "@types/node": "^25.2.0",
+    "rollup": "^4.59.0",
     "rollup-plugin-dts": "^6.3.0",
     "tslib": "^2.8.1"
   }

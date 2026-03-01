@@ -3,3 +3,4 @@ import type { CompileOpt } from "./types.js";
 export default async function CompileMcxDir(BuildOpt: CompileOpt): Promise<void> {
   await Compiler(BuildOpt);
 }
+export { mcxPlugn as plugin } from "./compiler/main";

@@ -3,6 +3,8 @@ import json from "@rollup/plugin-json";
 import ts from "@rollup/plugin-typescript";
 import commonjs from "@rollup/plugin-commonjs";
 import dts from "rollup-plugin-dts";
+import { rm } from "fs/promises";
+import path from "path";
 // 基础配置
 const main = {
   input: "src/index.ts", // 入口文件
@@ -23,7 +25,8 @@ const main = {
     "@rollup/plugin-node-resolve",
     "@rollup/plugin-typescript",
     "rollup",
-    "magic-string"
+    "magic-string",
+    "typescript",
   ],
 };
 const Dts = {
@@ -32,6 +35,29 @@ const Dts = {
     file: "dist/index.d.ts",
     format: "es",
   },
-  plugins: [dts()],
+  external: [
+    "@babel/generator",
+    "@babel/parser",
+    "@babel/types",
+    "@rollup/plugin-commonjs",
+    "@rollup/plugin-json",
+    "@rollup/plugin-node-resolve",
+    "@rollup/plugin-typescript",
+    "rollup",
+    "magic-string",
+    "typescript",
+  ],
+  plugins: [
+    dts(),
+    {
+      name: "remove-d-ts",
+      async buildEnd() {
+        await rm(path.join(import.meta.dirname, "dist/types"), {
+          force: true,
+          recursive: true,
+        });
+      },
+    },
+  ],
 };
 export default [main, Dts];

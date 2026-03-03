@@ -12,9 +12,10 @@ import type { MCXCompileData } from "./compileData";
 import { readFile, rm } from "node:fs/promises";
 import MagicString from "magic-string";
 import path from "node:path";
-const cache: Map<string, MCXCompileData> = new Map();
+
 
 export function mcxPlugn(opt: CompileOpt): Plugin {
+  let cache: Map<string, MCXCompileData> = new Map();
   return {
     name: "mbler-mcx-core",
     async resolveId(id, imp) {
@@ -69,13 +70,21 @@ export function mcxPlugn(opt: CompileOpt): Plugin {
           this.error(err.message);
         }
         compileData.setFilePath(id);
+        const compiledCode = await transform(compileData, cache, id, this, opt);
+        console.log(`[mcx plugin] ${id} compiled ${compiledCode}`);
         return {
-          code: await transform(compileData, cache, id, this, opt),
+          code: compiledCode,
           map: magic.generateMap({ hires: true, source: id }),
         };
       }
       return null;
     },
+    buildEnd() {
+      cache.clear();
+    },
+    buildStart() {
+      cache = new Map()
+    }
   };
 }
 function AbsoluteJoin(base: string, dir: string): string {

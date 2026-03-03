@@ -1,7 +1,7 @@
 import * as t from "@babel/types";
 import { JsCompileData } from "../compile-mcx/compiler/compileData";
 import Utils from "../compile-mcx/compiler/utils";
-import config from "./config"
+import config from "./config";
 const allKeys = ((): ((node: t.Declaration) => string[]) => {
   // 闭包
   const findkeyByVarId = (
@@ -131,10 +131,9 @@ function generateMain(
     t.variableDeclaration("const", [
       t.variableDeclarator(
         t.identifier(config.scriptCompileFn),
-        t.callExpression(
-          t.functionExpression(null, [], base, false, false),
-          [],
-        ),
+        t.functionExpression(null, [
+          t.identifier("ctx")
+        ], base, false, false),
       ),
     ]),
   ];

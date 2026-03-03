@@ -1,10 +1,14 @@
+import { TransformPluginContext } from "rollup";
+import type { MCXCompileData } from "./compile-mcx/compiler/compileData";
+import { CompileOpt } from "@mbler/mcx-types";
+import * as t from "@babel/types"
 interface BaseToken {
   data: string;
   type: TokenType;
-  startIndex ?: number;
-  endIndex ?: number;
-  startLine ?: number;
-  loc ?: MCXLoc;
+  startIndex?: number;
+  endIndex?: number;
+  startLine?: number;
+  loc?: MCXLoc;
 }
 interface TagToken extends BaseToken {
   type: 'Tag';
@@ -28,6 +32,7 @@ interface ParsedTagNode {
   content: (ParsedTagContentNode | ParsedTagNode)[];
   end: TagEndToken | null;
   loc: MCXLoc;
+  type: "TagNode";
 }
 interface ParsedTagContentNode {
   data: string;
@@ -66,4 +71,18 @@ export type {
   PropNode,
   ParsedTagNode,
   MCXLoc
+}
+export interface transformCtx {
+  rollupContext: TransformPluginContext;
+  compiledCode: MCXCompileData;
+  cache: Map<string, MCXCompileData>;
+  currentId: string;
+  scriptTag: ParsedTagNode;
+  currentAST: t.Statement[];
+  mainFn: {
+    param: t.FunctionParameter[];
+    body: t.Statement[];
+  }
+  impAST: t.ImportDeclaration[];
+  opt: CompileOpt;
 }

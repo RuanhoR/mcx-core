@@ -1,228 +1,33 @@
-import {
-  JsCompileData,
-  MCXCompileData,
-} from "../compile-mcx/compiler/compileData";
-import * as t from "@babel/types";
-import * as generator from "@babel/generator";
-import { CompileError, compileMCXFn } from "../compile-mcx/compiler";
-import { CompileOpt, MCXstructureLoc } from "../compile-mcx/types";
-import { generateMain, generateTempId } from "./utils";
-import config from "./config";
-import { mcxType } from "../types";
-import { readFile, stat } from "node:fs/promises";
-import path from "node:path";
-import type { TransformPluginContext } from "rollup";
-import { compileComponent } from "../compile-component";
-function addImport(
-  statement: t.Statement[],
-  source: string,
-  importArray: t.ImportSpecifier[],
-) {
-  statement.unshift(t.importDeclaration(importArray, t.stringLiteral(source)));
-}
-async function loadEvent(
-  compileData: MCXCompileData,
-  body: t.Statement[],
-  id: string,
-  context: TransformPluginContext,
-): Promise<void> {
-  const event = compileData.strLoc.Event;
-  const subscribeBody: t.ObjectProperty[] = [];
-  for (const [name, useExport] of Object.entries(event.subscribe)) {
-    if (name == config.eventExtendsName) {
-      continue;
-    }
-    subscribeBody.push(
-      t.objectProperty(
-        t.identifier(name),
-        t.memberExpression(
-          t.identifier(config.scriptCompileFn),
-          t.identifier(useExport),
-        ),
-      ),
-    );
-  };
- const armg = t.objectExpression([
-    t.objectProperty(t.identifier("on"), t.stringLiteral(event.on)),
-    t.objectProperty(t.identifier("data"), t.objectExpression(subscribeBody)),
-  ]);
-  const node = compileData.raw.find(item => item.name == "Event");
-  if (node && node?.arr) {
-    const arr = node.arr;
-    if (typeof arr.tick == "string") {
-      const num = parseFloat(arr.tick);
-      if (!Number.isNaN(num)) {
-        armg.properties.push(t.objectProperty(t.identifier("tick"), t.numericLiteral(num)))
-      }
-    };
-  }
- 
-  if (event.subscribe[config.eventExtendsName]) {
-    const imp = event.subscribe[config.eventExtendsName];
-    const extendArr: t.Expression[] = [];
-    if (!imp) return;
-    for (const pkg of imp.split(",")) {
-      const pkgDir = path.join(path.dirname(id), pkg.trim());
-      let st;
-      try {
-        st = await stat(pkgDir);
-        if (!st.isFile()) throw new Error("Not File");
-      } catch (err: any) {
-        context.error(
-          `[event node]: extends ${pkg} error: ${err.message} code: ${err.code} file: ${id}`,
-        );
-      }
-      const impId = generateTempId()
-      body.unshift(
-        t.importDeclaration(
-          [
-            t.importDefaultSpecifier(
-              t.identifier(
-                impId
-              ),
-            ),
-          ],
-          t.stringLiteral(pkg),
-        ),
-      );
-      extendArr.push(t.identifier(impId));
-    }
-    armg.properties.push(t.objectProperty(t.identifier("extends"), t.arrayExpression(extendArr)))
-  }
-
-  body.push(
-    t.variableDeclaration("const", [
-      t.variableDeclarator(
-        t.identifier(config.eventVarName),
-        t.newExpression(t.identifier(config.eventImported), [armg]),
-      ),
-    ]),
-  );
-}
+import { SourcemapPathTransformOption, TransformPluginContext } from "rollup";
+import { MCXCompileData } from "../compile-mcx/compiler/compileData";
+import { CompileOpt } from "@mbler/mcx-types";
+import { transformCtx } from "../types";
+import { _transform } from "./main";
 
 export async function transform(
-  compileData: MCXCompileData,
+  code: MCXCompileData,
   cache: Map<string, MCXCompileData>,
   id: string,
   context: TransformPluginContext,
   opt: CompileOpt,
 ): Promise<string> {
-  const mcxModule = "@mbler/mcx";
-  // first compile script
-  const statement: t.Statement[] = generateMain(compileData.JSIR);
-  let mcxtype: mcxType | null = null;
-
-  // detect imported mcx modules that are events by checking cache or compiling
-  const eventImportIds: (t.Identifier | t.MemberExpression)[] = [];
-  // build default export object: { type: <mcxtype>, setup: __main, ...(event?) }
-
-  // event MCX
-  if (compileData.strLoc.Event.isLoad) {
-    mcxtype = "event";
-    addImport(statement, mcxModule, [
-      t.importSpecifier(
-        t.identifier(config.eventImported),
-        t.identifier("Event"),
-      ),
-    ]);
-    await loadEvent(compileData, statement, id, context);
-    // export named event object
-  }
-
-  // component MCX
-  if (Object.keys(compileData.strLoc.Component).length >= 1) {
-    if (mcxtype == "event")
-      throw new Error(
-        "[compile component]: a mcx must event or component, can't both",
-      );
-    // leave placeholder for component compilation
-    await compileComponent(compileData, opt);
-    // export a MCXFile-like default for components
-    const defObj = t.objectExpression([
-      t.objectProperty(t.identifier("type"), t.stringLiteral("component")),
-      t.objectProperty(
-        t.identifier("setup"),
-        t.identifier(config.scriptCompileFn),
-      ),
-    ]);
-    statement.push(t.exportDefaultDeclaration(defObj));
-    return generator.generate(t.program(statement)).code;
-  }
-
-  // app (default) MCX
-  if (!mcxtype) {
-    mcxtype = "app";
-    for (const imp of compileData.JSIR.BuildCache.import || []) {
-      if (path.parse(imp.source).dir == "") continue;
-      const source = path.join(path.dirname(id), imp.source);
-      if (!source.endsWith(".mcx")) continue;
-      // generate code;
-      let moduleData: MCXCompileData;
-      if (cache.has(source)) {
-        moduleData = cache.get(source) as MCXCompileData;
-      } else {
-        let code: string;
-        try {
-          code = await readFile(source, "utf-8");
-        } catch (err: any) {
-          context.warn("import '" + source + "' not exsit");
-          continue;
-        }
-        moduleData = compileMCXFn(code);
-        cache.set(source, moduleData);
-      }
-      if (!moduleData.strLoc.Event.isLoad) continue;
-      for (const item of imp.imported) {
-        const base = t.identifier(item.as);
-        if (item.isAll)
-          eventImportIds.push(
-            t.memberExpression(
-              t.memberExpression(base, t.identifier("default")),
-              t.identifier("event"),
-            ),
-          );
-        else if (item.import == "default")
-          eventImportIds.push(t.memberExpression(base, t.identifier("event")));
-      }
+  const scriptTag = code.raw.find(node => {
+    return node.name == "script";
+  });
+  if (!scriptTag) throw new Error("[transform check]: not found mcx script tag")
+  const transformContext: transformCtx = {
+    rollupContext: context,
+    impAST: [],
+    currentAST: [],
+    opt,
+    currentId: id,
+    compiledCode: code,
+    cache,
+    scriptTag: scriptTag,
+    mainFn: {
+      param: [],
+      body: []
     }
   }
-
-  const props: t.ObjectProperty[] = [
-    t.objectProperty(t.identifier("type"), t.stringLiteral(mcxtype)),
-    t.objectProperty(t.identifier("setup"), t.objectExpression([])),
-  ];
-  // if this app imports an event mcx, attach it under `event` property
-  if (mcxtype === "app" && eventImportIds.length > 0) {
-    // prefer first discovered event import id
-    props.push(
-      t.objectProperty(
-        t.identifier("app"),
-        t.objectExpression([
-          t.objectProperty(
-            t.identifier("event"),
-            eventImportIds[0] as t.Identifier | t.MemberExpression,
-          ),
-        ]),
-      ),
-    );
-  }
-
-  // if this is an event mcx we still need to provide named export 'event'
-  if (mcxtype === "event") {
-    // ensure default export still includes type and setup
-    props.push(
-      t.objectProperty(
-        t.identifier("event"),
-        t.identifier(config.eventVarName),
-      ),
-    );
-    const defObj = t.objectExpression(props);
-    statement.push(t.exportDefaultDeclaration(defObj));
-    return generator.generate(t.program(statement)).code;
-  }
-
-  // normal app default export
-  const defObj = t.objectExpression(props);
-  statement.push(t.exportDefaultDeclaration(defObj));
-  return generator.generate(t.program(statement)).code;
+  return await _transform(transformContext)
 }

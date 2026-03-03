@@ -207,6 +207,7 @@ class Lexer {
           // content 现在是一个数组，包含文本节点或子标签
           content: [] as (ParsedTagContentNode | ParsedTagNode)[],
           end: null,
+          type: 'TagNode',
           // loc: start/end positions will be set when available
           loc: {
             start: { line: token.startLine || 1, index: token.startIndex || 0 },

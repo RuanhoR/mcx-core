@@ -12,6 +12,7 @@ import { parse } from "@babel/parser";
 import { ParsedTagContentNode, ParsedTagNode } from "../../types";
 import McxAst, { MCXUtils } from "../../ast/tag";
 import PropParser from "../../ast/prop";
+import ts from "typescript";
 export class CompileError extends Error {
   public loc: { line: number; pos: number };
   constructor(message: string, loc: { line: number; pos: number }) {
@@ -25,16 +26,21 @@ function extractLoc(node: any): { line: number; pos: number } {
   if (!node) return { line: -1, pos: -1 };
   // Node with loc.start (Babel or MCX): prefer column, fallback to index
   if (node.loc && node.loc.start) {
-    const line = typeof node.loc.start.line === "number" ? node.loc.start.line : -1;
-    const pos = typeof node.loc.start.column === "number"
-      ? node.loc.start.column
-      : typeof node.loc.start.index === "number"
-      ? node.loc.start.index
-      : -1;
+    const line =
+      typeof node.loc.start.line === "number" ? node.loc.start.line : -1;
+    const pos =
+      typeof node.loc.start.column === "number"
+        ? node.loc.start.column
+        : typeof node.loc.start.index === "number"
+          ? node.loc.start.index
+          : -1;
     return { line, pos };
   }
   // Our token shape from Lexer: startLine / startIndex
-  if (typeof node.startLine === "number" || typeof node.startIndex === "number") {
+  if (
+    typeof node.startLine === "number" ||
+    typeof node.startIndex === "number"
+  ) {
     const line = typeof node.startLine === "number" ? node.startLine : -1;
     const pos = typeof node.startIndex === "number" ? node.startIndex : -1;
     return { line, pos };
@@ -62,7 +68,10 @@ type MemberItem =
 export class CompileJS {
   constructor(public node: t.Program) {
     if (!t.isProgram(node))
-      throw makeError("[compile error]: jsCompile can't work in a not program", node);
+      throw makeError(
+        "[compile error]: jsCompile can't work in a not program",
+        node,
+      );
     this.CompileData = new CompileData.JsCompileData(node);
     this.run();
     this.writeBuildCache();
@@ -405,7 +414,10 @@ export class CompileJS {
                 status: "wait",
               };
             if (!init)
-                throw makeError("[compilr node]: 'const' must has a init", varDef);
+              throw makeError(
+                "[compilr node]: 'const' must has a init",
+                varDef,
+              );
             currenyContext[id.name] = init;
           }
         }
@@ -545,8 +557,18 @@ class CompileMCX {
       if (node.name == "script") {
         if (temp.script)
           throw makeError("[compile error]: duplicate script node", node);
-        temp.script =
+        const scriptNode =
           node.content.length == 0 ? "" : this.commonTagNodeContent(node);
+        let code = scriptNode;
+        if (node.arr.lang == "ts") {
+          code = ts.transpileModule(scriptNode, {
+            compilerOptions: {
+              target: ts.ScriptTarget.ES2024,
+              module: ts.ModuleKind.ESNext,
+            },
+          }).outputText;
+        }
+        temp.script = code;
       } else if (node.name == "Event") {
         if (temp.Event)
           throw makeError("[compile error]: duplicate Event node", node);
@@ -579,7 +601,10 @@ class CompileMCX {
         content.length > 1 ||
         !MCXUtils.isTagContentNode(content[0])
       )
-        throw makeError("[compile error]: Event node has invalid content", temp.Event);
+        throw makeError(
+          "[compile error]: Event node has invalid content",
+          temp.Event,
+        );
       const subscribeData = content[0].data.trim();
       this.tempLoc.Event = {
         on: on,
@@ -609,7 +634,10 @@ class CompileMCX {
       throw makeError(`[compile error]: invalid component name: ${name}`, node);
     const content = node.content;
     if (!content || content.length == 0)
-      throw makeError(`[compile error]: component ${name} has no content`, node);
+      throw makeError(
+        `[compile error]: component ${name} has no content`,
+        node,
+      );
     for (const subNode of content) {
       if (!MCXUtils.isTagNode(subNode)) continue;
       const subName = subNode.name;
@@ -638,7 +666,7 @@ class CompileMCX {
         this.tempLoc.Component[`${name}/${id}`] = {
           type: subName,
           useExpore: useExpore,
-          loc: extractLoc(subNode)
+          loc: extractLoc(subNode),
         };
       }
     }

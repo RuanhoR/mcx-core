@@ -7,6 +7,7 @@
     "lib": ["esnext"],
     "types": ["node"],
     "sourceMap": true,
+    "noEmit": true,
     "declaration": true,
     "declarationMap": false,
     "noUncheckedIndexedAccess": true,

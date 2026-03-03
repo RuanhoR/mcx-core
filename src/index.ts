@@ -5,14 +5,16 @@ import compiler, {
 import utils from "./utils.js"
 import * as Compiler from "./compile-mcx/compiler"
 import * as PUBTYPE from "./types.js";
+import * as compile_component from "./compile-component"
 import {
   transform
 } from "./transforms"
-export default {
+const index = {
   load: compiler,
   AST: AST,
   Compiler,
   utils: utils,
+  compile_component,
   plugin,
   transform
 }
@@ -20,9 +22,11 @@ export default {
 export {
   PUBTYPE,
   compiler as compile,
+  index as default,
   AST,
   Compiler,
   utils,
   transform,
+  compile_component,
   plugin
 };

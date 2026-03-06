@@ -10,16 +10,16 @@ function handlerPath(p: string, base: string): string {
   }
   throw new Error(`[component path]: path '${p}' is unreasonable. because root is not in '${Object.keys(_MCXstructureLocComponentTypes)}'`)
 }
-const cache: Map<CompileOpt, boolean> = new Map();
+const cache: Map<string, boolean> = new Map();
 async function compileComponent(compileData: MCXCompileData, opt: CompileOpt) {
-  const component =  compileData.strLoc.Component;
-  if (cache.get(opt)) {
+  const component = compileData.strLoc.Component;
+  if (cache.get(JSON.stringify(opt))) {
     throw new CompileError("[compile comonent]: can't load two and more component mcx in same project", {
       pos: 1,
       line: 1
     });
   }
-  cache.set(opt, true);
+  cache.set(JSON.stringify(opt), true);
   const projectDir = path.dirname(opt.ProjectDir)
   for (const jsonKey in component) {
     const jsonPath = handlerPath(jsonKey, projectDir);

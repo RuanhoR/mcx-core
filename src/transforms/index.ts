@@ -1,8 +1,9 @@
-import { SourcemapPathTransformOption, TransformPluginContext } from "rollup";
+import { TransformPluginContext } from "rollup";
 import { MCXCompileData } from "../compile-mcx/compiler/compileData";
 import { CompileOpt } from "@mbler/mcx-types";
 import { transformCtx } from "../types";
 import { _transform } from "./main";
+import { program } from "@babel/types";
 
 export async function transform(
   code: MCXCompileData,
@@ -18,7 +19,7 @@ export async function transform(
   const transformContext: transformCtx = {
     rollupContext: context,
     impAST: [],
-    currentAST: [],
+    currentAST: program([]),
     opt,
     currentId: id,
     compiledCode: code,

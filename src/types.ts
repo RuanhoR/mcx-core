@@ -55,7 +55,7 @@ export interface ParseReadFileOpt {
   want: 'string' | 'object';
 }
 export type ReadFileOpt = Partial<ParseReadFileOpt>;
-export type mcxType = "component" | "event" | "app"
+export type mcxType = "component" | "event" | "app" | "ui"
 export type {
   Token,
   ContentToken,
@@ -78,11 +78,19 @@ export interface transformCtx {
   cache: Map<string, MCXCompileData>;
   currentId: string;
   scriptTag: ParsedTagNode;
-  currentAST: t.Statement[];
+  currentAST: t.Program;
   mainFn: {
     param: t.FunctionParameter[];
     body: t.Statement[];
   }
   impAST: t.ImportDeclaration[];
   opt: CompileOpt;
+}
+export interface transformCompCtx {
+  enableSetup: () => void;
+  type: mcxType;
+  mainFn: t.Statement[];
+  rollupContext: TransformPluginContext;
+  code: MCXCompileData;
+  prop: t.ObjectProperty[];
 }

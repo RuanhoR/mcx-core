@@ -1,6 +1,3 @@
-/**
- * @description - 提供组件编译json，由/compile-mcx/_compile调度
- */
 import * as t from "./types"
 export class ItemComponent {
   #opt: t.ItemComponentOpt
@@ -93,7 +90,7 @@ export class ItemComponent {
       throw new Error("[set error]: id: type error")
     }
   }
-  getId() {}
+  getId() { }
 }
 export default {
   Item: ItemComponent

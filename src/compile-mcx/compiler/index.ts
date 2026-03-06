@@ -500,6 +500,7 @@ class CompileMCX {
       isLoad: false,
     },
     Component: {},
+    UI: null,
   };
   public getCompileData(): CompileData.MCXCompileData {
     return this.CompileData;
@@ -545,11 +546,13 @@ class CompileMCX {
     let component: ParsedTagNode | null = null;
     const temp: {
       script: string;
+      ui: ParsedTagNode | null;
       Event: ParsedTagNode | null;
       Component: Record<MCXstructureLocComponentType, ParsedTagNode>;
     } = {
       script: "",
       Event: null,
+      ui: null,
       Component: {} as Record<MCXstructureLocComponentType, ParsedTagNode>,
     };
     for (const node of this.mcxCode || []) {
@@ -588,7 +591,18 @@ class CompileMCX {
             "[compile error]: Component node cannot appear after Event",
             node,
           );
+        if (temp.ui)
+          throw makeError(
+            "[compile error]: Component node can't use with UI node",
+          );
         component = node;
+      } else if (node.name == "Ui") {
+        if (component || temp.Event || temp.ui)
+          throw makeError(
+            "[compile error]: UI node can't use with component or event or other ui node",
+            node,
+          );
+        temp.ui = node;
       }
     }
     if (!temp.script) throw makeError("[compile error]: mcx must has a script");
@@ -625,6 +639,9 @@ class CompileMCX {
         // if is a valid component name
         this.handlerChildComponent(subNode);
       }
+    }
+    if (temp.ui) {
+      this.tempLoc.UI = temp.ui;
     }
   }
   // 传入组件的节点，处理子组件（如 items entities）

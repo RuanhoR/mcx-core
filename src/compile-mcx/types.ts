@@ -14,6 +14,7 @@ import type {
 import {
   CompileOpt
 } from "@mbler/mcx-types"
+import { ParsedTagNode } from "../types";
 interface callList {
   source: Expression
   set: (callEXp: CallExpression) => boolean
@@ -22,13 +23,13 @@ interface callList {
 }
 interface ImportListImport {
   isAll: boolean
-  import ? : string | undefined
+  import?: string | undefined
   as: string
 }
 interface ImportList {
   source: string
   imported: ImportListImport[]
-  raw ? : ImportDeclaration
+  raw?: ImportDeclaration
 }
 interface BuildCache {
   call: callList[]
@@ -54,6 +55,7 @@ interface MCXstructureLoc {
     useExpore: string
     loc: { line: number; pos: number }
   }>
+  UI: ParsedTagNode | null;
 }
 export type {
   BuildCache,

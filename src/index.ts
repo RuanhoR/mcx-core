@@ -5,7 +5,7 @@ import compiler, {
 import utils from "./utils.js"
 import * as Compiler from "./compile-mcx/compiler"
 import * as PUBTYPE from "./types.js";
-import * as compile_component from "./compile-component"
+import * as compile_component from "./mcx-component/index.js"
 import {
   transform
 } from "./transforms"

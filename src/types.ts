@@ -90,5 +90,6 @@ export interface transformParseCtx {
   prop: t.ObjectProperty[];
   impBody: t.ImportDeclaration[];
   mainFn: t.Statement[];
-  ctx: transformCtx
+  ctx: transformCtx;
+  app: ((data: t.ObjectProperty[]) => void) & { prototype: { enable: t.ObjectProperty[] | null } }
 }

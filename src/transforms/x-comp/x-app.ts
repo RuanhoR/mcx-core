@@ -72,24 +72,23 @@ export async function Comp(ctx: transformParseCtx) {
       )
     );
     // app: add event export to runtime framework
-    ctx.prop.push(t.objectProperty(
-      t.identifier("app"),
-      t.objectExpression([
-        t.objectProperty(
-          t.identifier("event"),
-          t.arrayExpression(eventImportIdList.map(vl => {
-            if (vl.type == "all") {
-              return t.memberExpression(
-                t.identifier(vl.as),
-                t.identifier("default")
-              )
-            } else if (vl.type == "default") {
-              return t.identifier(vl.as)
-            };
-            throw new Error("[add prop]: can't format eventImportList")
-          }))
-        )
-      ])
-    ));
+
+    const appData = [
+      t.objectProperty(
+        t.identifier("event"),
+        t.arrayExpression(eventImportIdList.map(vl => {
+          if (vl.type == "all") {
+            return t.memberExpression(
+              t.identifier(vl.as),
+              t.identifier("default")
+            )
+          } else if (vl.type == "default") {
+            return t.identifier(vl.as)
+          };
+          throw new Error("[add prop]: can't format eventImportList")
+        }))
+      )
+    ];
+    ctx.app(appData);
   }
 }

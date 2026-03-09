@@ -1,20 +1,19 @@
-import { mcxType, ParsedTagNode, transformCtx, transformParseCtx } from "../types";
+import { mcxType, transformCtx, transformParseCtx } from "../types";
 import * as t from "@babel/types";
 import {
   generate
 } from "@babel/generator";
 import config from "./config";
-import path from "node:path";
-import { readFile } from "node:fs/promises";
-import { compileMCXFn } from "../compile-mcx/compiler";
-import { _enable, generateEventConfig, generateMain } from "./utils";
-import { Comp } from "./x-comp/x-event";
+import { _enable, _enableWithData, generateMain } from "./utils";
+import { Comp as EventComp } from "./x-comp/x-event";
 import { compileComponent } from "../mcx-component";
+import { Comp as AppComp } from "./x-comp/x-app";
 
 export async function _transform(ctx: transformCtx): Promise<string> {
   const _temp_main = generateMain(ctx.compiledCode.JSIR);
   const mainFn = ctx.mainFn.body = _temp_main[0];
   const prop: t.ObjectProperty[] = [];
+  const app = _enableWithData<t.ObjectProperty[]>();
   const params: t.FunctionParameter[] = ctx.mainFn.param = [
     t.identifier(config.paramCtx)
   ]
@@ -22,7 +21,8 @@ export async function _transform(ctx: transformCtx): Promise<string> {
     impBody: _temp_main[1],
     mainFn,
     prop,
-    ctx: ctx
+    ctx: ctx,
+    app
   }
   let type: mcxType = "app";
 
@@ -33,7 +33,7 @@ export async function _transform(ctx: transformCtx): Promise<string> {
     type = "event";
     // enable export setup
     enableSetup()
-    Comp(parseCtx)
+    await EventComp(parseCtx)
   }
   if (ctx.compiledCode.strLoc.UI) {
     /**
@@ -53,7 +53,7 @@ export async function _transform(ctx: transformCtx): Promise<string> {
     // enable setup export
     enableSetup()
     // find event mcx import
-
+    await AppComp(parseCtx)
   }
   // add default export: type
   prop.push(t.objectProperty(t.identifier("type"), t.stringLiteral(type)));
@@ -62,6 +62,9 @@ export async function _transform(ctx: transformCtx): Promise<string> {
       t.identifier("setup"),
       t.identifier(config.scriptCompileFn)
     ))
+  }
+  if (app.prototype.enable) {
+    prop.push(t.objectProperty(t.identifier("app"), t.objectExpression(app.prototype.enable)))
   }
   // generate code
   const code = generate(

@@ -155,7 +155,9 @@ async function generateEventConfig(
   impBody: t.ImportDeclaration[],
 ): Promise<t.ObjectExpression> {
   const prop = ctx.compiledCode.strLoc.Event.subscribe;
-  const argm: t.ObjectExpression = t.objectExpression([]);
+  const argm: t.ObjectExpression = t.objectExpression([
+    t.objectProperty(t.identifier("on"), t.stringLiteral(ctx.compiledCode.strLoc.Event.on))
+  ]);
   if (eventTag.arr.tick) {
     const num = parseFloat(eventTag.arr.tick as string);
     if (!Number.isNaN(num))
@@ -197,7 +199,11 @@ async function generateEventConfig(
  * record enable
  * @returns {(): void} - only call one
  */
-function _enable(): (() => void) {
+function _enable(): (() => void) & {
+  prototype: {
+    enable: boolean
+  }
+} {
   let success = false;
   const fn = function () {
     if (success) throw new Error("[enable]: can't enable again")
@@ -207,12 +213,26 @@ function _enable(): (() => void) {
   fn.prototype.enable = success;
   return fn;
 }
-
+function _enableWithData<T extends any>(): ((data: T) => void) & {
+  prototype: {
+    enable: T | null
+  }
+} {
+  let d: null | T = null;
+  const fn = function (data: T) {
+    if (d) throw new Error("[enable]: can't enable again")
+    d = data;
+    fn.prototype.enable = d;
+  }
+  fn.prototype.enable = d;
+  return fn;
+}
 // export
 export {
   extractIdList,
   extrectVarDefIdList,
   generateEventConfig,
   _enable,
-  generateMain
+  generateMain,
+  _enableWithData
 }

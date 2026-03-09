@@ -1,3 +1,4 @@
+import { stdout } from "node:process";
 import MCX from "../../dist/index.js";
 
 // test compiler
@@ -8,46 +9,48 @@ function fail(msg?: string, err?: any) {
   process.exit(1);
 }
 
-const testv1 = async () =>{try {
-  const result = MCX.Compiler.compileJSFn(
-    "import * as test from './'; test.default(); export * from '@babel/parser'; ",
-  );
-  if (!result || !result.BuildCache)
-    fail("compileJSFn returned no BuildCache", result);
-  if (
-    !Array.isArray(result.BuildCache.import) ||
-    result.BuildCache.import.length < 1
-  )
-    fail("no import in BuildCache.import", result.BuildCache);
-  if (
-    !Array.isArray(result.BuildCache.call) ||
-    result.BuildCache.call.length < 1
-  )
-    fail("no call in BuildCache.call", result.BuildCache);
-  if (
-    !Array.isArray(result.BuildCache.export) ||
-    result.BuildCache.export.length < 1
-  )
-    fail("no export in BuildCache.export", result.BuildCache);
-
-  const result$1 = MCX.Compiler.compileMCXFn(
-    "<script> console.log('test') </script> <Event @after>PlayerJoin=test</Event>",
-  );
-  if (!result$1 || !result$1.strLoc || !result$1.strLoc.Event)
-    fail("compileMCXFn returned unexpected shape", result$1);
-  if (!result$1.strLoc.Event.isLoad)
-    fail(
-      "no load Event in result$1.strLoc.Event.isLoad",
-      result$1.strLoc.Event,
+const testv1 = async () => {
+  try {
+    const result = MCX.Compiler.compileJSFn(
+      "import * as test from './'; test.default(); export * from '@babel/parser'; ",
     );
-  if (result$1.strLoc.script.indexOf("console.log('test')") === -1)
-    fail("script content missing from parse result", result$1);
+    if (!result || !result.BuildCache)
+      fail("compileJSFn returned no BuildCache", result);
+    if (
+      !Array.isArray(result.BuildCache.import) ||
+      result.BuildCache.import.length < 1
+    )
+      fail("no import in BuildCache.import", result.BuildCache);
+    if (
+      !Array.isArray(result.BuildCache.call) ||
+      result.BuildCache.call.length < 1
+    )
+      fail("no call in BuildCache.call", result.BuildCache);
+    if (
+      !Array.isArray(result.BuildCache.export) ||
+      result.BuildCache.export.length < 1
+    )
+      fail("no export in BuildCache.export", result.BuildCache);
 
-  
-} catch (err) {
-  console.error(err);
-  process.exit(1);
-}};
+    const result$1 = MCX.Compiler.compileMCXFn(
+      "<script> console.log('test') </script> <Event @after>PlayerJoin=test</Event>",
+    );
+    if (!result$1 || !result$1.strLoc || !result$1.strLoc.Event)
+      fail("compileMCXFn returned unexpected shape", result$1);
+    if (!result$1.strLoc.Event.isLoad)
+      fail(
+        "no load Event in result$1.strLoc.Event.isLoad",
+        result$1.strLoc.Event,
+      );
+    if (result$1.strLoc.script.indexOf("console.log('test')") === -1)
+      fail("script content missing from parse result", result$1);
+
+
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+};
 
 // Additional transform tests
 const testv2 = async () => {
@@ -90,7 +93,7 @@ const testv2 = async () => {
     // 2) both Event and Component should cause an error
     const mcx2 =
       '<script>console.log("testv2")</script> <Event @after>PlayerJoin=test</Event> <Component><items><item id="a">a</item></items></Component>';
- 
+
     let threw = false;
     try {
       const cd2 = MCX.Compiler.compileMCXFn(mcx2);

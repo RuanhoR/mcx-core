@@ -13,7 +13,6 @@ import { readFile, rm } from "node:fs/promises";
 import MagicString from "magic-string";
 import path from "node:path";
 
-
 export function mcxPlugn(opt: CompileOpt): Plugin {
   let cache: Map<string, MCXCompileData> = new Map();
   return {
@@ -71,7 +70,6 @@ export function mcxPlugn(opt: CompileOpt): Plugin {
         }
         compileData.setFilePath(id);
         const compiledCode = await transform(compileData, cache, id, this, opt);
-        console.log(`[mcx plugin] ${id} compiled ${compiledCode}`);
         return {
           code: compiledCode,
           map: magic.generateMap({ hires: true, source: id }),

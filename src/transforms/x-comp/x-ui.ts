@@ -1,15 +1,7 @@
-import { transformCompCtx } from "../../types";
+import { transformParseCtx } from "../../types";
 
-export function compileUIFn(ctx: transformCompCtx) {
-  if (ctx.enableSetup.prototype.enable) {
-    throw new Error("[ui]: shouldn't enable setup")
-  }
-  const uiTagNode = ctx.code.strLoc.UI;
-  if (!uiTagNode) {
-    throw new Error("[ui]: shouldn't run ui transform fn on not enable ui");
-  }
-  for (const content of uiTagNode.content) {
-    if (content.type == "TagContent") continue;
-
-  }
+export async function Comp(ctx: transformParseCtx) {
+  const internalCtx = ctx.ctx;
+  if (!internalCtx.compiledCode.strLoc.UI) throw new Error("[UI Component]: why didn't parent compeled verify?");
+  // TODO: compele transform
 }

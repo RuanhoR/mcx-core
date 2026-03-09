@@ -86,11 +86,9 @@ export interface transformCtx {
   impAST: t.ImportDeclaration[];
   opt: CompileOpt;
 }
-export interface transformCompCtx {
-  enableSetup: () => void;
-  type: mcxType;
-  mainFn: t.Statement[];
-  rollupContext: TransformPluginContext;
-  code: MCXCompileData;
+export interface transformParseCtx {
   prop: t.ObjectProperty[];
+  impBody: t.ImportDeclaration[];
+  mainFn: t.Statement[];
+  ctx: transformCtx
 }

@@ -8,7 +8,7 @@ import { _enable, _enableWithData, generateMain } from "./utils";
 import { Comp as EventComp } from "./x-comp/x-event";
 import { compileComponent } from "../mcx-component";
 import { Comp as AppComp } from "./x-comp/x-app";
-
+import { Comp as UIComp } from "./x-comp/x-ui"
 export async function _transform(ctx: transformCtx): Promise<string> {
   const _temp_main = generateMain(ctx.compiledCode.JSIR);
   const mainFn = ctx.mainFn.body = _temp_main[0];
@@ -42,7 +42,7 @@ export async function _transform(ctx: transformCtx): Promise<string> {
      */
     type = "ui"; // ui mcx
     enableSetup();
-
+    await UIComp(parseCtx)
   }
   if (Object.getOwnPropertyNames(ctx.compiledCode.strLoc.Component).length >= 1) {
     type = "component";

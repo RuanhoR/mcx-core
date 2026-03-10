@@ -49,15 +49,6 @@ const Dts = {
   ],
   plugins: [
     dts(),
-    {
-      name: "remove-d-ts",
-      async buildEnd() {
-        await rm(path.join(import.meta.dirname, "dist/types"), {
-          force: true,
-          recursive: true,
-        });
-      },
-    },
   ],
 };
 export default [main, Dts];

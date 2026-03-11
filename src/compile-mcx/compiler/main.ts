@@ -58,15 +58,15 @@ export function mcxPlugn(opt: CompileOpt): Plugin {
             ? (cache.get(id) as MCXCompileData)
             : compileMCXFn(code);
           cache.set(id, compileData);
-        } catch (err: any) {
+        } catch (err: unknown) {
           if (err instanceof CompileError) {
             const error: CompileError = err;
             this.error(error.message, {
-              column: error.loc.pos,
+              column: error.loc.column,
               line: error.loc.line,
             });
           }
-          this.error(err.message);
+          this.error(String(err));
         }
         compileData.setFilePath(id);
         const compiledCode = await transform(compileData, cache, id, this, opt);

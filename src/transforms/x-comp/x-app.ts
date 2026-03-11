@@ -44,16 +44,21 @@ export async function Comp(ctx: transformParseCtx) {
   }
   // only have event import
   if (eventImportIdList.length >= 1) {
+    const eventMemberNode = t.memberExpression(
+      t.identifier(config.paramCtx),
+      t.identifier("event")
+    )
     ctx.mainFn.unshift(
       // add declaration
+
       t.variableDeclaration("var", eventImportIdList.map(
         (item, index) => {
           if (item.type == "all") {
             return t.variableDeclarator(t.identifier(item.as), t.objectExpression([
               t.objectProperty(t.identifier("default"),
                 t.memberExpression(
-                  t.identifier(config.paramCtx),
-                  t.identifier(`event$$${index}`)
+                  eventMemberNode,
+                  t.numericLiteral(index)
                 ),
               ),
             ]))
@@ -61,9 +66,9 @@ export async function Comp(ctx: transformParseCtx) {
             return t.variableDeclarator(
               t.identifier(item.as),
               t.memberExpression(
-                t.identifier(config.paramCtx),
-                t.identifier(`event$$${index}`)
-              )
+                eventMemberNode,
+                t.numericLiteral(index)
+              ),
             )
           }
           // ts galgame

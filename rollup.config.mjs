@@ -3,8 +3,6 @@ import json from "@rollup/plugin-json";
 import ts from "@rollup/plugin-typescript";
 import commonjs from "@rollup/plugin-commonjs";
 import dts from "rollup-plugin-dts";
-import { rm } from "fs/promises";
-import path from "path";
 // 基础配置
 const main = {
   input: "src/index.ts", // 入口文件

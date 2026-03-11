@@ -1,12 +1,12 @@
 {
   "name": "@mbler/mcx-core",
-  "version": "0.0.3-alpha.r202603291200",
+  "version": "0.0.3-alpha.r20260311",
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {
     "test": "cd __test__ && npm run test",
     "build": "rollup -c",
-    "publish": "BUILD_MODULE=release rollup -c && npm publish"
+    "publish": "npm run build"
   },
   "keywords": [
     "compiler",

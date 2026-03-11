@@ -43,7 +43,7 @@ export async function Comp(ctx: transformParseCtx) {
     }
   }
   // only have event import
-  if (eventImportIdList.length > 1) {
+  if (eventImportIdList.length >= 1) {
     ctx.mainFn.unshift(
       // add declaration
       t.variableDeclaration("var", eventImportIdList.map(

@@ -14,16 +14,16 @@ import McxAst, { MCXUtils } from "../../ast/tag";
 import PropParser from "../../ast/prop";
 import ts from "typescript";
 export class CompileError extends Error {
-  public loc: { line: number; pos: number };
-  constructor(message: string, loc: { line: number; pos: number }) {
+  public loc: { line: number; column: number };
+  constructor(message: string, loc: { line: number; column: number }) {
     super(message);
     this.name = "CompileError";
-    this.loc = loc || { line: -1, pos: -1 };
+    this.loc = loc || { line: -1, column: -1 };
   }
 }
 
-function extractLoc(node: any): { line: number; pos: number } {
-  if (!node) return { line: -1, pos: -1 };
+function extractLoc(node: any): { line: number; column: number } {
+  if (!node) return { line: -1, column: -1 };
   // Node with loc.start (Babel or MCX): prefer column, fallback to index
   if (node.loc && node.loc.start) {
     const line =
@@ -34,7 +34,12 @@ function extractLoc(node: any): { line: number; pos: number } {
         : typeof node.loc.start.index === "number"
           ? node.loc.start.index
           : -1;
-    return { line, pos };
+    return { line, column: pos };
+  } else if (node.loc && node.loc.column) {
+    return {
+      line: node.loc.line,
+      column: node.loc.column
+    }
   }
   // Our token shape from Lexer: startLine / startIndex
   if (
@@ -43,10 +48,10 @@ function extractLoc(node: any): { line: number; pos: number } {
   ) {
     const line = typeof node.startLine === "number" ? node.startLine : -1;
     const pos = typeof node.startIndex === "number" ? node.startIndex : -1;
-    return { line, pos };
+    return { line, column: pos };
   }
   // (handled above) MCX ParsedTagNode loc: { start: { line, index } }
-  return { line: -1, pos: -1 };
+  return { line: -1, column: -1 };
 }
 
 function makeError(msg: string, node?: any) {
@@ -496,7 +501,7 @@ class CompileMCX {
     Event: {
       on: "after",
       subscribe: {},
-      loc: { line: -1, pos: -1 },
+      loc: { line: -1, column: -1 },
       isLoad: false,
     },
     Component: {},
@@ -697,7 +702,16 @@ class CompileMCX {
   }
 }
 export function compileJSFn(code: string): CompileData.JsCompileData {
-  const comiler = new CompileJS(parse(code, { sourceType: "module" }).program);
+  let parsedCode: t.File;
+  try {
+    parsedCode = parse(code, { sourceType: "module", allowImportExportEverywhere: true });
+  } catch (err: unknown) {
+    if (err instanceof SyntaxError) {
+      const babelErr: SyntaxError & { loc: { column: number; line: number } } = err as unknown as SyntaxError & { loc: { column: number; line: number; } };
+      throw makeError(err.message, babelErr)
+    } else { throw makeError(String(err)) }
+  }
+  const comiler = new CompileJS(parsedCode.program);
   comiler.run();
   return comiler.getCompileData();
 }

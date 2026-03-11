@@ -47,13 +47,13 @@ interface MCXstructureLoc {
   Event: {
     on: "after" | "before"
     subscribe: Record<string, string>
-    loc: { line: number; pos: number }
+    loc: { line: number; column: number }
     isLoad: boolean
   }
   Component: Record<string, {
     type: MCXstructureLocComponentType
     useExpore: string
-    loc: { line: number; pos: number }
+    loc: { line: number; column: number }
   }>
   UI: ParsedTagNode | null;
 }

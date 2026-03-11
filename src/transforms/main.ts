@@ -5,10 +5,8 @@ import {
 } from "@babel/generator";
 import config from "./config";
 import { _enable, _enableWithData, generateMain } from "./utils";
-import { Comp as EventComp } from "./x-comp/x-event";
+import { EventComp, UIComp, AppComp } from "./x-comp";
 import { compileComponent } from "../mcx-component";
-import { Comp as AppComp } from "./x-comp/x-app";
-import { Comp as UIComp } from "./x-comp/x-ui"
 export async function _transform(ctx: transformCtx): Promise<string> {
   const _temp_main = generateMain(ctx.compiledCode.JSIR);
   const mainFn = ctx.mainFn.body = _temp_main[0];

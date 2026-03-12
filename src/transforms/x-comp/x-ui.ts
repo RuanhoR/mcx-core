@@ -1,6 +1,7 @@
 import { MCXstructureLoc } from "../../compile-mcx/types";
 import { ContentToken, ParsedTagNode, transformParseCtx } from "../../types";
 import * as t from "@babel/types";
+import config from "../config";
 export async function Comp(ctx: transformParseCtx) {
   const internalCtx = ctx.ctx;
 
@@ -122,7 +123,7 @@ export async function Comp(ctx: transformParseCtx) {
   ctx.app([
     t.objectProperty(
       t.identifier("ui"),
-      t.newExpression(t.identifier("__mcx__ui"), [finallyData])
+      t.newExpression(t.identifier("__mcx__ui"), [finallyData, t.identifier(config.scriptCompileFn)])
     )
   ])
 }

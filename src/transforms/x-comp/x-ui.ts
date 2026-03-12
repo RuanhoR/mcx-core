@@ -10,6 +10,9 @@ export async function Comp(ctx: transformParseCtx) {
       [t.importSpecifier(t.identifier("__mcx_ui"), t.identifier("ui"))],
       t.stringLiteral("@mbler/mcx"),
     ),
+    t.importDeclaration([
+      t.importNamespaceSpecifier(t.identifier("__minecraft__ui"))
+    ], t.stringLiteral("@minecraft/server-ui"))
   );
 
   const uiTagNode = ctx.ctx.compiledCode.strLoc.UI;
@@ -59,7 +62,9 @@ export async function Comp(ctx: transformParseCtx) {
       ),
       t.objectProperty(
         t.identifier("content"),
-        t.stringLiteral(content)
+        (content.startsWith("{{ ") && content.endsWith(" }}")) ? t.objectExpression([
+          t.objectProperty(t.identifier("useProp"), t.stringLiteral(content.slice(3, content.length - 3).trim()))
+        ]) : t.stringLiteral(content)
       )
     ]))
   }
@@ -93,33 +98,27 @@ export async function Comp(ctx: transformParseCtx) {
     else if (["body", "divider", "title"].includes(name)) {
       pushToTree(name, tp.arr, tp.content)
     }
-    else {
-      if (name == "button") {
-        if (MCXUIType == "MessageFormData") internalCtx.rollupContext.error("[UI]: don't support use button for messageFormData", tp.loc ? {
-          line: tp.loc.start.line,
-          column: tp.loc.start.index
-        } : void 0);
-        pushToTree(name, tp.arr, tp.content)
-      } else {
-        internalCtx.rollupContext.error("[UI]: don't support tag: " + name, tp.loc ? {
-          line: tp.loc.start.line,
-          column: tp.loc.start.index
-        } : void 0);
-      }
+    else if (name == "button") {
+      if (MCXUIType !== "ActionFromData" && MCXUIType) internalCtx.rollupContext.error("[UI]: don't support use button for messageFormData", tp.loc ? {
+        line: tp.loc.start.line,
+        column: tp.loc.start.index
+      } : void 0);
+      pushToTree(name, tp.arr, tp.content)
+      MCXUIType = "ActionFromData";
     }
-  }
-  if (!MCXUIType) MCXUIType = "ActionFromData";
+    else {
+      internalCtx.rollupContext.error("[UI]: don't support tag: " + name, tp.loc ? {
+        line: tp.loc.start.line,
+        column: tp.loc.start.index
+      } : void 0);
+    }
+  } if (!MCXUIType) MCXUIType = "ActionFromData";
   const finallyData = t.objectExpression([
     t.objectProperty(t.identifier("layout"), t.arrayExpression(parsedObj)),
-    t.objectProperty(t.identifier("use"), t.identifier(MCXUIType))
+    t.objectProperty(t.identifier("use"), t.memberExpression(
+      t.identifier("__minecraft__ui"), t.identifier(MCXUIType))),
+    t.objectProperty(t.identifier("_UI"), t.identifier("__minecraft__ui"))
   ]);
-  ctx.impBody.push(t.importDeclaration([
-    t.importSpecifier(
-      t.identifier(MCXUIType),
-      t.identifier(MCXUIType)
-    )
-  ], t.stringLiteral("@minecraft/server-ui"))
-  )
   ctx.app([
     t.objectProperty(
       t.identifier("ui"),

@@ -58,7 +58,8 @@ export async function Comp(ctx: transformParseCtx) {
               t.objectProperty(t.identifier("default"),
                 t.memberExpression(
                   eventMemberNode,
-                  t.numericLiteral(index)
+                  t.numericLiteral(index),
+                  true
                 ),
               ),
             ]))

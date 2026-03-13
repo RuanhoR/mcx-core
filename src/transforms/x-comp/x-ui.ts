@@ -95,7 +95,7 @@ export async function Comp(ctx: transformParseCtx) {
       pushToTree(name, tp.arr, tp.content)
     }
     // public
-    else if (["body", "divider", "title"].includes(name)) {
+    else if (["body", "divider", "title", "label"].includes(name)) {
       pushToTree(name, tp.arr, tp.content)
     }
     else if (name == "button") {

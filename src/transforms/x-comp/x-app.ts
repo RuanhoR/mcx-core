@@ -68,7 +68,8 @@ export async function Comp(ctx: transformParseCtx) {
               t.identifier(item.as),
               t.memberExpression(
                 eventMemberNode,
-                t.numericLiteral(index)
+                t.numericLiteral(index),
+                true
               ),
             )
           }

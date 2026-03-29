@@ -5,6 +5,7 @@ import { ParsedTagNode, transformCtx } from "../types";
 import config from "./config";
 import McxUtlis from "../utils";
 import path from "node:path";
+import { generateFileId } from "./file_id";
 
 function extrectVarDefIdList(express: t.LVal | t.VoidPattern): string[] {
   const result: string[] = [];
@@ -125,7 +126,7 @@ function generateMain(
       // export * from "xxx"
     } else if (t.isExportAllDeclaration(exp)) {
       // xxx.js => xxx_js(id)
-      const id = exp.source.value.replace(/[!a-zA-Z0-9]+/g, "_");
+      const id = generateFileId();
       impBody.push(
         t.importDeclaration(
           [t.importNamespaceSpecifier(t.identifier(id))],
@@ -177,7 +178,7 @@ async function generateEventConfig(
             path.join(path.dirname(ctx.currentId), extFile),
           ))
         ) throw new Error("[transform event]: can't resolve");
-        const id = extFile.replace(/[!a-zA-Z0-9]+/g, "_");
+        const id = generateFileId();
         impBody.push(
           t.importDeclaration(
             [t.importDefaultSpecifier(t.identifier(id))],

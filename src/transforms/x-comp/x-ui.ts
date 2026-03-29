@@ -30,7 +30,7 @@ export async function Comp(ctx: transformParseCtx) {
       // if has client TagNode
       if (uiClientTag.content.some(i => i.type == "TagNode")) {
         internalCtx.rollupContext.error("[UI]: can't support ui client element", uiClientTag.loc ? {
-          column: uiClientTag.loc.start.index,
+          column: uiClientTag.loc.start.column,
           line: uiClientTag.loc.start.line
         } : void 0);
       }
@@ -77,7 +77,7 @@ export async function Comp(ctx: transformParseCtx) {
       if (MCXUIType && MCXUIType !== "ModalFormData") {
         internalCtx.rollupContext.error("[UI]: a mcx can't have a ModalFormData Node and other form tag", tp.loc ? {
           line: tp.loc.start.line,
-          column: tp.loc.start.index
+          column: tp.loc.start.column
         } : void 0)
       }
       MCXUIType = "ModalFormData";
@@ -88,7 +88,7 @@ export async function Comp(ctx: transformParseCtx) {
       if (MCXUIType && MCXUIType !== "MessageFormData") {
         internalCtx.rollupContext.error("[UI]: ", tp.loc ? {
           line: tp.loc.start.line,
-          column: tp.loc.start.index
+          column: tp.loc.start.column
         } : void 0)
       }
       MCXUIType = "MessageFormData";
@@ -101,7 +101,7 @@ export async function Comp(ctx: transformParseCtx) {
     else if (name == "button") {
       if (MCXUIType !== "ActionFromData" && MCXUIType) internalCtx.rollupContext.error("[UI]: don't support use button for messageFormData", tp.loc ? {
         line: tp.loc.start.line,
-        column: tp.loc.start.index
+        column: tp.loc.start.column
       } : void 0);
       pushToTree(name, tp.arr, tp.content)
       MCXUIType = "ActionFromData";
@@ -109,7 +109,7 @@ export async function Comp(ctx: transformParseCtx) {
     else {
       internalCtx.rollupContext.error("[UI]: don't support tag: " + name, tp.loc ? {
         line: tp.loc.start.line,
-        column: tp.loc.start.index
+        column: tp.loc.start.column
       } : void 0);
     }
   } if (!MCXUIType) MCXUIType = "ActionFromData";

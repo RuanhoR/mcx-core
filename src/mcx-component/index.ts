@@ -1,3 +1,4 @@
+import { readdir } from "node:fs/promises";
 import { MCXCompileData } from "../compile-mcx/compiler/compileData";
 
 export async function compileComponent(compiledCode: MCXCompileData, project: string) {
@@ -5,4 +6,4 @@ export async function compileComponent(compiledCode: MCXCompileData, project: st
   for (const i of Object.entries(component)) {
     // TODO: compele compile component
   }
-}
+} 

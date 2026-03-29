@@ -5,10 +5,8 @@ import * as t from "@babel/types"
 interface BaseToken {
   data: string;
   type: TokenType;
-  startIndex?: number;
-  endIndex?: number;
-  startLine?: number;
-  loc?: MCXLoc;
+  start: MCXPosition;
+  end: MCXPosition;
 }
 interface TagToken extends BaseToken {
   type: 'Tag';
@@ -21,9 +19,15 @@ interface ContentToken extends BaseToken {
 }
 type Token = TagToken | TagEndToken | ContentToken;
 type AttributeMap = Record<string, string | boolean>;
+/** 统一的位置信息结构 */
+interface MCXPosition {
+  line: number;
+  column: number;
+}
+
 interface MCXLoc {
-  start: { line: number; index: number };
-  end: { line: number; index: number };
+  start: MCXPosition;
+  end: MCXPosition;
 }
 interface ParsedTagNode {
   start: TagToken;
@@ -70,7 +74,8 @@ export type {
   JsType,
   PropNode,
   ParsedTagNode,
-  MCXLoc
+  MCXLoc,
+  MCXPosition
 }
 export interface transformCtx {
   rollupContext: TransformPluginContext;

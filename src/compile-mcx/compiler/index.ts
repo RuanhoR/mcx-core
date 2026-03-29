@@ -24,33 +24,25 @@ export class CompileError extends Error {
 
 function extractLoc(node: any): { line: number; column: number } {
   if (!node) return { line: -1, column: -1 };
-  // Node with loc.start (Babel or MCX): prefer column, fallback to index
+  // Node with loc.start (Babel or MCX): prefer column
   if (node.loc && node.loc.start) {
     const line =
       typeof node.loc.start.line === "number" ? node.loc.start.line : -1;
-    const pos =
+    const column =
       typeof node.loc.start.column === "number"
         ? node.loc.start.column
-        : typeof node.loc.start.index === "number"
-          ? node.loc.start.index
-          : -1;
-    return { line, column: pos };
-  } else if (node.loc && node.loc.column) {
+        : -1;
+    return { line, column };
+  } else if (node.loc && node.loc.column !== undefined) {
     return {
-      line: node.loc.line,
+      line: node.loc.line ?? -1,
       column: node.loc.column
-    }
+    };
   }
-  // Our token shape from Lexer: startLine / startIndex
-  if (
-    typeof node.startLine === "number" ||
-    typeof node.startIndex === "number"
-  ) {
-    const line = typeof node.startLine === "number" ? node.startLine : -1;
-    const pos = typeof node.startIndex === "number" ? node.startIndex : -1;
-    return { line, column: pos };
+  // MCX Token with unified position: start: { line, column }
+  if (node.start && typeof node.start.line === "number") {
+    return { line: node.start.line, column: node.start.column ?? -1 };
   }
-  // (handled above) MCX ParsedTagNode loc: { start: { line, index } }
   return { line: -1, column: -1 };
 }
 
@@ -704,12 +696,29 @@ class CompileMCX {
 export function compileJSFn(code: string): CompileData.JsCompileData {
   let parsedCode: t.File;
   try {
-    parsedCode = parse(code, { sourceType: "module", allowImportExportEverywhere: true });
+    parsedCode = parse(code, {
+      sourceType: "module",
+      allowImportExportEverywhere: true,
+      errorRecovery: true,
+      allowAwaitOutsideFunction: true,
+      allowReturnOutsideFunction: true,
+      allowSuperOutsideMethod: true,
+    });
   } catch (err: unknown) {
     if (err instanceof SyntaxError) {
-      const babelErr: SyntaxError & { loc: { column: number; line: number } } = err as unknown as SyntaxError & { loc: { column: number; line: number; } };
-      throw makeError(err.message, babelErr)
-    } else { throw makeError(String(err)) }
+      const babelErr = err as SyntaxError & { loc?: { column: number; line: number } };
+      const loc = babelErr.loc ?? { column: -1, line: -1 };
+      throw makeError(`[babel parse error]: ${err.message}`, { loc: { start: loc } });
+    }
+    throw makeError(`[parse error]: ${String(err)}`);
+  }
+  // 检查解析过程中的错误（当启用 errorRecovery 时）
+  const parseErrors = (parsedCode as any).errors;
+  if (parseErrors && Array.isArray(parseErrors) && parseErrors.length > 0) {
+    const firstError = parseErrors[0];
+    if (firstError && firstError.loc) {
+      throw makeError(`[babel parse error]: ${firstError.message || 'Unknown parse error'}`, { loc: firstError.loc });
+    }
   }
   const comiler = new CompileJS(parsedCode.program);
   comiler.run();

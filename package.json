@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-core",
-  "version": "0.0.3-alpha.r20260312",
+  "version": "0.0.3-beta",
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {
@@ -16,7 +16,9 @@
     "@babel/generator": "7.28.5",
     "@babel/parser": "7.28.5",
     "@babel/types": "7.28.6",
-    "magic-string": "0.30.21"
+    "@volar/language-core": "^2.4.28",
+    "magic-string": "0.30.21",
+    "vscode-uri": "^3.1.0"
   },
   "module": "commjs",
   "files": [

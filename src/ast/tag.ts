@@ -8,8 +8,15 @@ import type {
   AttributeMap,
   ParsedTagContentNode,
   MCXLoc,
+  MCXPosition,
   TokenType
 } from "./../types.js";
+
+/** 创建位置对象的辅助函数 */
+function createPos(line: number, column: number): MCXPosition {
+  return { line, column };
+}
+
 class Lexer {
   private text: string;
   private booleanProxyCache: WeakMap<object, Record<string, boolean>>;
@@ -97,12 +104,13 @@ class Lexer {
 
   /**
    * 拆分输入文本为 Token 流：Tag、TagEnd、Content
-   * 新增：忽略 HTML 注释 <!-- ... --> 并记录每个 token 的起始位置与行号
+   * 忽略 HTML 注释 <!-- ... --> 并记录每个 token 的起始位置与行号
    */
   * tagSplitIterator(): IterableIterator<Token> {
     const text = this.text;
     let i = 0;
     let line = 1;
+    let column = 0;
     const len = text.length;
 
     while (i < len) {
@@ -114,9 +122,15 @@ class Lexer {
           const commentStart = i;
           const endIdx = text.indexOf('-->', i + 4);
           const commentEnd = endIdx === -1 ? len - 1 : endIdx + 2;
-          // 更新行号
-          const segment = text.slice(i, commentEnd + 1);
-          for (const c of segment) if (c === '\n') line++;
+          // 更新行号和列号
+          for (let j = i; j <= commentEnd; j++) {
+            if (text[j] === '\n') {
+              line++;
+              column = 0;
+            } else {
+              column++;
+            }
+          }
           i = commentEnd + 1;
           continue; // 跳过注释
         }
@@ -124,6 +138,7 @@ class Lexer {
         // 普通标签读取到 '>'
         const tokenStart = i;
         const tokenStartLine = line;
+        const tokenStartColumn = column;
         let j = i + 1;
         let sawGt = false;
         for (; j < len; j++) {
@@ -132,37 +147,46 @@ class Lexer {
             sawGt = true;
             break;
           }
-          if (c === '\n') line++;
+          if (c === '\n') {
+            line++;
+            column = 0;
+          } else {
+            column++;
+          }
         }
-        const tokenEnd = j;
         const buffer = text.slice(tokenStart, sawGt ? j + 1 : len);
         const type: TokenType = buffer.startsWith('</') ? 'TagEnd' : 'Tag';
         const tok: Token = {
           data: buffer,
           type,
-          startIndex: tokenStart,
-          endIndex: sawGt ? tokenEnd : len - 1,
-          startLine: tokenStartLine
+          start: createPos(tokenStartLine, tokenStartColumn),
+          end: createPos(line, column)
         };
         yield tok;
         i = sawGt ? j + 1 : len;
+        if (sawGt) column++;
       } else {
         // 内容直到下一个 '<'
         const contentStart = i;
         const contentStartLine = line;
+        const contentStartColumn = column;
         let j = i;
         for (; j < len; j++) {
           const c = text[j];
           if (c === '<') break;
-          if (c === '\n') line++;
+          if (c === '\n') {
+            line++;
+            column = 0;
+          } else {
+            column++;
+          }
         }
         const data = text.slice(contentStart, j);
         const n: Token = {
           data,
           type: 'Content',
-          startIndex: contentStart,
-          endIndex: j - 1,
-          startLine: contentStartLine
+          start: createPos(contentStartLine, contentStartColumn),
+          end: createPos(line, j > contentStart ? column - 1 : column)
         };
         yield n;
         i = j;
@@ -172,7 +196,7 @@ class Lexer {
 
   /**
    * 生成 Token 迭代器，用于遍历所有结构化 Token
-   * 改为基于 stack 的解析以支持嵌套，并为 ParsedTagNode 添加 loc: { start:{line,index}, end:{line,index} }
+   * 改为基于 stack 的解析以支持嵌套，并为 ParsedTagNode 添加 loc: { start, end }
    * Content 改为递归节点数组 (ParsedTagContentNode | ParsedTagNode)[]
    */
   * tokenIterator(): IterableIterator<ParsedTagNode> {
@@ -208,10 +232,9 @@ class Lexer {
           content: [] as (ParsedTagContentNode | ParsedTagNode)[],
           end: null,
           type: 'TagNode',
-          // loc: start/end positions will be set when available
           loc: {
-            start: { line: token.startLine || 1, index: token.startIndex || 0 },
-            end: { line: token.startLine || 1, index: token.endIndex || (token.startIndex || 0) }
+            start: { ...token.start },
+            end: { ...token.end }
           } as MCXLoc
         };
 
@@ -235,7 +258,7 @@ class Lexer {
           if (candidate && candidate.name === name) {
             // 设置结束
             candidate.end = token;
-            candidate.loc.end = { line: token.startLine || candidate.loc.start.line, index: token.endIndex || ((token.loc as MCXLoc).start.index) };
+            candidate.loc.end = { ...token.end };
             // 从 stack 中移除并附加到父节点或作为顶层节点产出
             stack.splice(s, 1);
             if (stack.length > 0) {
@@ -369,6 +392,8 @@ export class MCXUtils {
       typeof obj === 'object' &&
       'data' in (obj as object) &&
       'type' in (obj as object) &&
+      'start' in (obj as object) &&
+      'end' in (obj as object) &&
       (((obj as Token).type) === 'Tag' || ((obj as Token).type) === 'TagEnd' || ((obj as Token).type) === 'Content')
     );
   }
@@ -395,7 +420,9 @@ export class MCXUtils {
       !!obj &&
       typeof obj === 'object' &&
       'data' in (obj as object) &&
-      'type' in (obj as object)
+      'type' in (obj as object) &&
+      'start' in (obj as object) &&
+      'end' in (obj as object)
     );
   }
   static isTokenType(value: unknown): value is TokenType {

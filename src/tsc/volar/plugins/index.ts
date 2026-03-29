@@ -1,1 +1,1 @@
-export { mcxVolarTscPlugin, MCXVirtualCode, createMCXVirtualCode } from './mcx-file';
+export { createMCXLanguagePlugin, createMCXVirtualCode, MCXVirtualCode } from './mcx-file';

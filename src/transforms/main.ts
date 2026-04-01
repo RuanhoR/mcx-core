@@ -34,10 +34,6 @@ export async function _transform(ctx: transformCtx): Promise<string> {
     await EventComp(parseCtx)
   }
   if (ctx.compiledCode.strLoc.UI) {
-    /**
-     * Completed UI handler
-     * @todo - handler
-     */
     type = "ui"; // ui mcx
     enableSetup();
     await UIComp(parseCtx)

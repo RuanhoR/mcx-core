@@ -17,7 +17,10 @@ interface TagEndToken extends BaseToken {
 interface ContentToken extends BaseToken {
   type: 'Content';
 }
-type Token = TagToken | TagEndToken | ContentToken;
+interface CommentToken extends BaseToken {
+  type: 'Comment';
+}
+type Token = TagToken | TagEndToken | ContentToken | CommentToken;
 type AttributeMap = Record<string, string | boolean>;
 /** 统一的位置信息结构 */
 interface MCXPosition {
@@ -33,7 +36,7 @@ interface ParsedTagNode {
   start: TagToken;
   name: string;
   arr: AttributeMap;
-  content: (ParsedTagContentNode | ParsedTagNode)[];
+  content: (ParsedTagContentNode | ParsedTagNode | ParsedCommentNode)[];
   end: TagEndToken | null;
   loc: MCXLoc;
   type: "TagNode";
@@ -42,7 +45,12 @@ interface ParsedTagContentNode {
   data: string;
   type: 'TagContent';
 }
-type TokenType = 'Tag' | 'TagEnd' | 'Content';
+interface ParsedCommentNode {
+  data: string;
+  type: 'Comment';
+  loc?: MCXLoc;
+}
+type TokenType = 'Tag' | 'TagEnd' | 'Content' | 'Comment';
 type PropValue = number | string | object
 interface PropNode {
   key: string
@@ -65,11 +73,13 @@ export type {
   ContentToken,
   TagEndToken,
   TagToken,
+  CommentToken,
   BaseToken,
   AttributeMap,
   PropValue,
   TokenType,
   ParsedTagContentNode,
+  ParsedCommentNode,
   TypeVerifyBody,
   JsType,
   PropNode,

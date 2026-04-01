@@ -520,7 +520,7 @@ class CompileMCX {
       return node.data;
     }
     if (MCXUtils.isTagNode(node)) {
-      return node.content.map((sub) => this.commonTagNodeContent(sub)).join("");
+      return node.content.map((sub) => sub.type !== "Comment" ? this.commonTagNodeContent(sub) : "").join("");
     }
     throw makeError("[mcx compile]: internal error: unknown node type", node);
   }

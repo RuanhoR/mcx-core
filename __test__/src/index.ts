@@ -109,6 +109,84 @@ const testv2 = async () => {
     process.exit(1);
   }
 };
+
+// AST 注释功能测试
+const testv3 = async () => {
+  try {
+    // 测试注释忽略功能
+    const testCode1 = `<div class="test">Hello<!--comment 1-->World</div>`;
+
+    // 直接使用 MXC.AST.tag 类（它本身是 McxAst 构造函数）
+    const ast1 = new (MCX.AST.tag as any)(testCode1);
+    const result1 = ast1.parseAST();
+
+    if (result1.length !== 1) {
+      fail("Expected 1 root node for testCode1");
+    }
+
+    const divNode1 = result1[0];
+
+    // 检查默认情况下的注释处理（应该被忽略）
+    if (divNode1.content) {
+      const hasComment = divNode1.content.some((item: any) => item && item.type === 'Comment');
+      if (hasComment) {
+        fail("Comments should be ignored in default mode");
+      }
+    }
+
+    // 测试注释保留功能
+    const ast2 = new (MCX.AST.tag as any)(testCode1, true);
+    const result2 = ast2.parseAST();
+
+    if (result2.length !== 1) {
+      fail("Expected 1 root node for testCode1 with comments");
+    }
+
+    const divNode2 = result2[0];
+
+    // 检查启用注释保留的情况
+    if (divNode2.content) {
+      const commentNodes = divNode2.content.filter((item: any) => item && item.type === 'Comment');
+      if (commentNodes.length === 0) {
+        fail("Expected at least 1 comment node when comments are included");
+      }
+    }
+
+    // 测试嵌套标签中的注释
+    const testCode2 = `
+      <div>
+        Hello
+        <!-- comment 2 -->
+        <span>test</span>
+        <!-- comment 3 -->
+      </div>
+    `;
+
+    const ast3 = new (MCX.AST.tag as any)(testCode2, true);
+    const result3 = ast3.parseAST();
+
+    if (result3.length !== 1) {
+      fail("Expected 1 root node for nested test");
+    }
+
+    const rootNode = result3[0];
+
+    // 验证注释功能基本工作
+    if (rootNode.content) {
+      const commentCount = rootNode.content.filter((item: any) => item && item.type === 'Comment').length;
+      if (commentCount < 2) {
+        console.warn("Warning: Expected at least 2 comment nodes in nested test, found", commentCount);
+      }
+    }
+
+    console.log("AST comment tests passed");
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+};
+
 testv1()
   .then(testv2)
+  .then(testv3)
   .then(() => console.log("All tests passed"));

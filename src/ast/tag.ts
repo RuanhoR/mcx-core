@@ -418,7 +418,9 @@ export default class McxAst {
     return code;
   }
 }
-export class MCXUtils {
+
+export { Tokenizer, Lexer, Parser, MCXUtils };
+class MCXUtils {
   static isTagNode(node: unknown): node is ParsedTagNode {
     return (
       !!node &&

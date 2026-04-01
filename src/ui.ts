@@ -1,7 +1,7 @@
 import type { MCXCtx } from "@mbler/mcx-types";
 import type { MCXUIOpt } from "./types";
 import type { Player } from "@minecraft/server";
-import type { ActionFormData, ActionFormResponse, MessageFormData, MessageFormResponse, ModalFormData, ModalFormResponse } from "@minecraft/server-ui";
+import type { ActionFormResponse, MessageFormData, MessageFormResponse, ModalFormResponse } from "@minecraft/server-ui";
 interface ParsedParams extends Omit<MCXUIOpt["layout"][number]["params"], "click"> {
   click: (value: ModalFormResponse | MessageFormData | ActionFormResponse) => void
 }
@@ -15,38 +15,42 @@ interface ParsedUIOption extends Omit<MCXUIOpt, "layout"> {
   }[];
 }
 export class ui {
-  /*private _nameList: { [key in MCXUIOpt["layout"][number]["type"]]: string | (() => string) } = {
-    input: "textField",
-    body: "body",
-    submit: "submitButton",
-    button: "button",
-    dropdown: "dropdown",
-    toggle: "toggle",
-    slider: "slider",
-    title: "title",
-    divider: "divider",
-    "button-m": ((): string => {
-      this._msgTemp++;
-      return "button" + this._msgTemp;
-    })
-  }*/
   private _mcUI: typeof import("@minecraft/server-ui");
   private _srcResult: Record<string, any> = {};
   private _UI: MCXUIOpt["use"];
   private _prop: string[];
   private _layout: ParsedUIOption["layout"];
   private _usePropLayoutIndexList: (number)[] = []
+  private _uiType: "modal" | "action" | "message";
   constructor(UIConfig: MCXUIOpt, mcxSrcFn: (ctx: MCXCtx) => any) {
     this._srcResult = mcxSrcFn({});
     this._UI = UIConfig.use;
     if (typeof this._srcResult !== "object") throw new Error("[mcx runtime]: can;t load mcx setup");
     this._prop = this._srcResult.prop || [];
     if (!Array.isArray(this._prop)) throw new Error("[mcx runtime]: can't load prop: invaild prop");
+
+    // 验证并缓存 UI 模块和类型
+    if (!UIConfig.UI) {
+      throw new Error("[mcx runtime]: UI module is required");
+    }
+    this._mcUI = UIConfig.UI;
+
+    // 验证 UI 类型并缓存
+    const tempUI = new this._UI();
+    if (tempUI instanceof this._mcUI.ModalFormData) {
+      this._uiType = "modal";
+    } else if (tempUI instanceof this._mcUI.ActionFormData) {
+      this._uiType = "action";
+    } else if (tempUI instanceof this._mcUI.MessageFormData) {
+      this._uiType = "message";
+    } else {
+      throw new Error("[mcx runtime]: Invalid UI type, must be ModalFormData, ActionFormData or MessageFormData");
+    }
+
     this._layout = UIConfig.layout.map((i): ParsedUIOption["layout"][number] => {
       if (i.type == "button" && i.params.click) i.params.click = this._srcResult[i.params.click];
       return i as unknown as ParsedUIOption["layout"][number];
     });
-    this._mcUI = UIConfig.UI;
     this._init();
   }
   private _init() {
@@ -66,50 +70,68 @@ export class ui {
     let ui = new this._UI();
     let MsgFormUse = 0;
     const clickEvent: Map<number, ParsedParams["click"]> = new Map()
+
     for (const iIndex in layout) {
       const i = layout[iIndex];
       if (!i) continue;
-      if (i.type == "input") {
-        (ui as ModalFormData).textField(String(i.content), i.params.placeholderText || "", {
-          defaultValue: i.params.default,
-          tooltip: i.params.tip
-        });
-      } else if (i.type == "slider") {
-        (ui as ModalFormData).slider(String(i.content), parseFloat(i.params.min) || 0, parseFloat(i.params.max) || 10, {
-          tooltip: {
-            text: i.params.tip || ""
-          }
-        })
-      } else if (i.type == "toggle") {
-        (ui as ModalFormData).toggle(String(i.content), {
-          defaultValue: Boolean(i.params.default)
-        })
-      } else if (i.type == "dropdown") {
-        (ui as ModalFormData).dropdown(String(i.content), i.params.option.split(","))
-      } else if (i.type == "submit") {
-        (ui as ModalFormData).submitButton(String(i.content));
-        if (i.params.click) clickEvent.set(0, i.params.click)
-      } else if (i.type == "button") {
-        (ui as ActionFormData).button(String(i.content), i.params.img || void 0);
-        clickEvent.set(parseInt(iIndex), i.params.click)
-      } else if (i.type == "body") {
-        (ui as ModalFormData | ActionFormData).label(String(i.content))
-      } else if (i.type == "divider") {
-        (ui as ModalFormData | ActionFormData).divider()
-      } else if (i.type == "title") {
-        ui.title(String(i))
-      } else if (i.type == "button-m") {
-        if (MsgFormUse == 0) {
-          (ui as MessageFormData).button1(String(i.content));
 
+      // ModalFormData 
+      if (this._uiType === "modal") {
+        const actionUi = ui as InstanceType<typeof this._mcUI.ModalFormData>;
+        if (i.type == "input") {
+          actionUi.textField(String(i.content), i.params.placeholderText || "", {
+            defaultValue: i.params.default,
+            tooltip: i.params.tip
+          });
+        } else if (i.type == "slider") {
+          actionUi.slider(String(i.content), parseFloat(i.params.min) || 0, parseFloat(i.params.max) || 10, {
+            tooltip: {
+              text: i.params.tip || ""
+            }
+          })
+        } else if (i.type == "toggle") {
+          actionUi.toggle(String(i.content), {
+            defaultValue: Boolean(i.params.default)
+          })
+        } else if (i.type == "dropdown") {
+          actionUi.dropdown(String(i.content), i.params.option.split(","))
+        } else if (i.type == "submit") {
+          actionUi.submitButton(String(i.content));
+          if (i.params.click) clickEvent.set(0, i.params.click)
+        } else if (i.type == "body") {
+          actionUi.label(String(i.content))
+        } else if (i.type == "divider") {
+          actionUi.divider()
         }
-        else if (MsgFormUse == 1) {
-          (ui as MessageFormData).button2(String(i.content));
-        } else {
-          throw new Error("[mcx runtime]: MessageFormData only can call two")
+      }
+      // ActionFormData 
+      else if (this._uiType === "action") {
+        const actionUi = ui as InstanceType<typeof this._mcUI.ActionFormData>;
+        if (i.type == "button") {
+          actionUi.button(String(i.content), i.params.img || void 0);
+          clickEvent.set(parseInt(iIndex), i.params.click)
+        } else if (i.type == "body") {
+          actionUi.label(String(i.content))
+        } else if (i.type == "divider") {
+          actionUi.divider()
         }
-        if (i.params.click) clickEvent.set(MsgFormUse, i.params.click);
-        MsgFormUse++;
+      }
+      // MessageFormData
+      else if (this._uiType === "message") {
+        const messageUi = ui as InstanceType<typeof this._mcUI.MessageFormData>;
+        if (i.type == "button-m") {
+          if (MsgFormUse == 0) {
+            messageUi.button1(String(i.content));
+          } else if (MsgFormUse == 1) {
+            messageUi.button2(String(i.content));
+          } else {
+            throw new Error("[mcx runtime]: MessageFormData only can call two")
+          }
+          if (i.params.click) clickEvent.set(MsgFormUse, i.params.click);
+          MsgFormUse++;
+        }
+      } else if (i.type == "title") {
+        ui.title(String(i.content))
       }
     }
     return [ui, clickEvent] as const;
@@ -126,18 +148,20 @@ export class ui {
     const promise = ui.show(player);
     const formResponse = await promise;
     if (formResponse.canceled) return;
-    if (formResponse instanceof this._mcUI.ActionFormResponse) {
-      const clickIndex = formResponse.selection;
-      if (!clickIndex) return;
-      const handler = _temp[1].get(clickIndex);
-      if (handler) handler(formResponse)
-    } else if (formResponse instanceof this._mcUI.MessageFormResponse) {
-      const p: MessageFormResponse & { selection: number } = formResponse as unknown as MessageFormResponse & { selection: number };
-      if (p.selection) {
-        const handler = _temp[1].get(p.selection);
+
+    if (this._uiType === "action") {
+      const clickIndex = (formResponse as ActionFormResponse).selection;
+      if (clickIndex !== undefined) {
+        const handler = _temp[1].get(clickIndex);
         if (handler) handler(formResponse)
       }
-    } else if (formResponse instanceof this._mcUI.ModalFormResponse) {
+    } else if (this._uiType === "message") {
+      const selection = (formResponse as MessageFormResponse).selection;
+      if (selection !== undefined) {
+        const handler = _temp[1].get(selection);
+        if (handler) handler(formResponse)
+      }
+    } else if (this._uiType === "modal") {
       const handler = _temp[1].get(0);
       if (handler) handler(formResponse);
     }

@@ -1,9 +1,25 @@
-import { readdir } from "node:fs/promises";
+import { readdir, writeFile } from "node:fs/promises";
 import { MCXCompileData } from "../compile-mcx/compiler/compileData";
-
+import { execESMMethod, RunScript } from "./vm"; import path from "node:path";
+import lib from "./lib";
+import { MCXstructureLocComponentType } from "../compile-mcx/types";
 export async function compileComponent(compiledCode: MCXCompileData, project: string) {
   const component = compiledCode.strLoc.Component;
+  const src = compiledCode.strLoc.script;
+  const scriptRunResult = (await (new RunScript(compiledCode.File, "esm")).run(src, execESMMethod.transformCjs)) as Record<string, InstanceType<typeof lib[MCXstructureLocComponentType]> | undefined>
+  if (!component) throw new Error("[component internal error]: compile component: mcx is not component: filePath: " + compiledCode.File)
+  if (typeof scriptRunResult !== "object") throw new Error("[component compile error]: exec code: mcx export type is not object")
   for (const i of Object.entries(component)) {
-    // TODO: compele compile component
+    const filePoint = path.join(project, "behavior", i[0]);
+    if (!path.relative(filePoint, path.join(project, "behavior")).startsWith("..")) throw new Error("[component]: Path Traversal: path: " + filePoint)
+    const pointExport = i[1].useExpore;
+    const pointData = scriptRunResult[pointExport]
+    const pointComponentClass = lib[i[1].type]
+    if (!pointExport || !(pointData instanceof pointComponentClass)) {
+      throw new Error("[component]: compile: check: not found Component class of file: " + compiledCode.File)
+    }
+    await writeFile(filePoint, JSON.stringify(pointData.toJSON()))
   }
-} 
+}
+export * from "./vm"
+export { ItemComponent, EntityComponent, BlockComponent } from "./lib"

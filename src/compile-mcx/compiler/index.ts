@@ -290,9 +290,7 @@ export class CompileJS {
         if (n in this.indexTemp && !this.writeImportKeys.includes(n))
           this.writeImportKeys.push(n);
       }
-    } catch (_) {
-      // ignore
-    }
+    } catch (_) { }
   }
   private tre(node: t.Block, ExtendContext: Context = {}): void {
     if (!t.isBlock(node))

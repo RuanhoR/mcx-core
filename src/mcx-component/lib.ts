@@ -1,10 +1,11 @@
+import { MCXstructureLocComponentType } from "../compile-mcx/types";
 import * as t from "./types"
-export class ItemComponent {
+class ItemComponent {
   #opt: t.ItemComponentOpt
   constructor(opt: t.ItemComponentOpt) {
     this.#opt = opt;
   }
-  toJSON(): t.ItemJSON {
+  public toJSON(): t.ItemJSON {
     if (!this.#opt) throw new Error("[mcx component]: cannot read component")
     const result: t.ItemJSON = {
       format_version: "",
@@ -51,21 +52,20 @@ export class ItemComponent {
     }
     return result
   }
-  // 外界方法
   /**
    * set name
    * @throws {Error}&
    * @param {string} newValue 
    * @returns {void}
    */
-  setName(newValue: string): void {
+  public setName(newValue: string): void {
     if (typeof newValue == "string") {
       this.#opt.name = newValue
     } else {
       throw new Error("[set error]: name type error")
     }
   }
-  setIcon(newValue: string): void {
+  public setIcon(newValue: string): void {
     if (typeof newValue == "string") {
       this.#opt.components.icon = newValue
     } else {
@@ -76,22 +76,58 @@ export class ItemComponent {
    * get name
    * @returns {string} name
    */
-  getName(): string {
+  public getName(): string {
     return this.#opt.name
   }
   /**
    * set identifier
    * @param {string} newValue
    */
-  setId(newValue: string): void {
+  public setId(newValue: string): void {
     if (typeof newValue == "string") {
       this.#opt.id == newValue
     } else {
       throw new Error("[set error]: id: type error")
     }
   }
-  getId() { }
+  /**
+   * get item component identifier
+   */
+  public getId() {
+    return this.#opt.id
+  }
+  /**
+   * setAllowOffHand
+   * @param vl {boolean} allow off hand
+   */
+  public setAllowOffHand(vl: boolean) {
+    if (typeof vl == "boolean") {
+      this.#opt.components.offHand == vl
+    } else {
+      throw new TypeError("[set error]: allowOffHand: type error")
+    }
+  }
+
+}
+class EntityComponent {
+  public toJSON() {
+    return {}
+  }
+}
+class BlockComponent {
+  public toJSON() {
+    return {}
+  }
 }
 export default {
-  Item: ItemComponent
+  item: ItemComponent,
+  entity: EntityComponent,
+  block: BlockComponent
+} satisfies {
+  [key in MCXstructureLocComponentType]: unknown
+}
+export {
+  ItemComponent,
+  BlockComponent,
+  EntityComponent
 }

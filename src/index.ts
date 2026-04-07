@@ -22,3 +22,5 @@ export {
   plugin,
   TSC
 };
+export { ItemComponent, BlockComponent, EntityComponent } from "./mcx-component/lib"
+export * as ComponentType from "./mcx-component/types"

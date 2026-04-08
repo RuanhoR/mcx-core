@@ -1929,4 +1929,713 @@ const SeedPropertiesSchema = {
   plant_at_face: '"UP" | "DOWN"'
 } as const
 
+// Entity Component Interfaces
+interface EntityComponentOpt {
+  id: string
+  format: string
+  is_spawnable?: boolean
+  is_summonable?: boolean
+  components?: {
+    physics?: boolean
+    addrider?: {
+      entity_type?: string
+      riders?: Array<{
+        entity_type: string
+        spawn_event?: string
+      }>
+      spawn_event?: string
+    }
+    "minecraft:admire_item"?: {
+      cooldown_after_being_attacked?: number
+      duration?: number
+    }
+    "minecraft:ageable"?: {
+      drop_items?: string[]
+      duration?: number
+      feed_items?: string | string[] | Array<{
+        growth?: number
+        item: string
+      }>
+      grow_up?: string | {
+        event: string
+        target: string
+      }
+      interact_filters?: any
+      pause_growth_items?: string[]
+      reset_growth_items?: string[]
+    }
+    "minecraft:ambient_sound_interval"?: {
+      event_name?: string
+      event_names?: Array<{
+        condition?: string
+        event_name?: string
+      }>
+      range?: number
+      value?: number
+    }
+    "minecraft:attack_damage"?: {
+      value?: number | { min: number, max: number }
+    }
+    "minecraft:anger_level"?: {
+      anger_decrement_interval?: number
+      angry_boost?: number
+      angry_threshold?: number
+      broadcast_anger?: boolean
+      broadcast_anger_on_attack?: boolean
+      broadcast_filters?: any
+      broadcast_range?: number
+      broadcast_targets?: string[]
+      calm_event?: string
+      default_annoyingness?: number
+      default_projectile_annoyingness?: number
+      duration?: number
+      duration_delta?: number
+      filters?: any
+      max_anger?: number
+      nuisance_filter?: any
+      on_increase_sounds?: Array<{
+        condition?: string
+        sound?: string
+      }>
+      remove_targets_below_angry_threshold?: boolean
+      sound_interval?: { min: number, max: number }
+    }
+    "minecraft:angry"?: {
+      angry_sound?: string
+      broadcast_anger?: boolean
+      broadcast_anger_on_attack?: boolean
+      broadcast_anger_on_being_attacked?: boolean
+      broadcast_anger_when_dying?: boolean
+      broadcast_filters?: any
+      broadcast_range?: number
+      broadcast_targets?: string[]
+      calm_event?: string | { event: string, target: string }
+      duration?: number
+      duration_delta?: number
+      filters?: any
+      sound_interval?: { min: number, max: number }
+    }
+    "minecraft:annotation.break_door"?: {
+      break_time?: number
+      min_difficulty?: 'hard' | 'normal' | 'easy' | 'peaceful'
+    }
+    "minecraft:annotation.open_door"?: {}
+    "minecraft:attack"?: {
+      damage?: number | [number, number] | { range_min: number, range_max: number }
+      effect_duration?: number
+      effect_name?: string
+    }
+    "minecraft:area_attack"?: {
+      cause?: string
+      damage_cooldown?: number
+      damage_per_tick?: number
+      damage_range?: number
+      entity_filter?: any
+      play_attack_sound?: boolean
+    }
+    "minecraft:attack_cooldown"?: {
+      attack_cooldown_complete_event?: string | { event: string, target?: string }
+      attack_cooldown_time?: number | { min: number, max: number }
+    }
+    "minecraft:balloonable"?: {
+      mass?: number
+      max_distance?: number
+      on_balloon?: any
+      on_unballoon?: any
+      soft_distance?: number
+    }
+    "minecraft:barter"?: {
+      barter_table?: string
+      cooldown_after_being_attacked?: { min: number, max: number }
+    }
+    "minecraft:block_climber"?: {}
+    "minecraft:block_sensor"?: {
+      on_break?: Array<{
+        block_list?: string[]
+        on_block_broken?: string
+      }>
+      sensor_radius?: number
+      sources?: any
+    }
+    "minecraft:body_rotation_axis_aligned"?: {}
+    "minecraft:body_rotation_always_follows_head"?: {}
+    "minecraft:body_rotation_blocked"?: {}
+    "minecraft:body_rotation_locked_to_vehicle"?: {}
+    "minecraft:boostable"?: {
+      boost_items?: Array<{
+        damage?: number
+        item: string
+        replace_item?: string
+      }>
+      duration?: number
+      speed_multiplier?: number
+    }
+    "minecraft:boss"?: {
+      hud_range?: number
+      name?: string
+      should_darken_sky?: boolean
+    }
+    "minecraft:break_blocks"?: {
+      breakable_blocks?: string[]
+    }
+    "minecraft:breathable"?: {
+      breathe_blocks?: string[]
+      breathes_air?: boolean
+      breathes_lava?: boolean
+      breathes_solids?: boolean
+      breathes_water?: boolean
+      generates_bubbles?: boolean
+      inhale_time?: number
+      non_breathe_blocks?: string[]
+      suffocate_time?: number
+      suffocateTime?: number
+      total_supply?: number
+      totalSupply?: number
+    }
+    "minecraft:bribeable"?: {
+      bribe_cooldown?: number
+      bribe_items?: string[] | string
+    }
+    "minecraft:breedable"?: {
+      allow_sitting?: boolean
+      blend_attributes?: boolean
+      breed_cooldown?: number
+      breed_items?: string[] | string
+      breeds_with?: Array<{
+        baby_type?: string
+        breed_event?: string | { event: string; filters?: any }
+        mate_type?: string
+      }> | { baby_type?: string; breed_event?: string | { event: string; filters?: any }; mate_type?: string }
+      causes_pregnancy?: boolean
+      deny_parents_variant?: {
+        chance?: number
+        max_variant?: string
+        min_variant?: string
+      }
+      environment_requirements?: Array<{
+        block_types?: string[]
+        count?: number
+        radius?: number
+      }>
+      extra_baby_chance?: { min: number; max: number }
+      inherit_tamed?: boolean
+      love_filters?: any
+      mutation_factor?: {
+        color?: { min: number; max: number } | number
+        extra_variant?: { min: number; max: number } | number
+        variant?: { min: number; max: number } | number
+      }
+      require_full_health?: boolean
+      require_tame?: boolean
+    }
+    "minecraft:buoyant"?: {
+      apply_gravity?: boolean
+      base_buoyancy?: number
+      big_wave_probability?: number
+      big_wave_speed?: number
+      can_auto_step_from_liquid?: boolean
+      drag_down_on_buoyancy_removed?: number
+      liquid_blocks?: string[]
+      movement_type?: "waves" | "bobbing" | "none"
+    }
+    "minecraft:burns_in_daylight"?: {
+      protection_slot?: "slot.armor.body" | "slot.armor.chest" | "slot.armor.feet" | "slot.armor.head" | "slot.armor.legs" | "slot.weapon.mainhand" | "slot.weapon.offhand"
+    }
+    "minecraft:cannot_be_attacked"?: {}
+    "minecraft:can_climb"?: {}
+    "minecraft:can_fly"?: {}
+    "minecraft:can_join_raid"?: {}
+    "minecraft:can_power_jump"?: {}
+    "minecraft:celebrate_hunt"?: {
+      broadcast?: boolean
+      celeberation_targets?: any
+      celebrate_sound?: string
+      duration?: number
+      radius?: number
+      sound_interval?: { min: number; max: number }
+    }
+    "minecraft:collision_box"?: {
+      height?: number
+      width?: number
+    }
+    "minecraft:color"?: {
+      value?: number
+    }
+    "minecraft:color2"?: {
+      value?: number
+    }
+    "minecraft:combat_regeneration"?: {
+      apply_to_family?: boolean
+      apply_to_self?: boolean
+      regeneration_duration?: number | "infinite"
+    }
+    "minecraft:conditional_bandwidth_optimization"?: {
+      conditional_values?: Array<{
+        conditional_values?: any
+        max_dropped_ticks?: number
+        max_optimized_distance?: number
+        use_motion_prediction_hints?: boolean
+      }>
+      default_values?: {
+        max_dropped_ticks?: number
+        max_optimized_distance?: number
+        use_motion_prediction_hints?: boolean
+      }
+    }
+    "minecraft:custom_hit_test"?: {
+      hitboxes?: Array<{
+        height?: number
+        pivot?: [number, number, number]
+        width?: number
+      }>
+    }
+    "minecraft:damage_over_time"?: {
+      damage_per_hurt?: number
+      time_between_hurt?: number
+    }
+    "minecraft:damage_sensor"?: {
+      deals_damage?: boolean | "yes" | "no" | "no_but_side_effects_apply"
+      triggers?: Array<{
+        cause?: string
+        damage_modifier?: number
+        damage_multiplier?: number
+        deals_damage?: boolean | string
+        event?: string
+        filters?: any
+        on_damage?: {
+          filters?: any
+        }
+        on_damage_sound_event?: string
+      }> | {
+        cause?: string
+        damage_modifier?: number
+        damage_multiplier?: number
+        deals_damage?: boolean | string
+        event?: string
+        filters?: any
+        on_damage?: {
+          filters?: any
+        }
+        on_damage_sound_event?: string
+      }
+    }
+    "minecraft:dash"?: {
+      cooldown_time?: number
+      horizontal_momentum?: number
+      vertical_momentum?: number
+    }
+    "minecraft:dash_action"?: {
+      can_dash_underwater?: boolean
+      cooldown_time?: number
+      direction?: "entity" | "passenger"
+      horizontal_momentum?: number
+      vertical_momentum?: number
+    }
+    "minecraft:default_look_angle"?: {
+      value?: number
+    }
+    "minecraft:despawn"?: {
+      despawn_from_chance?: boolean
+      despawn_from_distance?: {
+        max_distance?: number
+        min_distance?: number
+      }
+      despawn_from_inactivity?: boolean
+      despawn_from_simulation_edge?: boolean
+      filters?: any
+      min_range_inactivity_timer?: number
+      min_range_random_chance?: number
+      remove_child_entities?: boolean
+    }
+    "minecraft:dimension_bound"?: {}
+    "minecraft:drying_out_timer"?: {
+      dried_out_event?: string | { event: string, target?: string }
+      recover_after_dried_out_event?: string | { event: string, target?: string }
+      stopped_drying_out_event?: string | { event: string, target?: string }
+      total_time?: number
+      water_bottle_refill_time?: number
+    }
+    "minecraft:dweller"?: {
+      can_find_poi?: boolean
+      can_migrate?: boolean
+      dweller_role?: string
+      dwelling_bounds_tolerance?: number
+      dwelling_role?: string
+      dwelling_type?: string
+      first_founding_reward?: number
+      preferred_profession?: string
+      update_interval_base?: number
+      update_interval_variant?: number
+    }
+    "minecraft:economy_trade_table"?: {
+      convert_trades_economy?: boolean
+      cured_discount?: number | [number, number]
+      display_name?: string
+      hero_demand_discount?: number
+      max_cured_discount?: number | [number, number]
+      max_nearby_cured_discount?: number
+      nearby_cured_discount?: number
+      new_screen?: boolean
+      persist_trades?: boolean
+      show_trade_screen?: boolean
+      table?: string
+      use_legacy_price_formula?: boolean
+    }
+    "minecraft:entity_armor_equipment_slot_mapping"?: {
+      armor_slot?: string
+    }
+    "minecraft:entity_sensor"?: {
+      find_players_only?: boolean
+      relative_range?: boolean
+      subsensors?: Array<{
+        cooldown?: number
+        event?: string | { event: string, target?: string }
+        event_filters?: any // Minecraft filter can be complex
+        maximum_count?: number
+        minimum_count?: number
+        range?: [number, number] | [number, number, number] // [x,z] or [x,y,z]
+        require_all?: boolean
+        y_offset?: number
+      }>
+    }
+    "minecraft:equipment"?: {
+      slot_drop_chance?: Array<
+        | string // Slot name string
+        | {
+          drop_chance?: number // Decimal number (0.0 to 1.0)
+          slot?: string // Equipment slot name
+        }
+      >
+      table?: string // File path to equipment table
+    }
+    "minecraft:equippable"?: {
+      slots?: Array<{
+        accepted_items?: string[] // List of items that can go in this slot
+        interact_text?: string // Text for touch-screen controls
+        item?: string // Identifier of the item
+        on_equip?: any // Minecraft Event Trigger
+        on_unequip?: any // Minecraft Event Trigger
+        slot?: number // Slot number
+        [key: string]: any // Allow additional slot properties
+      }>
+    }
+    "minecraft:equip_item"?: {
+      can_wear_armor?: boolean // If true, entity can pick up armor
+      excluded_items?: Array<{
+        item?: string // Excluded item identifier
+        [key: string]: any // Allow additional excluded item properties
+      }>
+    }
+    "minecraft:environment_sensor"?: {
+      triggers?: {
+        event?: string | { event: string, target?: string }
+        filters?: any // Can be complex filter objects
+        [key: string]: any // Allow additional trigger properties
+      } | Array<{
+        event?: string | { event: string, target?: string }
+        filters?: any // Can be complex filter objects
+        [key: string]: any // Allow additional trigger properties
+      }>
+    }
+    "minecraft:exhaustion_values"?: {
+      attack?: number // Amount of exhaustion when attacking
+      damage?: number // Amount of exhaustion when taking damage
+      heal?: number // Amount of exhaustion when healed
+      jump?: number // Amount of exhaustion when jumping
+      lunge?: number // Amount of exhaustion when lunge enchantment triggers
+      mine?: number // Amount of exhaustion when mining
+      sprint?: number // Amount of exhaustion when sprinting
+      sprint_jump?: number // Amount of exhaustion when sprint jumping
+      swim?: number // Amount of exhaustion when swimming
+      walk?: number // Amount of exhaustion when walking
+      [key: string]: any // Allow additional exhaustion properties
+    }
+    "minecraft:experience_reward"?: {
+      on_bred?: string | number | { // Molang expression or decimal number
+        expression?: string
+        version?: number
+      }
+      on_death?: string | number | { // Molang expression or decimal number
+        expression?: string
+        version?: number
+      }
+      [key: string]: any // Allow additional experience reward properties
+    }
+    "minecraft:explode"?: {
+      add?: { // Add component groups
+        component_groups?: string[]
+        [key: string]: any // Allow additional add properties
+      }
+      allow_underwater?: boolean // If true, affects underwater blocks/entities
+      breaks_blocks?: boolean // If true, destroys blocks in explosion radius
+      causes_fire?: boolean // If true, sets blocks on fire
+      damage_scaling?: number // Scale factor for explosion damage
+      destroy_affected_by_griefing?: boolean // Affected by mob griefing game rule
+      fire_affected_by_griefing?: boolean // Fire affected by mob griefing game rule
+      fuse_length?: number | [number, number] // Range for random fuse length
+      fuse_lit?: boolean // If true, fuse already lit
+      knockback_scaling?: number // Scale factor for knockback force
+      max_resistance?: number // Cap for block explosion resistance
+      negates_fall_damage?: boolean // Apply fall damage negation to players
+      particle_effect?: string // Particle effect name (explosion, wind_burst, breeze_wind_burst)
+      power?: number // Explosion radius and damage amount
+      sound_effect?: string // Sound effect when explosion triggers
+      toggles_blocks?: boolean // If true, toggles blocks in explosion radius
+      [key: string]: any // Allow additional explosion properties
+    }
+    "minecraft:fire_immune"?: {
+      // Empty object indicates entity is immune to fire damage
+    }
+    "minecraft:floats_in_liquid"?: {
+      // Empty object indicates entity can float in liquid blocks
+    }
+    "minecraft:flocking"?: {
+      block_distance?: number // The amount of blocks away the entity will look at to push away from
+      block_weight?: number // The weight of the push back away from blocks
+      breach_influence?: number // The amount of push back given to a flocker that breaches out of the water
+      cohesion_threshold?: number // The threshold in which to start applying cohesion
+      cohesion_weight?: number // The weight applied for the cohesion steering of the flock
+      goal_weight?: number // The weight on which to apply on the goal output
+      high_flock_limit?: number // Determines the high bound amount of entities that can be allowed in the flock
+      in_water?: boolean // Tells the Flocking Component if the entity exists in water
+      influence_radius?: number // The area around the entity that allows others to be added to the flock
+      innner_cohesion_threshold?: number // The distance in which the flocker will stop applying cohesion
+      loner_chance?: number // The percentage chance between 0-1 that a fish will spawn and not want to join flocks
+      low_flock_limit?: number // Determines the low bound amount of entities that can be allowed in the flock
+      match_variants?: boolean // Tells the flockers that they can only match similar entities
+      max_height?: number // The max height allowable in the air or water
+      min_height?: number // The min height allowable in the air or water
+      separation_threshold?: number // The distance that is determined to be to close to another flocking and to start applying separation
+      separation_weight?: number // The weight applied to the separation of the flock
+      use_center_of_mass?: boolean // Tells the flockers that they will follow flocks based on the center of mass
+      [key: string]: any
+    }
+    "minecraft:flying_speed"?: {
+      value?: number // Flying speed in blocks per tick
+    }
+    "minecraft:follow_range"?: {
+      max?: number // Maximum follow distance in blocks
+      value?: number // The default follow range in blocks
+    }
+    "minecraft:free_camera_controlled"?: {
+      backwards_movement_modifier?: number // Modifies speed going backwards
+      strafe_speed_modifier?: number // Modifies the strafe speed
+    }
+    "minecraft:friction_modifier"?: {
+      value?: number // The higher the number, the more friction affects this entity
+    }
+    "minecraft:game_event_movement_tracking"?: {
+      emit_flap?: boolean // If true, the flap game event will be emitted when the entity moves through air
+      emit_move?: boolean // If true, the entityMove game event will be emitted when the entity moves on ground or through a solid
+      emit_swim?: boolean // If true, the swim game event will be emitted when the entity moves through a liquid
+    }
+    "minecraft:genetics"?: {
+      mutation_rate?: number // Chance that an allele will be replaced with a random one instead of the parent's allele during birth
+      genes?: Array<{
+        name: string // The name of the gene
+        use_simplified_breeding?: boolean // If true, mobs will inherit main alleles from parents' main alleles
+        mutation_rate?: number // Override for this gene's mutation rate
+        allele_range?: number | { // The range of positive integer allele values
+          range_min: number // Minimum allele value
+          range_max: number // Maximum allele value
+        }
+        genetic_variants?: Array<{
+          birth_event?: string | { // Event to run when this mob is created and matches the allele conditions
+            event: string
+            target?: string
+          }
+          main_allele?: number | { // Compare the mob's main allele with this value
+            range_min: number
+            range_max: number
+          }
+          hidden_allele?: number | { // Compare the mob's hidden allele with this value
+            range_min: number
+            range_max: number
+          }
+          both_allele?: number | { // Compare both main and hidden alleles with this value
+            range_min: number
+            range_max: number
+          }
+          either_allele?: number | { // Compare either main or hidden allele with this value
+            range_min: number
+            range_max: number
+          }
+        }>
+      }>
+    }
+    "minecraft:giveable"?: {
+      cooldown?: number // An optional cool down in seconds to prevent spamming interactions
+      items?: string | string[] // The list of items that can be given to the entity
+      on_give?: string | { // Event to fire when the correct item is given
+        event: string
+        target?: string
+      }
+    }
+    "minecraft:ground_offset"?: {
+      value?: number // The value of the entity's offset from the terrain, in blocks
+    }
+    "minecraft:group_size"?: {
+      radius?: number // Radius from center of entity
+      filters?: any // The list of conditions that must be satisfied for other entities to be counted
+    }
+    "minecraft:grows_crop"?: {
+      chance?: number // Value between 0-1. Chance of success per tick
+      charges?: number // Number of charges
+    }
+    "minecraft:health"?: {
+      max?: number // Maximum health this entity can have
+      value?: number | {
+        range_min?: number // Minimum health value
+        range_max?: number // Maximum health value
+      }
+    }
+    "minecraft:heartbeat"?: {
+      interval?: string // A Molang expression defining the inter-beat interval in seconds
+      sound_event?: string // Level sound event to be played as the heartbeat sound
+    }
+    "minecraft:hide"?: {} // Moves to and hides at their owned POI or the closest nearby
+    "minecraft:home"?: {
+      home_block_list?: string[] // Optional list of blocks that can be considered a valid home
+      restriction_radius?: number // Optional radius that the entity will be restricted to
+      restriction_type?: 'none' | 'random_movement' | 'all_movement' // How the entity will be restricted to its home
+    }
+    "minecraft:horse.jump_strength"?: {
+      value?: number | {
+        range_min?: number // Minimum jump strength value
+        range_max?: number // Maximum jump strength value
+      }
+    }
+    "minecraft:hurt_on_condition"?: {
+      damage_conditions?: Array<{
+        cause?: string // The kind of damage that is caused to the entity
+        damage_per_tick?: number // The amount of damage done each tick that the conditions are met
+        filters?: {
+          subject?: string // The subject of the filter test
+          test?: string // The test to perform
+          value?: any // The value to compare against
+          operator?: string // The operator to use for comparison
+          [key: string]: any // Allow for other filter properties
+        }
+      }>
+    }
+    "minecraft:ignore_cannot_be_attacked"?: {
+      filters?: {
+        subject?: string // The subject of the filter test
+        test?: string // The test to perform
+        value?: any // The value to compare against
+        operator?: string // The operator to use for comparison
+        [key: string]: any // Allow for other filter properties
+      }
+    }
+    "minecraft:input_air_controlled"?: {
+      [key: string]: any // Flexible structure for movement modifiers
+    }
+    "minecraft:input_ground_controlled"?: {
+      // Empty object as specified
+    }
+    "minecraft:inside_block_notifier"?: {
+      block_list?: Array<{
+        block?: {
+          name?: string // The name of the block to listen for
+          states?: {
+            [key: string]: string | number | boolean // The specific block states to match
+          }
+        }
+        entered_block_event?: {
+          event?: string // The event to run when the block is entered
+          target?: string // The target of the event
+        }
+        exited_block_event?: {
+          event?: string // The event to run when the block is exited
+          target?: string // The target of the event
+        }
+      }>
+    }
+    "minecraft:insomnia"?: {
+      days_until_insomnia?: number // Number of days the mob has to stay up until the insomnia effect begins
+    }
+    "minecraft:instant_despawn"?: {
+      remove_child_entities?: boolean // If true, all entities linked to this entity in a child relationship will also be despawned
+    }
+    "minecraft:interact"?: {
+      cooldown?: number // Time in seconds before this entity can be interacted with again
+      cooldown_after_being_attacked?: number // Time in seconds before this entity can be interacted with after being attacked
+      drop_item_slot?: string | number // The entity's slot to remove and drop the item from
+      drop_item_y_offset?: number // Will offset the item drop position this amount in the y direction
+      equip_item_slot?: string | number // The entity's slot to equip the item to
+      health_amount?: number // The amount of health this entity will recover or lose when interacting
+      hurt_item?: number // The amount of damage the item will take when used to interact
+      interact_text?: string // Text to show when the player is able to interact
+      interactions?: Array<{
+        give_item?: boolean // If true, the player can give items to the entity
+        hurt_item?: number // Amount of damage the item will take
+        interact_text?: string // Interaction text
+        on_interact?: string | { // Event to fire when the interaction occurs
+          filters?: {
+            subject?: string
+            test?: string
+            value?: any
+            operator?: string
+            [key: string]: any
+          }
+        }
+        particle_on_start?: Array<{
+          particle_offset_towards_interactor?: boolean // Whether particle appears closer to interactor
+          particle_type?: string // The type of particle to spawn
+          particle_y_offset?: number // Y direction offset for particles
+        }>
+        play_sounds?: string // List of sounds to play
+        repair_entity_item?: Array<{
+          amount?: number // How much durability to restore
+          slot?: string | number // The entity's slot containing the item to be repaired
+        }>
+        spawn_entities?: string // List of entities to spawn
+        spawn_items?: Array<{
+          table?: string // File path to the loot table file
+          y_offset?: number // Y direction offset for item spawn
+        }>
+        swing?: boolean // If true, player will do 'swing' animation
+        take_item?: boolean // If true, player can take items from the entity
+        transform_to_item?: string // Item used will transform to this item
+        use_item?: boolean // If true, interaction will use an item
+        vibration?: 'none' | 'shear' | 'entity_die' | 'entity_act' | 'entity_interact' // Vibration to emit
+      }>
+    }
+    "minecraft:inventory"?: {
+      additional_slots_per_strength?: number // Number of slots that this entity can gain per extra strength
+      can_be_siphoned_from?: boolean // If true, the contents of this inventory can be removed by a hopper
+      container_type?: string // Type of container this entity has
+      inventory_size?: number // Number of slots the container has
+      private?: boolean // If true, the entity will not drop its inventory on death
+      restrict_to_owner?: boolean // If true, the entity's inventory can only be accessed by its owner
+    }
+    "minecraft:is_baby"?: {
+      // Empty object as specified
+    }
+    "minecraft:is_charged"?: {
+      // Empty object as specified
+    }
+    "minecraft:is_chested"?: {
+      // Empty object as specified
+    }
+    "minecraft:is_dyeable"?: {
+      interact_text?: string // The text that will display when interacting with this entity with a dye
+    }
+    // 后面可以根据需要添加更多实体组件
+  }
+}
+
+interface EntityJSON {
+  format_version: string
+  "minecraft:entity": {
+    description: {
+      identifier: string
+      is_spawnable?: boolean
+      is_summonable?: boolean
+    }
+    components?: Record<string, any>
+    component_groups?: Record<string, {}>
+  }
+}
+export type { EntityComponentOpt, EntityJSON }
 export { RepairItemSchema, SeedPropertiesSchema }

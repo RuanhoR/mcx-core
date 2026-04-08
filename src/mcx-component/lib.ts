@@ -1,12 +1,8 @@
 import { MCXstructureLocComponentType } from "../compile-mcx/types"
+import { BlockComponent } from "./components/block"
 import { EntityComponent } from "./components/entity"
 import { ItemComponent } from "./components/item"
 
-class BlockComponent {
-  public toJSON() {
-    return {}
-  }
-}
 export default {
   item: ItemComponent,
   entity: EntityComponent,

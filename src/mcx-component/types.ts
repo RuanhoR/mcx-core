@@ -1937,16 +1937,45 @@ interface EntityComponentOpt {
   is_summonable?: boolean
   components?: {
     physics?: boolean
+    /**
+     * Adds a rider to the entity.
+     * Requires the following component in order to work properly: Rideable (minecraft:rideable)
+     */
     addrider?: {
+      /** Type of entity to acquire as a rider */
       entity_type?: string
+      /** 
+       * List of riders to be added to the entity. Can only spawn as many riders as 
+       * "minecraft:rideable" has "seat_count".
+       */
       riders?: Array<{
         entity_type: string
         spawn_event?: string
       }>
+      /** Trigger event when a rider is acquired */
       spawn_event?: string
     }
+    "minecraft:addrider"?: {
+      /** Type of entity to acquire as a rider */
+      entity_type?: string
+      /** 
+       * List of riders to be added to the entity. Can only spawn as many riders as 
+       * "minecraft:rideable" has "seat_count".
+       */
+      riders?: Array<{
+        entity_type: string
+        spawn_event?: string
+      }>
+      /** Trigger event when a rider is acquired */
+      spawn_event?: string
+    }
+    /**
+     * Allows an entity to ignore attackable targets for a given duration.
+     */
     "minecraft:admire_item"?: {
+      /** Duration, in seconds, for which mob won't admire items if it was hurt */
       cooldown_after_being_attacked?: number
+      /** Duration, in seconds, that the mob is pacified */
       duration?: number
     }
     "minecraft:ageable"?: {
@@ -2621,6 +2650,408 @@ interface EntityComponentOpt {
     "minecraft:is_dyeable"?: {
       interact_text?: string // The text that will display when interacting with this entity with a dye
     }
+    "minecraft:is_ignited"?: {
+      // Empty object as specified
+    }
+    "minecraft:is_pregnant"?: {
+      // Empty object as specified
+    }
+    "minecraft:item_controllable"?: {
+      control_items?: string | string[] // List of items that can be used to control this entity while ridden
+    }
+    "minecraft:item_hopper"?: {
+      // Empty object as specified
+    }
+    "minecraft:jump.dynamic"?: {
+      fast_skip_data?: {
+        animation_duration?: number // Duration of the jump animation
+        distance_scale?: number // The multiplier applied to horizontal velocity when jumping
+        height?: number // The force applied vertically when jumping
+        jump_delay?: number // Amount of ticks between sequential jumps
+      }
+      regular_skip_data?: {
+        animation_duration?: number // Duration of the jump animation
+        distance_scale?: number // The multiplier applied to horizontal velocity when jumping
+        height?: number // The force applied vertically when jumping
+        jump_delay?: number // Amount of ticks between sequential jumps
+      }
+    }
+    "minecraft:jump.static"?: {
+      jump_power?: number // The initial vertical velocity for the jump (default 0.42)
+    }
+    "minecraft:knockback_resistance"?: number | {
+      max?: number // Maximum potential knockback resistance
+      value?: number // The amount of knockback resistance from 0.0 to 1.0
+    }
+    "minecraft:lava_movement"?: {
+      value?: number // The speed the mob moves over a lava block
+    }
+    "minecraft:leashable"?: {
+      can_be_cut?: boolean // If true, players can cut both incoming and outgoing leashes
+      can_be_stolen?: boolean // If true, players can leash this entity even if already leashed
+      hard_distance?: number // Distance in blocks at which the leash stiffens
+      max_distance?: number // Distance in blocks at which the leash breaks
+      on_leash?: string | { event: string, target?: string } // Event to call when leashed
+      on_unleash?: string | { event: string, target?: string } // Event to call when unleashed
+      on_unleash_interact_only?: boolean // Triggers only for player interactions
+      presets?: Array<{
+        filter?: {
+          subject?: string
+          test?: string
+          value?: any
+          operator?: string
+          [key: string]: any
+        } // Conditions for preset application
+        hard_distance?: number // Distance for spring-like force
+        max_distance?: number // Distance at which leash breaks
+        rotation_adjustment?: number // Rotation adjustment for equilibrium
+        soft_distance?: number // Distance for pathfinding
+        spring_type?: "bouncy" | "dampened" | "quad_dampened" // Type of spring force
+      }> // Behavior presets for different leashed scenarios
+      soft_distance?: number // Distance for spring effect start
+    }
+    "minecraft:leashable_to"?: {
+      can_retrieve_from?: boolean // Allows retrieving entities leashed to this entity
+    }
+    "minecraft:looked_at"?: {
+      field_of_view?: number // Width of field of view in degrees
+      filters?: {
+        subject?: string
+        test?: string
+        value?: any
+        operator?: string
+        [key: string]: any
+      } // Which entities are considered
+      find_players_only?: boolean // Limit search to nearest Player only
+      line_of_sight_obstruction_type?: "outline" | "collision" | "collision_for_camera" // Block shape for obstruction
+      look_at_locations?: string[] // Locations on entity for line of sight checks
+      looked_at_cooldown?: { min: number, max: number } // Range for cooldown
+      looked_at_event?: string | { event: string, target?: string } // Event when looked at
+      min_looked_at_duration?: number // Minimum continuous look time
+      not_looked_at_event?: string | { event: string, target?: string } // Event when not looked at
+      scale_fov_by_distance?: boolean // Narrow FOV with distance
+      search_radius?: number // Maximum search distance
+      set_target?: boolean | "never" | "once_and_stop_scanning" | "once_and_keep_scanning" // Combat targeting behavior
+    }
+    "minecraft:loot"?: {
+      table?: string // Path to loot table JSON file
+    }
+    "minecraft:managed_wandering_trader"?: {
+      // Component that manages the wandering trader's ability to trade
+      // Can only be used on wandering_trader entities
+    }
+    "minecraft:mark_variant"?: {
+      value: number // The ID of the mark_variant (0 for base entity)
+    }
+    "minecraft:mob_effect"?: {
+      ambient?: boolean // If the effect is considered an ambient effect
+      cooldown_time?: number // Time in seconds between effect applications
+      effect_range?: number // How close an entity must be to have effect applied
+      effect_time?: number | "infinite" // Duration in seconds or infinite
+      entity_filter?: {
+        subject?: string
+        test?: string
+        value?: any
+        operator?: string
+        [key: string]: any
+      } // Set of entities valid for the effect
+      mob_effect: string // The mob effect that is applied
+    }
+    "minecraft:mob_effect_immunity"?: {
+      mob_effects: string[] // List of effect names the entity is immune to
+    }
+    "minecraft:movement"?: {
+      max?: number // Maximum movement speed this entity can have
+      value?: number | { range_min: number, range_max: number } // Base movement speed value or range
+    }
+    "minecraft:movement.amphibious"?: {
+      max_turn?: number // The maximum number in degrees the mob can turn per tick
+    }
+    "minecraft:movement.basic"?: {
+      max_turn?: number // The maximum number in degrees the mob can turn per tick
+    }
+    "minecraft:movement.dolphin"?: {
+      // This movement is not currently being used in game
+      // 组件占位符，用于海豚式移动控制
+    }
+    "minecraft:movement.fly"?: {
+      max_turn?: number // The maximum number in degrees the mob can turn per tick
+      speed_when_turning?: number // Speed that the mob adjusts to when it has to turn quickly
+      start_speed?: number // Initial speed of the mob when it starts gliding
+    }
+    "minecraft:movement.generic"?: {
+      max_turn?: number // The maximum number in degrees the mob can turn per tick
+    }
+    "minecraft:movement.glide"?: {
+      max_turn?: number // The maximum number in degrees the mob can turn per tick
+      speed_when_turning?: number // Speed that the mob adjusts to when it has to turn quickly
+    }
+    "minecraft:movement.hover"?: {
+      max_turn?: number // The maximum number in degrees the mob can turn per tick
+    }
+    "minecraft:movement.jump"?: {
+      jump_delay?: number | [number, number] | { range_min: number, range_max: number } // Delay in seconds after landing
+      max_turn?: number // The maximum number in degrees the mob can turn per tick
+    }
+    "minecraft:movement.skip"?: {
+      max_turn?: number // The maximum number in degrees the mob can turn per tick
+    }
+    "minecraft:movement.sound_distance_offset"?: {
+      value?: number // The higher the number, the less often the movement sound will be played
+    }
+    "minecraft:movement.sway"?: {
+      max_turn?: number // The maximum number in degrees the mob can turn per tick
+      sway_amplitude?: number // Strength of the sway movement
+      sway_frequency?: number // Multiplier for the frequency of the sway movement
+    }
+    "minecraft:nameable"?: {
+      allow_name_tag_renaming?: boolean // If true, this entity can be renamed with name tags
+      always_show?: boolean // If true, the name will always be shown
+      default_trigger?: string // Trigger to run when the entity gets named
+      name_actions?: Array<{
+        name_filter?: string[] // List of special names that will cause the events to fire
+        on_named?: string | { event: string, target?: string } // Event to be called when this entity acquires the name
+      }> // Describes special names and corresponding events
+    }
+    "minecraft:navigation.climb"?: {
+      avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
+      avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
+      avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
+      avoid_water?: boolean // Tells the pathfinder to avoid water when creating a path
+      blocks_to_avoid?: string[] // Tells the pathfinder which blocks to avoid
+      can_breach?: boolean // Tells the pathfinder whether or not it can jump out of water
+      can_break_doors?: boolean // Tells the pathfinder that it can path through a closed door and break it
+      can_jump?: boolean // Tells the pathfinder whether or not it can jump up blocks
+      can_open_doors?: boolean // Tells the pathfinder that it can path through a closed door
+      can_open_iron_doors?: boolean // Tells the pathfinder that it can path through a closed iron door
+      can_pass_doors?: boolean // Whether a path can be created through a door
+      can_path_from_air?: boolean // Tells the pathfinder that it can start pathing when in the air
+      can_path_over_lava?: boolean // Tells the pathfinder whether or not it can travel on lava surface
+      can_path_over_water?: boolean // Tells the pathfinder whether or not it can travel on water surface
+      can_sink?: boolean // Tells the pathfinder whether or not it will be pulled down by gravity in water
+      can_swim?: boolean // Tells the pathfinder whether or not it can path through water
+      can_walk?: boolean // Tells the pathfinder whether or not it can walk on the ground outside water
+      can_walk_in_lava?: boolean // Tells the pathfinder whether or not it can travel in lava
+      is_amphibious?: boolean // Tells the pathfinder whether or not it can walk underwater
+      using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
+    }
+    "minecraft:navigation.float"?: {
+      avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
+      avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
+      avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
+      avoid_water?: boolean // Tells the pathfinder to avoid water when creating a path
+      blocks_to_avoid?: string[] // Tells the pathfinder which blocks to avoid
+      can_breach?: boolean // Tells the pathfinder whether or not it can jump out of water
+      can_break_doors?: boolean // Tells the pathfinder that it can path through a closed door and break it
+      can_jump?: boolean // Tells the pathfinder whether or not it can jump up blocks
+      can_open_doors?: boolean // Tells the pathfinder that it can path through a closed door
+      can_open_iron_doors?: boolean // Tells the pathfinder that it can path through a closed iron door
+      can_pass_doors?: boolean // Whether a path can be created through a door
+      can_path_from_air?: boolean // Tells the pathfinder that it can start pathing when in the air
+      can_path_over_lava?: boolean // Tells the pathfinder whether or not it can travel on lava surface
+      can_path_over_water?: boolean // Tells the pathfinder whether or not it can travel on water surface
+      can_sink?: boolean // Tells the pathfinder whether or not it will be pulled down by gravity in water
+      can_swim?: boolean // Tells the pathfinder whether or not it can path through water
+      can_walk?: boolean // Tells the pathfinder whether or not it can walk on the ground outside water
+      can_walk_in_lava?: boolean // Tells the pathfinder whether or not it can travel in lava
+      is_amphibious?: boolean // Tells the pathfinder whether or not it can walk underwater
+      using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
+    }
+    "minecraft:navigation.fly"?: {
+      avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
+      avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
+      avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
+      avoid_water?: boolean // Tells the pathfinder to avoid water when creating a path
+      blocks_to_avoid?: string[] // Tells the pathfinder which blocks to avoid
+      can_breach?: boolean // Tells the pathfinder whether or not it can jump out of water
+      can_break_doors?: boolean // Tells the pathfinder that it can path through a closed door and break it
+      can_jump?: boolean // Tells the pathfinder whether or not it can jump up blocks
+      can_open_doors?: boolean // Tells the pathfinder that it can path through a closed door
+      can_open_iron_doors?: boolean // Tells the pathfinder that it can path through a closed iron door
+      can_pass_doors?: boolean // Whether a path can be created through a door
+      can_path_from_air?: boolean // Tells the pathfinder that it can start pathing when in the air
+      can_path_over_lava?: boolean // Tells the pathfinder whether or not it can travel on lava surface
+      can_path_over_water?: boolean // Tells the pathfinder whether or not it can travel on water surface
+      can_sink?: boolean // Tells the pathfinder whether or not it will be pulled down by gravity in water
+      can_swim?: boolean // Tells the pathfinder whether or not it can path through water
+      can_walk?: boolean // Tells the pathfinder whether or not it can walk on the ground outside water
+      can_walk_in_lava?: boolean // Tells the pathfinder whether or not it can travel in lava
+      is_amphibious?: boolean // Tells the pathfinder whether or not it can walk underwater
+      using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
+    }
+    "minecraft:navigation.generic"?: {
+      avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
+      avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
+      avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
+      avoid_water?: boolean // Tells the pathfinder to avoid water when creating a path
+      blocks_to_avoid?: string[] // Tells the pathfinder which blocks to avoid
+      can_breach?: boolean // Tells the pathfinder whether or not it can jump out of water
+      can_break_doors?: boolean // Tells the pathfinder that it can path through a closed door and break it
+      can_jump?: boolean // Tells the pathfinder whether or not it can jump up blocks
+      can_open_doors?: boolean // Tells the pathfinder that it can path through a closed door
+      can_open_iron_doors?: boolean // Tells the pathfinder that it can path through a closed iron door
+      can_pass_doors?: boolean // Whether a path can be created through a door
+      can_path_from_air?: boolean // Tells the pathfinder that it can start pathing when in the air
+      can_path_over_lava?: boolean // Tells the pathfinder whether or not it can travel on lava surface
+      can_path_over_water?: boolean // Tells the pathfinder whether or not it can travel on water surface
+      can_sink?: boolean // Tells the pathfinder whether or not it will be pulled down by gravity in water
+      can_swim?: boolean // Tells the pathfinder whether or not it can path through water
+      can_walk?: boolean // Tells the pathfinder whether or not it can walk on the ground outside water
+      can_walk_in_lava?: boolean // Tells the pathfinder whether or not it can travel in lava
+      is_amphibious?: boolean // Tells the pathfinder whether or not it can walk underwater
+      using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
+    }
+    "minecraft:navigation.hover"?: {
+      avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
+      avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
+      avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
+      avoid_water?: boolean // Tells the pathfinder to avoid water when creating a path
+      blocks_to_avoid?: string[] // Tells the pathfinder which blocks to avoid
+      can_breach?: boolean // Tells the pathfinder whether or not it can jump out of water
+      can_break_doors?: boolean // Tells the pathfinder that it can path through a closed door and break it
+      can_jump?: boolean // Tells the pathfinder whether or not it can jump up blocks
+      can_open_doors?: boolean // Tells the pathfinder that it can path through a closed door
+      can_open_iron_doors?: boolean // Tells the pathfinder that it can path through a closed iron door
+      can_pass_doors?: boolean // Whether a path can be created through a door
+      can_path_from_air?: boolean // Tells the pathfinder that it can start pathing when in the air
+      can_path_over_lava?: boolean // Tells the pathfinder whether or not it can travel on lava surface
+      can_path_over_water?: boolean // Tells the pathfinder whether or not it can travel on water surface
+      can_sink?: boolean // Tells the pathfinder whether or not it will be pulled down by gravity in water
+      can_swim?: boolean // Tells the pathfinder whether or not it can path through water
+      can_walk?: boolean // Tells the pathfinder whether or not it can walk on the ground outside water
+      can_walk_in_lava?: boolean // Tells the pathfinder whether or not it can travel in lava
+      is_amphibious?: boolean // Tells the pathfinder whether or not it can walk underwater
+      using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
+    }
+    "minecraft:navigation.swim"?: {
+      avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
+      avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
+      avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
+      avoid_water?: boolean // Tells the pathfinder to avoid water when creating a path
+      blocks_to_avoid?: string[] | Array<{
+        name?: string // Block identifier to avoid
+        tags?: string // Molang expression to match block tags, e.g. query.any_tag('trapdoors')
+      }> // Tells the pathfinder which blocks to avoid
+      can_breach?: boolean // Tells the pathfinder whether or not it can jump out of water (like a dolphin)
+      can_break_doors?: boolean // Tells the pathfinder that it can path through a closed door and break it
+      can_jump?: boolean // Tells the pathfinder whether or not it can jump up blocks
+      can_open_doors?: boolean // Tells the pathfinder that it can path through a closed door assuming the AI will open the door
+      can_open_iron_doors?: boolean // Tells the pathfinder that it can path through a closed iron door assuming the AI will open the door
+      can_pass_doors?: boolean // Whether a path can be created through a door
+      can_path_from_air?: boolean // Tells the pathfinder that it can start pathing when in the air
+      can_path_over_lava?: boolean // Tells the pathfinder whether or not it can travel on the surface of the lava
+      can_path_over_water?: boolean // Tells the pathfinder whether or not it can travel on the surface of the water
+      can_sink?: boolean // Tells the pathfinder whether or not it will be pulled down by gravity while in water
+      can_swim?: boolean // Tells the pathfinder whether or not it can path anywhere through water and plays swimming animation along that path
+      can_walk?: boolean // Tells the pathfinder whether or not it can walk on the ground outside water
+      can_walk_in_lava?: boolean // Tells the pathfinder whether or not it can travel in lava like walking on ground
+      is_amphibious?: boolean // Tells the pathfinder whether or not it can walk on the ground underwater
+      using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
+    }
+    "minecraft:navigation.walk"?: {
+      avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage when finding a path
+      avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals) when finding a path
+      avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles that are exposed to the sun when creating paths
+      avoid_water?: boolean // Tells the pathfinder to avoid water when creating a path
+      blocks_to_avoid?: string[] | Array<{
+        name?: string // Block identifier to avoid
+        tags?: string // Molang expression to match block tags, e.g. query.any_tag('trapdoors')
+      }> // Tells the pathfinder which blocks to avoid
+      can_breach?: boolean // Tells the pathfinder whether or not it can jump out of water (like a dolphin)
+      can_break_doors?: boolean // Tells the pathfinder that it can path through a closed door and break it
+      can_float?: boolean // Tells the pathfinder whether or not it can float
+      can_jump?: boolean // Tells the pathfinder whether or not it can jump up blocks
+      can_open_doors?: boolean // Tells the pathfinder that it can path through a closed door assuming the AI will open the door
+      can_open_iron_doors?: boolean // Tells the pathfinder that it can path through a closed iron door assuming the AI will open the door
+      can_pass_doors?: boolean // Whether a path can be created through a door
+      can_path_from_air?: boolean // Tells the pathfinder that it can start pathing when in the air
+      can_path_over_lava?: boolean // Tells the pathfinder whether or not it can travel on the surface of the lava
+      can_path_over_water?: boolean // Tells the pathfinder whether or not it can travel on the surface of the water
+      can_sink?: boolean // Tells the pathfinder whether or not it will be pulled down by gravity while in water
+      can_swim?: boolean // Tells the pathfinder whether or not it can path anywhere through water and plays swimming animation along that path
+      can_walk?: boolean // Tells the pathfinder whether or not it can walk on the ground outside water
+      can_walk_in_lava?: boolean // Tells the pathfinder whether or not it can travel in lava like walking on ground
+      is_amphibious?: boolean // Tells the pathfinder whether or not it can walk on the ground underwater
+      using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
+    }
+    "minecraft:out_of_control"?: {} // Defines the entity's 'out of control' state
+    "minecraft:peek"?: {
+      on_close?: {
+        event?: string // Event to call when the entity is done peeking
+      }
+      on_open?: {
+        event?: string // Event to call when the entity starts peeking  
+      }
+      on_target_open?: {
+        event?: string // Event to call when the entity's target entity starts peeking
+      }
+    } // Defines the entity's 'peek' behavior
+    "minecraft:persistent"?: {} // Defines whether an entity should be persistent in the game world
+    "minecraft:physics"?: {
+      has_collision?: boolean // Whether or not the entity collides with things
+      has_gravity?: boolean // Whether or not the entity is affected by gravity
+      push_towards_closest_space?: boolean // Whether or not the entity should be pushed towards the nearest open area when stuck inside a block
+    } // Defines physics properties of an actor
+    "minecraft:player.exhaustion"?: {
+      max?: number // A maximum value for a player's exhaustion
+      value?: number // The initial value of a player's exhaustion level
+    } // Defines the player's exhaustion level
+    "minecraft:offspring"?: {
+      born_event?: {
+        event?: string
+        target?: string
+      }
+      breed_event?: {
+        event?: string
+        target?: string
+      }
+      breed_items?: string[]
+      blend_attributes?: boolean // If true, the entities will blend their attributes in the offspring after they breed
+      cooldown?: number
+      delayed_growth?: boolean
+      deny_parents_baby_variant?: boolean
+      deny_parents_variant?: Array<{
+        chance?: number // The percentage chance of denying the parents' variant
+        max_variant?: number // The inclusive maximum of the variant range
+        min_variant?: number // The inclusive minimum of the variant range
+      }> // Determines how likely the baby of parents with the same variant will deny that variant
+      grow_up_duration?: number
+      inherit_tamed?: boolean // If true, the babies will be automatically tamed if its parents are
+      initial_variant?: number
+      inheritance_chance?: {
+        angry?: number
+        attacker?: number
+        color?: number
+        gene?: number
+        variant?: number
+      }
+      mutation_factor?: {
+        color?: number // The percentage chance of the offspring getting its color as if spawned
+        gene?: number // The percentage chance of a mutation on the entity's gene
+        extra?: number // The percentage chance of a mutation on the entity's extra attribute
+        health?: number // The percentage chance of a mutation on the entity's health attribute
+        speed?: number // The percentage chance of a mutation on the entity's speed attribute
+        extra_variant?: number // The percentage chance of a mutation on the entity's extra variant type
+        variant?: number // The percentage chance of a mutation on the entity's variant type
+      } // Determines how likely the babies are to NOT inherit one of their parent's variances
+      num_variants?: number
+      offspring_pairs?: Record<string, string> // The map of entity to offspring definitions that this entity can make offspring with
+      parent_centric_attribute_blending?: {
+        attribute?: string
+        dampening?: number
+      }
+      property_inheritance?: Record<string, any> // List of Entity Properties that should be inherited from the parent entities and potentially mutated
+      random_extra_variant_mutation_interval?: {
+        range_max?: number
+        range_min?: number
+      } // Range used to determine random extra variant
+      random_variant_mutation_interval?: {
+        range_max?: number
+        range_min?: number
+      } // Range used to determine random variant
+      should_baby_face_parent?: boolean
+      variants?: Record<string | number, number>
+    }
     // 后面可以根据需要添加更多实体组件
   }
 }
@@ -2633,7 +3064,7 @@ interface EntityJSON {
       is_spawnable?: boolean
       is_summonable?: boolean
     }
-    components?: Record<string, any>
+    components?: EntityComponentOpt["components"]
     component_groups?: Record<string, {}>
   }
 }

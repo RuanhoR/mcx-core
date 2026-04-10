@@ -100,6 +100,11 @@ export interface transformCtx {
   }
   impAST: t.ImportDeclaration[];
   opt: CompileOpt;
+  output: {
+    dist: string;
+    behavior: string;
+    resources: string;
+  }
 }
 export interface transformParseCtx {
   prop: t.ObjectProperty[];

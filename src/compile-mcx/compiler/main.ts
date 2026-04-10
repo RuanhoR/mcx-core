@@ -7,8 +7,9 @@ import type { MCXCompileData } from "./compileData";
 import { readFile, rm } from "node:fs/promises";
 import MagicString from "magic-string";
 import path from "node:path";
+import { transformCtx } from "../../types";
 
-export function mcxPlugn(opt: CompileOpt): Plugin {
+export function mcxPlugn(opt: CompileOpt, output: transformCtx["output"]): Plugin {
   let cache: Map<string, MCXCompileData> = new Map();
   return {
     name: "mbler-mcx-core",
@@ -64,7 +65,7 @@ export function mcxPlugn(opt: CompileOpt): Plugin {
           this.error(String(err));
         }
         compileData.setFilePath(id);
-        const compiledCode = await transform(compileData, cache, id, this, opt);
+        const compiledCode = await transform(compileData, cache, id, this, opt, output);
         return {
           code: compiledCode,
           map: magic.generateMap({ hires: true, source: id }),

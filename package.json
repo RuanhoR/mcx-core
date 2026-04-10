@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-core",
-  "version": "0.0.5-alpha.r20260410.6",
+  "version": "0.0.5-alpha.r20260410.8",
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "magic-string": "0.30.21",
     "rollup": "4.59.0",
     "typescript": "5.9.3",
-    "@mbler/mcx-types": "latest"
+    "@mbler/mcx-types": "0.0.2"
   },
   "module": "commjs",
   "files": [

@@ -11,6 +11,7 @@ export async function transform(
   id: string,
   context: TransformPluginContext,
   opt: CompileOpt,
+  output: transformCtx["output"]
 ): Promise<string> {
   const scriptTag = code.raw.find(node => {
     return node.name == "script";
@@ -28,7 +29,8 @@ export async function transform(
     mainFn: {
       param: [],
       body: []
-    }
+    },
+    output
   }
   return await _transform(transformContext)
 }

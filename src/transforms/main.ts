@@ -40,7 +40,7 @@ export async function _transform(ctx: transformCtx): Promise<string> {
   }
   if (Object.getOwnPropertyNames(ctx.compiledCode.strLoc.Component).length >= 1) {
     type = "component";
-    await compileComponent(ctx.compiledCode, ctx.opt.ProjectDir)
+    await compileComponent(ctx.compiledCode, ctx)
     return `export default {type:'component',setup:null,app:{}}`;
   }
   if (type == "app") {

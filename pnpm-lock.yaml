@@ -17,19 +17,22 @@ importers:
       '@babel/types':
         specifier: 7.28.6
         version: 7.28.6
+      '@mbler/mcx-types':
+        specifier: 0.0.2
+        version: 0.0.2(@minecraft/vanilla-data@1.26.2)
       '@volar/language-core':
         specifier: ^2.4.28
         version: 2.4.28
       magic-string:
         specifier: 0.30.21
         version: 0.30.21
-      vscode-uri:
-        specifier: ^3.1.0
-        version: 3.1.0
+      rollup:
+        specifier: 4.59.0
+        version: 4.59.0
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
     devDependencies:
-      '@mbler/mcx-types':
-        specifier: latest
-        version: 0.0.2-beta(@minecraft/vanilla-data@1.26.2)
       '@rollup/plugin-commonjs':
         specifier: 29.0.1
         version: 29.0.1(rollup@4.59.0)
@@ -51,18 +54,12 @@ importers:
       '@types/node':
         specifier: 25.3.5
         version: 25.3.5
-      rollup:
-        specifier: 4.59.0
-        version: 4.59.0
       rollup-plugin-dts:
         specifier: 6.3.0
         version: 6.3.0(rollup@4.59.0)(typescript@5.9.3)
       tslib:
         specifier: 2.8.1
         version: 2.8.1
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
 
 packages:
 
@@ -104,8 +101,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@mbler/mcx-types@0.0.2-beta':
-    resolution: {integrity: sha512-MOGWlRSfsAVBM8dRD2pzL8bNSvDxpBqDP7BrgEVqQ0KnToabt4Rjh8ixL3bjWp6wmeEvElHovM/1tyxCLXFL9g==}
+  '@mbler/mcx-types@0.0.2':
+    resolution: {integrity: sha512-dkaL0ZB7rtj77XkcRwAWixEXFPdypHJ0hGkW/x9TA/YxKx59j5A6SzMKzvruQ0vH8I8Ixpoys6HVKAFc6YV4Fw==}
 
   '@minecraft/common@1.2.0':
     resolution: {integrity: sha512-JdmEq4P3Z/FtoBzhLijFgMSVFnFRrUoLwY8DHHrgtFo0mfLTOLTB1RErYjLMsA6b7BGVNxkX/pfFRiH7QZ0XwQ==}
@@ -455,9 +452,6 @@ packages:
   '@types/node@25.3.5':
     resolution: {integrity: sha512-oX8xrhvpiyRCQkG1MFchB09f+cXftgIXb3a7UUa4Y3wpmZPw5tyZGTLWhlESOLq1Rq6oDlc8npVU2/9xiCuXMA==}
 
-  '@types/node@25.5.0':
-    resolution: {integrity: sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw==}
-
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
 
@@ -566,9 +560,6 @@ packages:
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
-  vscode-uri@3.1.0:
-    resolution: {integrity: sha512-/BpdSx+yCQGnCvecbyXdxHDkuk55/G3xwnC0GqY4gmQ3j+A+g8kzzgB4Nk/SINjqn6+waqw3EgbVF2QKExkRxQ==}
-
 snapshots:
 
   '@babel/code-frame@7.29.0':
@@ -613,12 +604,10 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@mbler/mcx-types@0.0.2-beta(@minecraft/vanilla-data@1.26.2)':
+  '@mbler/mcx-types@0.0.2(@minecraft/vanilla-data@1.26.2)':
     dependencies:
       '@babel/parser': 7.28.5
-      '@babel/types': 7.28.6
       '@minecraft/server': 2.0.0(@minecraft/vanilla-data@1.26.2)
-      '@types/node': 25.5.0
       rollup: 4.57.1
     transitivePeerDependencies:
       - '@minecraft/vanilla-data'
@@ -841,10 +830,6 @@ snapshots:
     dependencies:
       undici-types: 7.18.2
 
-  '@types/node@25.5.0':
-    dependencies:
-      undici-types: 7.18.2
-
   '@types/resolve@1.20.2': {}
 
   '@volar/language-core@2.4.28':
@@ -981,5 +966,3 @@ snapshots:
   typescript@5.9.3: {}
 
   undici-types@7.18.2: {}
-
-  vscode-uri@3.1.0: {}

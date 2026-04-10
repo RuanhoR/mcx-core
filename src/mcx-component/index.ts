@@ -1,8 +1,9 @@
-import { readdir, writeFile } from "node:fs/promises";
+import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { MCXCompileData } from "../compile-mcx/compiler/compileData";
 import { execESMMethod, RunScript } from "./vm"; import path from "node:path";
 import lib from "./lib";
 import { MCXstructureLocComponentType } from "../compile-mcx/types";
+import McxUtlis from "../utils";
 export async function compileComponent(compiledCode: MCXCompileData, project: string) {
   const component = compiledCode.strLoc.Component;
   const src = compiledCode.strLoc.script;
@@ -13,10 +14,14 @@ export async function compileComponent(compiledCode: MCXCompileData, project: st
     const filePoint = path.join(project, "behavior", i[0]);
     if (!path.relative(filePoint, path.join(project, "behavior")).startsWith("..")) throw new Error("[component]: Path Traversal: path: " + filePoint)
     const pointExport = i[1].useExpore;
-    const pointData = scriptRunResult[pointExport]
-    const pointComponentClass = lib[i[1].type]
-    if (!pointExport || !(pointData instanceof pointComponentClass)) {
+    const pointData = scriptRunResult[pointExport] as InstanceType<typeof lib[keyof typeof lib]>
+    if (!pointExport/* || !(pointData instanceof pointComponentClass) */) {
       throw new Error("[component]: compile: check: not found Component class of file: " + compiledCode.File)
+    }
+    if (!await McxUtlis.FileExsit(path.dirname(filePoint))) {
+      mkdir(path.dirname(filePoint), {
+        recursive: true
+      })
     }
     await writeFile(filePoint, JSON.stringify(pointData.toJSON()))
   }

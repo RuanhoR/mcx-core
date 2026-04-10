@@ -169,7 +169,8 @@ class EntityComponent {
         components["minecraft:navigation.hover"] !== void 0 ||
         components["minecraft:navigation.swim"] !== void 0 ||
         components["minecraft:navigation.walk"] !== void 0 ||
-        components["minecraft:offspring"] !== void 0;
+        components["minecraft:offspring"] !== void 0 ||
+        components["minecraft:preferred_path"] !== void 0;
 
       if (hasComponents) {
         result["minecraft:entity"].components = {};
@@ -192,7 +193,7 @@ class EntityComponent {
             addriderConfig.spawn_event = components.addrider.spawn_event;
           }
 
-          ApplyComponents["minecraft:addrider"] = addriderConfig;
+          ApplyComponents["addrider"] = addriderConfig;
         }
         if (components["minecraft:admire_item"]) {
           const admireItemConfig = components["minecraft:admire_item"];
@@ -1141,8 +1142,7 @@ class EntityComponent {
             navigationWalkConfigObj.using_door_annotation = navigationWalkConfig.using_door_annotation;
           }
           ApplyComponents["minecraft:navigation.walk"] = navigationWalkConfigObj;
-        }
-        const offspringConfig = components["minecraft:offspring"];
+        }; const preferredPathConfig = components["minecraft:preferred_path"]; if (preferredPathConfig !== void 0) { const preferredPathConfigObj: any = {}; if (preferredPathConfig.default_block_cost !== void 0) { preferredPathConfigObj.default_block_cost = preferredPathConfig.default_block_cost; } if (preferredPathConfig.jump_cost !== void 0) { preferredPathConfigObj.jump_cost = preferredPathConfig.jump_cost; } if (preferredPathConfig.max_fall_blocks !== void 0) { preferredPathConfigObj.max_fall_blocks = preferredPathConfig.max_fall_blocks; } if (preferredPathConfig.preferred_path_blocks !== void 0) { preferredPathConfigObj.preferred_path_blocks = [...preferredPathConfig.preferred_path_blocks]; } ApplyComponents["minecraft:preferred_path"] = preferredPathConfigObj; } const offspringConfig = components["minecraft:offspring"];
         if (offspringConfig !== void 0) {
           const offspringConfigObj: any = {};
           if (offspringConfig.born_event !== void 0) {
@@ -5811,5 +5811,6 @@ class EntityComponent {
     this.#opt.components["minecraft:offspring"] = config;
   }
 }
-
-export { EntityComponent }
+export {
+  EntityComponent
+}

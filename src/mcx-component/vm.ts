@@ -153,6 +153,25 @@ function transformESMToCJS(
               );
             }
           }
+        } else {
+          // Handle export { item } - simple variable export
+          if (i.specifiers.length >= 1) {
+            const exportExprs = i.specifiers.map(specifier => {
+              if (t.isExportSpecifier(specifier)) {
+                const exportedName = t.isIdentifier(specifier.exported) ? specifier.exported.name : (specifier.exported as any).value;
+                return t.assignmentExpression(
+                  "=",
+                  t.memberExpression(
+                    t.identifier("exports"),
+                    t.identifier(exportedName)
+                  ),
+                  t.identifier(specifier.local.name)
+                );
+              }
+              return null;
+            }).filter(Boolean) as t.AssignmentExpression[];
+            return exportExprs.length === 1 ? exportExprs[0] : t.sequenceExpression(exportExprs);
+          }
         }
       }
       return null;
@@ -300,4 +319,7 @@ export class RunScript {
     return vm.createContext(context)
   }
   public static isCanUseEsmRunVm = typeof vm.SourceTextModule == "function"
+}
+export {
+  transformESMToCJS
 }

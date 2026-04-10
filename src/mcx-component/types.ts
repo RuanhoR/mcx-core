@@ -1955,20 +1955,7 @@ interface EntityComponentOpt {
       /** Trigger event when a rider is acquired */
       spawn_event?: string
     }
-    "minecraft:addrider"?: {
-      /** Type of entity to acquire as a rider */
-      entity_type?: string
-      /** 
-       * List of riders to be added to the entity. Can only spawn as many riders as 
-       * "minecraft:rideable" has "seat_count".
-       */
-      riders?: Array<{
-        entity_type: string
-        spawn_event?: string
-      }>
-      /** Trigger event when a rider is acquired */
-      spawn_event?: string
-    }
+
     /**
      * Allows an entity to ignore attackable targets for a given duration.
      */
@@ -1978,74 +1965,149 @@ interface EntityComponentOpt {
       /** Duration, in seconds, that the mob is pacified */
       duration?: number
     }
+    /**
+     * Adds a timer for the entity to grow up. It can be accelerated by giving the entity 
+     * the items it likes as defined by feed_items.
+     */
     "minecraft:ageable"?: {
+      /** List of items that are dropped when an entity grows up */
       drop_items?: string[]
+      /** Length of time before an entity grows up (-1 to always stay a baby) */
       duration?: number
+      /** 
+       * List of items that can be fed to an entity to age them up. Can be a single item string, 
+       * an array of strings, or an array of objects with item and growth properties.
+       */
       feed_items?: string | string[] | Array<{
         growth?: number
         item: string
       }>
+      /** Event to fire when an entity grows up. Can be an object with event and target properties, or a simple event string. */
       grow_up?: string | {
         event: string
         target: string
       }
+      /** List of conditions to meet so that the entity can be fed. */
       interact_filters?: any
+      /** List of items that can be fed to the entity to pause growth for baby entities. */
       pause_growth_items?: string[]
+      /** List of items that can be used to reset growth for baby entities. */
       reset_growth_items?: string[]
     }
+    /**
+     * Delay for an entity playing its sound.
+     */
     "minecraft:ambient_sound_interval"?: {
+      /** Level sound event to be played as the ambient sound. */
       event_name?: string
+      /** 
+       * List of dynamic level sound events, with conditions for choosing between them. 
+       * Evaluated in order, first one wins. If none evaluate to true, 'event_name' will take precedence.
+       */
       event_names?: Array<{
+        /** The condition that must be satisfied to select the given ambient sound */
         condition?: string
+        /** Level sound event to be played as the ambient sound */
         event_name?: string
       }>
+      /** Maximum time in seconds to randomly add to the ambient sound delay time. */
       range?: number
+      /** Minimum time in seconds before the entity plays its ambient sound again. */
       value?: number
     }
     "minecraft:attack_damage"?: {
       value?: number | { min: number, max: number }
     }
+    /**
+     * Compels the entity to track anger towards a set of nuisances.
+     */
     "minecraft:anger_level"?: {
+      /** Anger level will decay over time. Defines how often anger towards all nuisances will decrease by one. */
       anger_decrement_interval?: number
+      /** Anger boost applied to angry threshold when mob gets angry Value must be >= 0. */
       angry_boost?: number
+      /** Threshold that define when the mob is considered angry at a nuisance Value must be >= 0. */
       angry_threshold?: number
+      /** If set, other entities of the same entity definition within the broadcastRange will also become angry */
       broadcast_anger?: boolean
+      /** If set, other entities of the same entity definition within the broadcastRange will also become angry whenever this mob attacks */
       broadcast_anger_on_attack?: boolean
+      /** Conditions that make this entry in the list valid */
       broadcast_filters?: any
+      /** Distance in blocks within which other entities of the same entity type will become angry */
       broadcast_range?: number
+      /** A list of entity families to broadcast anger to */
       broadcast_targets?: string[]
+      /** Event to fire when this entity is calmed down */
       calm_event?: string
+      /** The default amount of annoyingness for any given nuisance. Specifies how much to raise anger level on each provocation. */
       default_annoyingness?: number
+      /** Default projectile annoyingness value */
       default_projectile_annoyingness?: number
+      /** The amount of time in seconds that the entity will be angry. */
       duration?: number
+      /** Variance in seconds added to the duration [-delta, delta]. */
       duration_delta?: number
+      /** Filter out mob types that it should not attack while angry (other Piglins) */
       filters?: any
+      /** The maximum anger level that can be reached. Applies to any nuisance Value must be >= 0. */
       max_anger?: number
+      /** Filter that is applied to determine if a mob can be a nuisance */
       nuisance_filter?: any
+      /** 
+       * Sounds to play when the entity is getting provoked. Evaluated in order. 
+       * First matching condition wins
+       */
       on_increase_sounds?: Array<{
+        /** A Molang expression describing under which conditions to play this sound, given that the entity was provoked */
         condition?: string
+        /** The sound to play */
         sound?: string
       }>
+      /** Defines if the mob should remove target if it falls below 'angry' threshold */
       remove_targets_below_angry_threshold?: boolean
+      /** The range of time in seconds to randomly wait before playing the sound again. */
       sound_interval?: { min: number, max: number }
     }
+    /**
+     * Defines an entity's 'angry' state using a timer.
+     */
     "minecraft:angry"?: {
+      /** The sound event to play when the mob is angry */
       angry_sound?: string
+      /** If set, other entities of the same entity definition within the broadcastRange will also become angry */
       broadcast_anger?: boolean
+      /** If set, other entities of the same entity definition within the broadcastRange will also become angry whenever this mob attacks */
       broadcast_anger_on_attack?: boolean
+      /** If true, other entities of the same entity definition within the broadcastRange will also become angry whenever this mob is attacked */
       broadcast_anger_on_being_attacked?: boolean
+      /** If false, when this mob is killed it does not spread its anger to other entities of the same entity definition within the broadcastRange */
       broadcast_anger_when_dying?: boolean
+      /** Conditions that make this entry in the list valid */
       broadcast_filters?: any
+      /** Distance in blocks within which other entities of the same entity type will become angry */
       broadcast_range?: number
+      /** A list of entity families to broadcast anger to */
       broadcast_targets?: string[]
+      /** Event to fire when this entity is calmed down. Can be a simple event name string or an object with event and target properties. */
       calm_event?: string | { event: string, target: string }
+      /** The amount of time in seconds that the entity will be angry. */
       duration?: number
+      /** Variance in seconds added to the duration [-delta, delta]. */
       duration_delta?: number
+      /** Filter out mob types that it should not attack while angry (other Piglins) */
       filters?: any
+      /** The range of time in seconds to randomly wait before playing the sound again. */
       sound_interval?: { min: number, max: number }
     }
+    /**
+     * Allows an entity to break doors, assuming that that flags set up for the component to use in navigation.
+     * 注意: Requires the entity's navigation component to have the parameter can_break_doors set to true.
+     */
     "minecraft:annotation.break_door"?: {
+      /** The time in seconds required to break through doors. */
       break_time?: number
+      /** The minimum difficulty that the world must be on for this entity to break doors. */
       min_difficulty?: 'hard' | 'normal' | 'easy' | 'peaceful'
     }
     "minecraft:annotation.open_door"?: {}
@@ -2973,6 +3035,21 @@ interface EntityComponentOpt {
       can_walk_in_lava?: boolean // Tells the pathfinder whether or not it can travel in lava like walking on ground
       is_amphibious?: boolean // Tells the pathfinder whether or not it can walk on the ground underwater
       using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
+    }
+    "minecraft:preferred_path"?: {
+      /** Cost for non-preferred blocks */
+      default_block_cost?: number
+      /** Added cost for jumping up a node */
+      jump_cost?: number
+      /** Distance mob can fall without taking damage */
+      max_fall_blocks?: number
+      /** A list of block types with their associated pathfinding costs */
+      preferred_path_blocks?: Array<{
+        /** Array of block identifiers that share this cost value */
+        blocks: string[]
+        /** The cost value for these blocks during pathfinding. Lower costs make paths more preferred */
+        cost: number
+      }>
     }
     "minecraft:out_of_control"?: {} // Defines the entity's 'out of control' state
     "minecraft:peek"?: {

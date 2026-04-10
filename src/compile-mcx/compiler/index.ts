@@ -142,6 +142,14 @@ export class CompileJS {
           identifiers.push(...this.extractIdentifierNames(arg));
         }
       }
+    } else if (t.isNewExpression(node)) {
+      // Handle new expressions specifically
+      identifiers.push(...this.extractIdentifierNames(node.callee));
+      for (const arg of node.arguments) {
+        if (t.isExpression(arg)) {
+          identifiers.push(...this.extractIdentifierNames(arg));
+        }
+      }
     } else if (t.isBinaryExpression(node) || t.isLogicalExpression(node)) {
       identifiers.push(...this.extractIdentifierNames(node.left));
       identifiers.push(...this.extractIdentifierNames(node.right));
@@ -160,9 +168,7 @@ export class CompileJS {
     const currenySource: string[] = [];
     let build: ImportList[] = [];
     for (const [as, data] of Object.entries(this.indexTemp)) {
-      // only include imports that were actually referenced
       if (!this.writeImportKeys.includes(as)) continue;
-
       if (currenySource.includes(data.source)) {
         let isFound: boolean = false;
         for (const index in build) {
@@ -270,6 +276,21 @@ export class CompileJS {
         remove,
       });
 
+      this.conditionalInTempImport(
+        node.callee as t.Expression,
+        thisContext,
+        remove,
+        set,
+      );
+      for (const arg of node.arguments) {
+        if (t.isExpression(arg))
+          this.conditionalInTempImport(arg, thisContext, remove, set);
+      }
+      return;
+    }
+
+    // New expression: mark identifiers used in constructor
+    if (t.isNewExpression(node)) {
       this.conditionalInTempImport(
         node.callee as t.Expression,
         thisContext,
@@ -414,6 +435,19 @@ export class CompileJS {
                 varDef,
               );
             currenyContext[id.name] = init;
+
+            // Process the initialization expression to mark used imports
+            if (init) {
+              this.conditionalInTempImport(
+                init,
+                currenyContext,
+                remove,
+                (t: t.Expression) => {
+                  varDef.init = t;
+                  return true;
+                },
+              );
+            }
           }
         }
       } else if (item.type == "ReturnStatement") {

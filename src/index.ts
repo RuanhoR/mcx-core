@@ -1,5 +1,5 @@
 import AST from "./ast/index.js";
-import compiler, {
+import {
   plugin
 } from "./compile-mcx/index.js";
 import utils from "./utils.js"
@@ -13,9 +13,8 @@ import * as TSC from "./tsc/index.js"
 
 export {
   PUBTYPE,
-  compiler as compile,
   AST,
-  Compiler,
+  Compiler as compiler,
   utils,
   transform,
   compile_component,

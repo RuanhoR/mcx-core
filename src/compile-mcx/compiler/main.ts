@@ -1,11 +1,6 @@
-import { Plugin, rollup, TransformResult } from "rollup";
+import { Plugin, TransformResult } from "rollup";
 import { CompileOpt } from "../types";
-import * as t from "@babel/types";
 import { extname, isAbsolute, join } from "node:path";
-import { tmpdir } from "node:os";
-import commjs from "@rollup/plugin-commonjs";
-import json from "@rollup/plugin-json";
-import module_resolve from "@rollup/plugin-node-resolve";
 import { CompileError, compileMCXFn } from ".";
 import { transform } from "../../transforms";
 import type { MCXCompileData } from "./compileData";
@@ -87,28 +82,4 @@ export function mcxPlugn(opt: CompileOpt): Plugin {
 }
 function AbsoluteJoin(base: string, dir: string): string {
   return isAbsolute(dir) ? dir : join(base, dir);
-}
-export default async function CompileProject(opt: CompileOpt) {
-  const rollupResult = await rollup({
-    input: opt.main,
-    // only minecraft package
-    external: ["@minecraft/server", "@minecraft/server-ui"],
-    plugins: [
-      mcxPlugn(opt),
-      commjs(),
-      json(),
-      module_resolve({
-        modulePaths: [opt.moduleDir],
-      }),
-    ],
-  });
-  // only index.js
-  await rm(opt.output, {
-    recursive: true,
-  });
-  await rollupResult.write({
-    file: AbsoluteJoin(opt.output, "./index.js"),
-    format: "esm",
-    sourcemap: true,
-  });
 }

@@ -760,3 +760,7 @@ export function compileMCXFn(mcxCode: string): CompileData.MCXCompileData {
   const compiler = new CompileMCX(mcxCode);
   return compiler.getCompileData();
 }
+export * from "./compileData"
+export {
+  Utils as MCXNodeUtils
+}

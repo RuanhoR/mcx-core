@@ -9,8 +9,6 @@ import * as compile_component from "./mcx-component/index.js"
 import {
   transform
 } from "./transforms"
-import * as TSC from "./tsc/index.js"
-
 export {
   PUBTYPE,
   AST,
@@ -18,8 +16,7 @@ export {
   utils,
   transform,
   compile_component,
-  plugin,
-  TSC
+  plugin
 };
 export { ItemComponent, BlockComponent, EntityComponent } from "./mcx-component/lib"
 export * as ComponentType from "./mcx-component/types"

@@ -3,6 +3,7 @@ import json from "@rollup/plugin-json";
 import ts from "@rollup/plugin-typescript";
 import commonjs from "@rollup/plugin-commonjs";
 import dts from "rollup-plugin-dts";
+import minify from "@rollup/plugin-terser"
 // 基础配置
 const main = {
   input: "src/index.ts", // 入口文件
@@ -49,4 +50,8 @@ const Dts = {
     dts(),
   ],
 };
+
+if (process.env.BUILD_MODULE == 'release') {
+  main.plugins.push(minify())
+}
 export default [main, Dts];

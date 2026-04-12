@@ -8,9 +8,53 @@ import { readFile, rm } from "node:fs/promises";
 import MagicString from "magic-string";
 import path from "node:path";
 import { transformCtx } from "../../types";
-
+import * as ts from "typescript"
+import { readFileSync } from "node:fs";
 export function mcxPlugn(opt: CompileOpt, output: transformCtx["output"]): Plugin {
   let cache: Map<string, MCXCompileData> = new Map();
+  let tsconfig: ts.ParsedCommandLine;
+  try {
+    const configResult = ts.readConfigFile(opt.tsconfigPath, (path) => {
+      try {
+        return readFileSync(path, "utf-8");
+      } catch (error) {
+        throw new Error(`Failed to read TypeScript config file at ${path}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    });
+
+    if (configResult.error) {
+      throw new Error(`TypeScript configuration error: ${configResult.error.messageText}`);
+    }
+
+    if (!configResult.config) {
+      throw new Error(`Empty TypeScript configuration file at ${opt.tsconfigPath}`);
+    }
+
+    // Parse the configuration with proper path resolution
+    const parsedConfig = ts.parseJsonConfigFileContent(
+      configResult.config,
+      ts.sys,
+      path.dirname(opt.tsconfigPath),
+      undefined,
+      opt.tsconfigPath
+    );
+
+    if (parsedConfig.errors.length > 0) {
+      const errorMessages = parsedConfig.errors.map(err => err.messageText).join('\n');
+      throw new Error(`TypeScript configuration parsing errors:\n${errorMessages}`);
+    }
+
+    tsconfig = parsedConfig;
+  } catch (error) {
+    // Fallback to default configuration if reading fails
+    console.warn(`Failed to load TypeScript config from ${opt.tsconfigPath}: ${error instanceof Error ? error.message : String(error)}`);
+    console.warn('Using default TypeScript configuration');
+    tsconfig = {
+      options: {},
+      fileNames: [],
+      errors: []
+    };
+  }
   return {
     name: "mbler-mcx-core",
     async resolveId(id, imp) {
@@ -47,6 +91,7 @@ export function mcxPlugn(opt: CompileOpt, output: transformCtx["output"]): Plugi
     ): Promise<TransformResult> {
       const magic = new MagicString(code);
       const ext = extname(id).slice(1);
+      const tsRegex = /^.+?\.(ts|mts|cts)$/
       if (ext == "mcx") {
         let compileData: MCXCompileData;
         try {
@@ -63,12 +108,23 @@ export function mcxPlugn(opt: CompileOpt, output: transformCtx["output"]): Plugi
             });
           }
           this.error(String(err));
+          return;
         }
         compileData.setFilePath(id);
         const compiledCode = await transform(compileData, cache, id, this, opt, output);
         return {
           code: compiledCode,
-          map: magic.generateMap({ hires: true, source: id }),
+          map: opt.sourcemap ? magic.generateMap({ hires: true, source: id }) : void 0,
+        };
+      } else if (tsRegex.test(id)) {
+        // Use the parsed TypeScript configuration
+        const compiledCode = ts.transpileModule(code, {
+          compilerOptions: tsconfig.options,
+          fileName: id
+        }).outputText;
+        return {
+          code: compiledCode,
+          map: opt.sourcemap ? magic.generateMap({ hires: true, source: id }) : void 0
         };
       }
       return null;

@@ -304,6 +304,26 @@ export class CompileJS {
       return;
     }
 
+    // Handle expressions like xxx + <imported variable>() - MemberExpression with CallExpression
+    if (t.isMemberExpression(node)) {
+      // Check if this is a pattern: object + property()
+      const names = this.extractIdentifierNames(node as t.MemberExpression);
+      for (const n of names) {
+        if (n in this.indexTemp && !this.writeImportKeys.includes(n))
+          this.writeImportKeys.push(n);
+      }
+      // Also check if it's part of a call expression pattern
+      this.conditionalInTempImport(
+        (node as t.MemberExpression).object as t.Expression,
+        thisContext,
+        remove,
+        set,
+      );
+      if (t.isExpression((node as t.MemberExpression).property))
+        this.conditionalInTempImport((node as t.MemberExpression).property as t.Expression, thisContext, remove, set);
+      return;
+    }
+
     // Generic expressions: try to extract identifier names and mark them
     try {
       const names = this.extractIdentifierNames(node as any);
@@ -311,7 +331,7 @@ export class CompileJS {
         if (n in this.indexTemp && !this.writeImportKeys.includes(n))
           this.writeImportKeys.push(n);
       }
-    } catch (_) { }
+    } catch { }
   }
   private tre(node: t.Block, ExtendContext: Context = {}): void {
     if (!t.isBlock(node))

@@ -283,8 +283,9 @@ export class CompileJS {
         set,
       );
       for (const arg of node.arguments) {
-        if (t.isExpression(arg))
-          this.conditionalInTempImport(arg, thisContext, remove, set);
+        if (t.isExpression(arg)) { this.conditionalInTempImport(arg, thisContext, () => { }, () => true) } else if (arg.type == "SpreadElement") {
+          this.conditionalInTempImport(arg.argument, thisContext, () => { }, () => true)
+        }
       }
       return;
     }
@@ -298,35 +299,56 @@ export class CompileJS {
         set,
       );
       for (const arg of node.arguments) {
-        if (t.isExpression(arg))
-          this.conditionalInTempImport(arg, thisContext, remove, set);
+        if (t.isExpression(arg)) { this.conditionalInTempImport(arg, thisContext, () => { }, () => true) } else if (arg.type == "SpreadElement") {
+          this.conditionalInTempImport(arg.argument, thisContext, () => { }, () => true)
+        }
       }
       return;
     }
-
-    // Handle expressions like xxx + <imported variable>() - MemberExpression with CallExpression
-    if (t.isMemberExpression(node)) {
-      // Check if this is a pattern: object + property()
-      const names = this.extractIdentifierNames(node as t.MemberExpression);
-      for (const n of names) {
-        if (n in this.indexTemp && !this.writeImportKeys.includes(n))
-          this.writeImportKeys.push(n);
+    if (t.isObjectExpression(node)) {
+      for (const prop of node.properties) {
+        if (t.isSpreadElement(prop)) {
+          this.conditionalInTempImport(prop.argument, thisContext, () => { }, () => true)
+        } else if (t.isObjectMethod(prop)) {
+          this.tre(prop.body, thisContext)
+        } else if (t.isObjectProperty(prop)) {
+          if (!t.isPrivateName(prop.key)) this.conditionalInTempImport(prop.key, thisContext, () => { }, () => true);
+          if (t.isExpression(prop.value)) this.conditionalInTempImport(prop.value, thisContext, () => { }, () => true)
+        }
       }
-      // Also check if it's part of a call expression pattern
-      this.conditionalInTempImport(
-        (node as t.MemberExpression).object as t.Expression,
-        thisContext,
-        remove,
-        set,
-      );
-      if (t.isExpression((node as t.MemberExpression).property))
-        this.conditionalInTempImport((node as t.MemberExpression).property as t.Expression, thisContext, remove, set);
       return;
     }
-
+    if (t.isAwaitExpression(node)) {
+      this.conditionalInTempImport(node.argument, thisContext, remove, set);
+      return;
+    }
+    if (t.isArrayExpression(node)) {
+      for (const expressionIndex in node.elements) {
+        const expression = node.elements[expressionIndex]
+        const removeFn = () => {
+          node.elements.splice(expressionIndex as unknown as number, 1);
+        }
+        const setFn = (newData: t.Expression) => {
+          node.elements[expressionIndex] = newData
+          return true;
+        }
+        if (t.isExpression(expression)) this.conditionalInTempImport(node.elements[expressionIndex] as t.Expression, thisContext, removeFn, setFn);
+        if (t.isSpreadElement(expression)) this.conditionalInTempImport(expression.argument, thisContext, removeFn, setFn);
+      }
+      return;
+    }
+    if (t.isAssignmentExpression(node)) {
+      this.conditionalInTempImport(node.right, thisContext, () => {
+        node.right = t.nullLiteral()
+      }, (exp) => {
+        node.right = exp;
+        return true;
+      });
+      return;
+    }
     // Generic expressions: try to extract identifier names and mark them
     try {
-      const names = this.extractIdentifierNames(node as any);
+      const names = this.extractIdentifierNames(node);
       for (const n of names) {
         if (n in this.indexTemp && !this.writeImportKeys.includes(n))
           this.writeImportKeys.push(n);
@@ -481,6 +503,28 @@ export class CompileJS {
       ) {
         if (!isTop) {
           throw makeError("[compiler]: export node can't in not top", item);
+        }
+        if (item.type == "ExportDefaultDeclaration") {
+          if (t.isExpression(item.declaration)) {
+            this.conditionalInTempImport(item.declaration, currenyContext, remove, set)
+          }
+        } else if (item.type == "ExportNamedDeclaration") {
+          if (item.specifiers.length >= 1) {
+            for (const specifierIndex in item.specifiers) {
+              const specifier = item.specifiers[specifierIndex];
+              if (!specifier) continue;
+              if (specifier.type == "ExportDefaultSpecifier") {
+                this.conditionalInTempImport(specifier.exported, currenyContext, () => {
+                  item.specifiers.splice(specifierIndex as unknown as number, 1)
+                }, (newData) => {
+                  (item.specifiers[specifierIndex] as t.ExportDefaultSpecifier).exported = newData as t.Identifier
+                  return true;
+                })
+              } else if (specifier.type == "ExportSpecifier") {
+                this.conditionalInTempImport(specifier.local, currenyContext, () => { }, () => true)
+              }
+            }
+          }
         }
         this.CompileData.BuildCache.export.push(item);
         remove();

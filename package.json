@@ -12,6 +12,16 @@
     "minecraft",
     "dsl"
   ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "types": "./client.d.ts"
+    }
+  },
   "dependencies": {
     "@babel/generator": "7.28.5",
     "@babel/parser": "7.28.5",

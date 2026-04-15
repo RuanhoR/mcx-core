@@ -18,5 +18,5 @@ export {
   compile_component,
   plugin
 };
-export { ItemComponent, BlockComponent, EntityComponent } from "./mcx-component/lib"
+export { ItemComponent, BlockComponent, EntityComponent, PNGImageComponent, JPGImageComponent, SVGImageComponent, GIFImageComponent } from "./mcx-component/lib"
 export * as ComponentType from "./mcx-component/types"

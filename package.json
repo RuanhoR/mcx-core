@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-core",
-  "version": "0.0.6-alpha.r20260412.3",
+  "version": "0.0.6-alpha.r20260416.2",
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {
@@ -36,7 +36,8 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "client.d.ts"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

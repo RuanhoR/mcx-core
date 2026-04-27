@@ -6,7 +6,7 @@ interface ItemComponentOpt {
   id: string
   name: string
   format: string
-  components: {
+  components: Partial<{
     offHand: boolean
     damage: number
     DestroyInCreate: boolean
@@ -869,7 +869,7 @@ interface ItemComponentOpt {
        */
       value?: number
     }
-  }
+  }>
 }
 type JSONValue<T> =
   | T

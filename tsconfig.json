@@ -8,6 +8,9 @@
     "rootDir": "./",
     "strict": true,
     "allowJs": true,
+    "types": [
+      "node"
+    ],
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "outDir": "temp",

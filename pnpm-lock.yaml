@@ -11,6 +11,9 @@ importers:
       '@eslint/js':
         specifier: ^9.17.0
         version: 9.39.4
+      '@types/node':
+        specifier: ^25.6.0
+        version: 25.6.0
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.17.0
         version: 8.59.1(@typescript-eslint/parser@8.59.1(eslint@9.39.4)(typescript@5.9.3))(eslint@9.39.4)(typescript@5.9.3)
@@ -20,6 +23,12 @@ importers:
       eslint:
         specifier: ^9.17.0
         version: 9.39.4
+      husky:
+        specifier: ^9.1.7
+        version: 9.1.7
+      picocolors:
+        specifier: ^1.1.1
+        version: 1.1.1
 
   packages/client:
     devDependencies:
@@ -44,9 +53,6 @@ importers:
       '@rollup/plugin-typescript':
         specifier: ^12.3.0
         version: 12.3.0(rollup@4.60.2)(tslib@2.8.1)(typescript@5.9.3)
-      '@types/node':
-        specifier: ^25.2.0
-        version: 25.6.0
       rollup:
         specifier: ^4.57.1
         version: 4.60.2
@@ -105,9 +111,6 @@ importers:
       '@types/babel__traverse':
         specifier: 7.28.0
         version: 7.28.0
-      '@types/node':
-        specifier: 25.3.5
-        version: 25.3.5
       rollup-plugin-dts:
         specifier: 6.3.0
         version: 6.3.0(rollup@4.59.0)(typescript@5.9.3)
@@ -600,9 +603,6 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/node@25.3.5':
-    resolution: {integrity: sha512-oX8xrhvpiyRCQkG1MFchB09f+cXftgIXb3a7UUa4Y3wpmZPw5tyZGTLWhlESOLq1Rq6oDlc8npVU2/9xiCuXMA==}
-
   '@types/node@25.6.0':
     resolution: {integrity: sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ==}
 
@@ -872,6 +872,11 @@ packages:
     resolution: {integrity: sha512-ej4AhfhfL2Q2zpMmLo7U1Uv9+PyhIZpgQLGT1F9miIGmiCJIoCgSmczFdrc97mWT4kVY72KA+WnnhJ5pghSvSg==}
     engines: {node: '>= 0.4'}
 
+  husky@9.1.7:
+    resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
     engines: {node: '>= 4'}
@@ -1106,9 +1111,6 @@ packages:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
     hasBin: true
-
-  undici-types@7.18.2:
-    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
   undici-types@7.19.2:
     resolution: {integrity: sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg==}
@@ -1521,10 +1523,6 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/node@25.3.5':
-    dependencies:
-      undici-types: 7.18.2
-
   '@types/node@25.6.0':
     dependencies:
       undici-types: 7.19.2
@@ -1814,6 +1812,8 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
+  husky@9.1.7: {}
+
   ignore@5.3.2: {}
 
   ignore@7.0.5: {}
@@ -1916,8 +1916,7 @@ snapshots:
 
   path-parse@1.0.7: {}
 
-  picocolors@1.1.1:
-    optional: true
+  picocolors@1.1.1: {}
 
   picomatch@4.0.4: {}
 
@@ -2073,8 +2072,6 @@ snapshots:
       prelude-ls: 1.2.1
 
   typescript@5.9.3: {}
-
-  undici-types@7.18.2: {}
 
   undici-types@7.19.2: {}
 

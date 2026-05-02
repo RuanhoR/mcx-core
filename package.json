@@ -1,0 +1,21 @@
+{
+  "name": "core-mcx",
+  "version": "0.0.0",
+  "description": "MCX CORE",
+  "license": "MIT",
+  "author": {
+    "name": "ruanhor",
+    "email": "a@ruanhor.dpdns.org",
+    "url": "https://github.com/RuanhoR/"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "workspaces": [
+    "packages/compiler",
+    "packages/client",
+    "packages/types",
+    "packages/core"
+  ]
+}

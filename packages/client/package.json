@@ -1,0 +1,38 @@
+{
+  "name": "@mbler/mcx",
+  "version": "0.0.2-beta.r7",
+  "description": "MCX Runtime Framework",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rollup -c"
+  },
+  "keywords": [
+    "minecraft"
+  ],
+  "module": "commjs",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "types": "./dist/index.d.ts",
+  "author": "ruanhor",
+  "license": "MIT",
+  "devDependencies": {
+    "@mbler/mcx-types": "0.0.2-beta.r2026031201",
+    "@minecraft/server": "2.0.0",
+    "@minecraft/server-ui": "2.0.0",
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/node": "^25.2.0",
+    "rollup": "^4.57.1",
+    "rollup-plugin-dts": "^6.3.0",
+    "tslib": "^2.8.1"
+  }
+}

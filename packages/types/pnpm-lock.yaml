@@ -1,0 +1,62 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@minecraft/server':
+        specifier: 2.0.0
+        version: 2.0.0(@minecraft/vanilla-data@1.26.2)
+      '@volar/language-core':
+        specifier: ^2.4.28
+        version: 2.4.28
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+packages:
+
+  '@minecraft/common@1.2.0':
+    resolution: {integrity: sha512-JdmEq4P3Z/FtoBzhLijFgMSVFnFRrUoLwY8DHHrgtFo0mfLTOLTB1RErYjLMsA6b7BGVNxkX/pfFRiH7QZ0XwQ==}
+
+  '@minecraft/server@2.0.0':
+    resolution: {integrity: sha512-X2LmT82eO0oCjOFaFgg6zoGenAUSyrG+YvIbe7/FSPj9hpMt4BtOIs7axoQUUvMx2NNbq8uEsnQadMMrDDBmUA==}
+    peerDependencies:
+      '@minecraft/vanilla-data': '>=1.20.70'
+
+  '@minecraft/vanilla-data@1.26.2':
+    resolution: {integrity: sha512-nxACCFgbcE9D5Z5vRnl/AtJljat7yC4vKzZ/t87iHqdersZlDhBzUnfBDH4d1F6Le5vgdSEUIJwUJxKR+Yc3+w==}
+
+  '@volar/language-core@2.4.28':
+    resolution: {integrity: sha512-w4qhIJ8ZSitgLAkVay6AbcnC7gP3glYM3fYwKV3srj8m494E3xtrCv6E+bWviiK/8hs6e6t1ij1s2Endql7vzQ==}
+
+  '@volar/source-map@2.4.28':
+    resolution: {integrity: sha512-yX2BDBqJkRXfKw8my8VarTyjv48QwxdJtvRgUpNE5erCsgEUdI2DsLbpa+rOQVAJYshY99szEcRDmyHbF10ggQ==}
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+snapshots:
+
+  '@minecraft/common@1.2.0': {}
+
+  '@minecraft/server@2.0.0(@minecraft/vanilla-data@1.26.2)':
+    dependencies:
+      '@minecraft/common': 1.2.0
+      '@minecraft/vanilla-data': 1.26.2
+
+  '@minecraft/vanilla-data@1.26.2': {}
+
+  '@volar/language-core@2.4.28':
+    dependencies:
+      '@volar/source-map': 2.4.28
+
+  '@volar/source-map@2.4.28': {}
+
+  typescript@5.9.3: {}

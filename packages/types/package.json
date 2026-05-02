@@ -1,0 +1,31 @@
+{
+  "name": "@mbler/mcx-types",
+  "version": "0.0.3-rc.4",
+  "description": "a DSL compiler of mcx",
+  "keywords": [
+    "types"
+  ],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts"
+    }
+  },
+  "dependencies": {
+    "@minecraft/server": "2.0.0",
+    "@volar/language-core": "^2.4.28",
+    "typescript": "5.9.3"
+  },
+  "module": "module",
+  "files": [
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "types": "./index.d.ts",
+  "author": "ruanhor",
+  "license": "MIT"
+}

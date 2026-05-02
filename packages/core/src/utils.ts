@@ -5,13 +5,14 @@ import type {
   ParseReadFileOpt,
   TypeVerifyBody
 } from "./types.js"
+
 export default class McxUtlis {
   /**
    * 检查文件是否存在
    * @param path 文件路径
    * @returns 是否存在
    */
-  public static async FileExsit(path: string): Promise < boolean > {
+  public static async FileExsit(path: string): Promise<boolean> {
     try {
       await fs.access(path);
       return true;
@@ -29,7 +30,7 @@ export default class McxUtlis {
   public static async readFile(
     filePath: string,
     opt: ReadFileOpt = {}
-  ): Promise < object | string > {
+  ): Promise<object | string> {
     // 补全必填字段，确保类型安全
     const opts: ParseReadFileOpt = {
       delay: 200, // 默认延迟
@@ -47,7 +48,7 @@ export default class McxUtlis {
         } else if (opts.want === 'object') {
           try {
             text = JSON.parse(buffer.toString()); // Buffer -> string -> object
-          } catch (parseErr) {
+          } catch {
             // JSON 解析失败时返回空对象
             text = {};
           }
@@ -58,7 +59,8 @@ export default class McxUtlis {
 
         return text;
 
-      } catch (err: any) {
+      } catch {
+        // err 变量不再使用，直接忽略
         // 如果不是最后一次尝试，则等待后重试
         if (attempt < opts.maxRetries - 1) {
           await McxUtlis.sleep(opts.delay);
@@ -67,7 +69,7 @@ export default class McxUtlis {
     }
     return opts.want === 'object' ? {} : '';
   }
-  public static sleep(time: number): Promise < void > {
+  public static sleep(time: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, time));
   }
   // 在运行时进行对象类型验证

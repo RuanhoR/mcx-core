@@ -67,7 +67,7 @@ export class ui {
     }
   }
   private _generateUI(layout: ParsedUIOption["layout"]) {
-    let ui = new this._UI();
+    const ui = new this._UI();
     let MsgFormUse = 0;
     const clickEvent: Map<number, ParsedParams["click"]> = new Map()
 

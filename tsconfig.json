@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "esnext",
+    "moduleDetection": "auto",
+    "verbatimModuleSyntax": true,
+    "moduleResolution": "bundler",
+    "rootDir": "./",
+    "strict": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "outDir": "temp",
+    "noEmit": true,
+    "esModuleInterop": true
+  },
+  "include": [
+    "rollup.config.*",
+    "eslint.config.js",
+    "scripts/*"
+  ]
+}

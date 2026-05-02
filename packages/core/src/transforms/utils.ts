@@ -214,7 +214,7 @@ function _enable(): (() => void) & {
   fn.prototype.enable = success;
   return fn;
 }
-function _enableWithData<T extends any>(): ((data: T) => void) & {
+function _enableWithData<T>(): ((data: T) => void) & {
   prototype: {
     enable: T | null
   }

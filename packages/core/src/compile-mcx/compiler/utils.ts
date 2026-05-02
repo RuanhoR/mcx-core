@@ -42,8 +42,8 @@ export default class Utils {
     if (!ir) throw new TypeError("plase call use right ImportList")
     // first verify ir.raw
     if (ir?.raw && Utils.CheckImportNode(ir?.raw, ir)) return ir.raw;
-    let result: Array<t.ImportNamespaceSpecifier | t.ImportSpecifier | t.ImportDefaultSpecifier> = [];
-    for (let ImportIt of ir.imported) {
+    const result: Array<t.ImportNamespaceSpecifier | t.ImportSpecifier | t.ImportDefaultSpecifier> = [];
+    for (const ImportIt of ir.imported) {
       if (!ImportIt) continue
       if (ImportIt.isAll) {
         result.push(t.importNamespaceSpecifier(
@@ -72,7 +72,7 @@ export default class Utils {
   }
   public static ImportToCache(node: t.ImportDeclaration): ImportList {
     const result: ImportListImport[] = []
-    for (let item of node.specifiers) {
+    for (const item of node.specifiers) {
       const thisName = item.local.name
       if (item.type == "ImportNamespaceSpecifier") {
         result.push({

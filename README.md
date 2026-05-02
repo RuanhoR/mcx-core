@@ -27,3 +27,5 @@ MCX is a MCBE addon DSL. It is not affiliated with the official mcbe. It can let
 - MCX Client can let you run your app
 - MCX Compiler core and [mbler](https://github.com/RuanhoR/mbler) can let build your app
 - It support I18n
+## Contributing
+Read [Contributing](./CONTRIBUTING.md)

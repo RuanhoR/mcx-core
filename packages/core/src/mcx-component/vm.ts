@@ -231,7 +231,7 @@ function transformESMToCJS(
 function transformImportIRtoRequire(
   importIR: ImportList[],
 ): t.VariableDeclarator[] {
-  let define: t.VariableDeclarator[] = [
+  const define: t.VariableDeclarator[] = [
     t.variableDeclarator(
       t.identifier('__import_default'),
       t.functionExpression(

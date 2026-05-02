@@ -166,7 +166,7 @@ export class CompileJS {
   }
   private writeBuildCache() {
     const currenySource: string[] = [];
-    let build: ImportList[] = [];
+    const build: ImportList[] = [];
     for (const [as, data] of Object.entries(this.indexTemp)) {
       if (!this.writeImportKeys.includes(as)) continue;
       if (currenySource.includes(data.source)) {
@@ -611,7 +611,7 @@ class CompileMCX {
   private commonTagNodeContent(
     node: ParsedTagNode | ParsedTagContentNode,
   ): string {
-    let content: string = "";
+    const content: string = "";
     if (MCXUtils.isTagContentNode(node)) {
       return node.data;
     }

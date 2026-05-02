@@ -1,0 +1,1 @@
+export { mcxPlugn as plugin } from "./compiler/main";

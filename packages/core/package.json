@@ -1,0 +1,61 @@
+{
+  "name": "@mbler/mcx-core",
+  "version": "0.0.7-alpha.r2",
+  "description": "a DSL compiler of mcx",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "cd __test__ && npm run test",
+    "build": "rollup -c"
+  },
+  "keywords": [
+    "compiler",
+    "minecraft",
+    "dsl"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "types": "./client.d.ts"
+    }
+  },
+  "dependencies": {
+    "@babel/generator": "7.28.5",
+    "@babel/parser": "7.28.5",
+    "@babel/types": "7.28.6",
+    "@mbler/mcx-types": "0.0.3-rc.5",
+    "@volar/language-core": "^2.4.28",
+    "magic-string": "0.30.21",
+    "rollup": "4.59.0",
+    "typescript": "5.9.3"
+  },
+  "module": "commjs",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "client.d.ts"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "types": "./dist/index.d.ts",
+  "author": "ruanhor",
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "29.0.1",
+    "@rollup/plugin-json": "6.1.0",
+    "@rollup/plugin-node-resolve": "16.0.3",
+    "@rollup/plugin-terser": "0.4.4",
+    "@rollup/plugin-typescript": "12.3.0",
+    "@types/babel__generator": "7.27.0",
+    "@types/babel__traverse": "7.28.0",
+    "@types/node": "25.3.5",
+    "rollup-plugin-dts": "6.3.0",
+    "tslib": "2.8.1"
+  }
+}

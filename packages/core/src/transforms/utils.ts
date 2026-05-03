@@ -187,8 +187,11 @@ async function generateEventConfig(
         );
         extend.push(t.identifier(id));
       }
+    } else {
+      data.push(
+        t.objectProperty(t.identifier(name), t.stringLiteral(handlerName))
+      );
     }
-    data.push(t.objectProperty(t.identifier(name), t.stringLiteral(handlerName)));
   }
   argm.properties.push(
     t.objectProperty(t.identifier("data"), t.objectExpression(data)),

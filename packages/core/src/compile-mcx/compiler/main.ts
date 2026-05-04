@@ -55,14 +55,75 @@ export function mcxPlugn(opt: CompileOpt, output: transformCtx["output"]): Plugi
       errors: []
     };
   }
+  const resolveExtensions = ["", ".ts", ".mts", ".cts", ".js", ".mjs", ".cjs"];
+  const indexExtensions = resolveExtensions.map(ext => "/index" + ext);
+
+  async function tryResolvePath(filePath: string): Promise<string | null> {
+    for (const idxExt of indexExtensions) {
+      try {
+        const fullPath = filePath + idxExt;
+        await readFile(fullPath, "utf-8");
+        return fullPath;
+      } catch { }
+    }
+    for (const ext of resolveExtensions) {
+      try {
+        const fullPath = filePath + ext;
+        await readFile(fullPath, "utf-8");
+        return fullPath;
+      } catch { }
+    }
+    return null;
+  }
+
+  async function resolvePackageExports(pkgDir: string, subPath: string, pkgJson: any): Promise<string | null> {
+    const exports = pkgJson.exports;
+    if (exports) {
+      const subImport = subPath.startsWith("./") ? subPath : `./${subPath}`;
+      if (typeof exports === "object" && exports !== null) {
+        if (exports[subImport]) {
+          const target = exports[subImport];
+          if (typeof target === "string") {
+            return path.join(pkgDir, target);
+          } else if (typeof target === "object" && target !== null) {
+            if (target.import) {
+              return path.join(pkgDir, target.import);
+            }
+            return path.join(pkgDir, target.default || Object.values(target)[0] as string);
+          }
+        }
+        if (subImport.endsWith("/") || subImport.endsWith("/*")) {
+          const dirMapping = subImport.slice(0, -1);
+          for (const [key, value] of Object.entries(exports)) {
+            if (key.startsWith(dirMapping) && key !== dirMapping) {
+              const target = value as string;
+              return path.join(pkgDir, target);
+            }
+          }
+        }
+      } else if (typeof exports === "string") {
+        return path.join(pkgDir, exports);
+      }
+    }
+    return null;
+  }
+
   return {
     name: "mbler-mcx-core",
     async resolveId(id, imp) {
       const i = path.parse(id);
-      // if is not a file path
-      if (!i.root && !i.dir.startsWith(".")) {
-        // read module package.json
-        const d = path.join(opt.moduleDir, id);
+      if (i.dir.startsWith(".") || i.root) {
+        if (imp) {
+          const baseDir = path.dirname(imp);
+          const resolved = await tryResolvePath(path.join(baseDir, id));
+          if (resolved) return resolved;
+        }
+        return null;
+      } else {
+        const parts = id.split("/");
+        const pkgName = parts[0] as string;
+        const subPath = parts.slice(1).join("/");
+        const d = path.join(opt.moduleDir, pkgName);
         let pkgJson: any;
         try {
           pkgJson = JSON.parse(
@@ -79,11 +140,17 @@ export function mcxPlugn(opt: CompileOpt, output: transformCtx["output"]): Plugi
             );
           }
         }
+        if (subPath) {
+          const fromExports = await resolvePackageExports(d, subPath, pkgJson);
+          if (fromExports) return fromExports;
+          const fromDist = await tryResolvePath(path.join(d, "./dist", subPath));
+          if (fromDist) return fromDist;
+          const fromRoot = await tryResolvePath(path.join(d, subPath));
+          if (fromRoot) return fromRoot;
+          return null;
+        }
         return path.join(d, pkgJson.main);
-      } else if (imp) {
-        return path.join(path.dirname(imp), id);
       }
-      return null;
     },
     transform: async function (
       code: string,

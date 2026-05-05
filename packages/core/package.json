@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-core",
-  "version": "0.0.8-rc.2",
+  "version": "0.0.8-rc.4",
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {

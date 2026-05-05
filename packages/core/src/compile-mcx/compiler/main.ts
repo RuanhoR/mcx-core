@@ -120,23 +120,24 @@ export function mcxPlugn(opt: CompileOpt, output: transformCtx["output"]): Plugi
         }
         return null;
       } else {
+        const isScopedPackage = id.startsWith("@");
         const parts = id.split("/");
-        const pkgName = parts[0] as string;
-        const subPath = parts.slice(1).join("/");
+        const pkgName = isScopedPackage ? `${parts[0]}/${parts[1]}` : parts[0] as string;
+        const subPath = isScopedPackage ? parts.slice(2).join("/") : parts.slice(1).join("/");
         const d = path.join(opt.moduleDir, pkgName);
         let pkgJson: any;
         try {
           pkgJson = JSON.parse(
-            await readFile(path.join(d, "package.json"), "utf-8"),
+            await readFile(path.join(d, "package.json"), "utf-8",
           );
         } catch (err: any) {
-          if (err.code === "ENOENT") {
+          if (!err.code || err.code === "ENOENT") {
             throw new Error(
-              `[mcx resolveId]\: package.json not found for '${id}'`,
+              `[mcx resolveId]: package.json not found for '${id}' at '${d}'`,
             );
           } else {
             throw new Error(
-              `[mcx resolveId]\: invalid package.json for '${id}'`,
+              `[mcx resolveId]: invalid package.json for '${id}': ${err.message}`,
             );
           }
         }

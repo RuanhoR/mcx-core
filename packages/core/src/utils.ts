@@ -1,10 +1,6 @@
-import * as fs from "node:fs/promises";
-import * as path from "node:path"
-import type {
-  ReadFileOpt,
-  ParseReadFileOpt,
-  TypeVerifyBody
-} from "./types.js"
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
+import type { ReadFileOpt, ParseReadFileOpt, TypeVerifyBody } from './types.js'
 
 export default class McxUtlis {
   /**
@@ -14,10 +10,10 @@ export default class McxUtlis {
    */
   public static async FileExsit(path: string): Promise<boolean> {
     try {
-      await fs.access(path);
-      return true;
+      await fs.access(path)
+      return true
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -29,7 +25,7 @@ export default class McxUtlis {
    */
   public static async readFile(
     filePath: string,
-    opt: ReadFileOpt = {}
+    opt: ReadFileOpt = {},
   ): Promise<object | string> {
     // 补全必填字段，确保类型安全
     const opts: ParseReadFileOpt = {
@@ -37,52 +33,66 @@ export default class McxUtlis {
       maxRetries: 3, // 默认最大重试次数
       want: 'string', // 默认返回字符串
       ...opt, // 用户传入的配置覆盖默认值
-    };
+    }
 
     for (let attempt = 0; attempt < opts.maxRetries; attempt++) {
       try {
-        const buffer: Buffer = await fs.readFile(filePath);
-        let text: string | object;
+        const buffer: Buffer = await fs.readFile(filePath)
+        let text: string | object
         if (opts.want === 'string') {
-          text = buffer.toString(); // Buffer -> string
+          text = buffer.toString() // Buffer -> string
         } else if (opts.want === 'object') {
           try {
-            text = JSON.parse(buffer.toString()); // Buffer -> string -> object
+            text = JSON.parse(buffer.toString()) // Buffer -> string -> object
           } catch {
             // JSON 解析失败时返回空对象
-            text = {};
+            text = {}
           }
         } else {
           // 默认情况也返回字符串
-          text = buffer.toString();
+          text = buffer.toString()
         }
 
-        return text;
-
+        return text
       } catch {
         // err 变量不再使用，直接忽略
         // 如果不是最后一次尝试，则等待后重试
         if (attempt < opts.maxRetries - 1) {
-          await McxUtlis.sleep(opts.delay);
+          await McxUtlis.sleep(opts.delay)
         }
       }
     }
-    return opts.want === 'object' ? {} : '';
+    return opts.want === 'object' ? {} : ''
   }
   public static sleep(time: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, time));
+    return new Promise(resolve => setTimeout(resolve, time))
   }
-  // 在运行时进行对象类型验证
-  public static TypeVerify(obj: any, types: TypeVerifyBody) {
+  public static TypeVerify<
+    T extends Record<string, any>,
+    U extends TypeVerifyBody,
+  >(
+    obj: T,
+    types: U,
+  ): obj is T & {
+    [P in keyof U]: {
+      boolean: boolean
+      number: number
+      string: string
+      object: object
+      function: Function
+      bigint: bigint
+      symbol: Symbol
+    }[U[P]]
+  } {
     for (const item of Object.entries(types)) {
-      const [key, ShouldType]: [string, string] = item;
-      if (!(typeof obj[key] === ShouldType)) return false;
+      const [key, ShouldType]: [string, string] = item
+      if (!(typeof obj[key] === ShouldType)) return false
     }
-    return true;
+    return true
   }
   public static AbsoluteJoin(baseDir: string, inputPath: string): string {
-    return path.isAbsolute(inputPath) ?
-      inputPath :
-      path.join(baseDir, inputPath);
+    return path.isAbsolute(inputPath)
+      ? inputPath
+      : path.join(baseDir, inputPath)
   }
 }

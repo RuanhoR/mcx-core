@@ -15,8 +15,7 @@
   },
   "dependencies": {
     "@minecraft/server": "2.0.0",
-    "@volar/language-core": "^2.4.28",
-    "typescript": "5.9.3"
+    "@volar/language-core": "^2.4.28"
   },
   "module": "module",
   "files": [

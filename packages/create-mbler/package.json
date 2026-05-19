@@ -1,0 +1,36 @@
+{
+  "name": "create-mbler",
+  "description": "Create a mbler with cli",
+  "license": "MIT",
+  "author": {
+    "name": "ruanhor",
+    "email": "root@ruanhor.dpdns.org",
+    "url": "https://github.com/RuanhoR"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RuanhoR/mcx-core",
+    "directory": "packages/create-mbler"
+  },
+  "engines": {
+    "node": ">= 20"
+  },
+  "version": "0.0.1",
+  "dependencies": {
+    "commander": "14.0.3",
+    "inquirer": "13.4.3"
+  },
+  "scripts": {
+    "build": "rollup -c && rm -rf ./dist/_tmp",
+    "dev": "rollup -c -w",
+    "postpublish": "pnpm build"
+  },
+  "bin": {
+    "create-mbler": "./bin/create-mbler.js"
+  },
+  "exports": {
+    "./cli": "./bin/cli.js",
+    ".": "./dist/main.mjs"
+  },
+  "main": "./dist/main.js"
+}

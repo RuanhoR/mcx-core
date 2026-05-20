@@ -15,7 +15,7 @@
   "engines": {
     "node": ">= 20"
   },
-  "version": "0.0.1-beta",
+  "version": "0.0.1-beta.r1",
   "dependencies": {
     "commander": "14.0.3",
     "inquirer": "13.4.3"
@@ -25,7 +25,7 @@
     "dev": "rollup -c -w",
     "lint": "eslint src --ext .js,.ts",
     "lint:fix": "eslint src --ext .js,.ts --fix",
-    "postpublish": "pnpm build"
+    "prepublish": "pnpm build"
   },
   "bin": {
     "create-mbler": "./bin/create-mbler.js"

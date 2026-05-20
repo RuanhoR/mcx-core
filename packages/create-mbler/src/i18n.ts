@@ -4,6 +4,7 @@ export type I18nKey =
   | 'Description'
   | 'McVersion'
   | 'Need'
+  | 'PackageManager'
 export const LanguageList = ['zh', 'en'] as const
 export type Language = (typeof LanguageList)[number]
 export const LanguageMap = {
@@ -13,6 +14,7 @@ export const LanguageMap = {
     Need: '需要什么？',
     McVersion: '依赖的 mc 版本（像 1.21.100 ）？',
     Description: '项目描述？',
+    PackageManager: '使用哪个包管理器？',
   },
   en: {
     InputCreateAt: 'Create mbler project at ...?',
@@ -20,6 +22,7 @@ export const LanguageMap = {
     Description: 'Project description?',
     McVersion: 'Need mcbe version(like 1.21.100)?',
     Name: 'Project name? ',
+    PackageManager: 'Which package manager to use?',
   },
 } satisfies {
   [key in Language]: {

@@ -2,6 +2,8 @@ import { Argument, Command } from 'commander'
 import inpurer from 'inquirer'
 import { getI18n, LanguageList } from './i18n'
 import { showText, verifyType } from './utils'
+import { InputResult } from './types'
+import { initProject } from './init'
 function throwErr(text: string) {
   showText('×: ERR: ' + text)
   process.exit(1)
@@ -13,7 +15,7 @@ program
   .addArgument(new Argument('[dir]', 'Where to create mbler project'))
   .option('-l, --language <value>', 'Define Create mbler tool language', 'en')
   .action(async function (...argv) {
-    let language = this.getOptionValue('language')
+    const language = this.getOptionValue('language')
     if (!LanguageList.includes(language)) {
       throwErr(
         'Invaild Language, should such as ' + JSON.stringify(LanguageList),
@@ -49,24 +51,33 @@ program
         message: getI18n('Need', language),
         choices: ['ui', 'beta-api', 'init git', 'init dep'],
       },
-    ])) as {
-      createAt: string
-      OtherModule: ('ui' | 'beta-api' | 'init git' | 'init dep')[]
-      McVersion: string
-      Description: string
-      Name: string
-    }
+      {
+        type: 'select',
+        name: 'Language',
+        message: getI18n('Need', language),
+        choices: ['mcx', 'js', 'ts'],
+      },
+      {
+        type: 'select',
+        name: 'PackageManager',
+        message: getI18n('PackageManager', language),
+        choices: ['npm', 'pnpm'],
+      },
+    ])) as InputResult
     if (
       !verifyType(inputResult, {
         createAt: 'string',
         Description: 'string',
+        Language: 'string',
         McVersion: 'string',
+        PackageManager: 'string',
         Name: 'string',
         OtherModule: 'object',
       })
     ) {
       throwErr('basic type error')
     }
+    await initProject(inputResult)
   })
 export const cli = () => {
   program.parse()

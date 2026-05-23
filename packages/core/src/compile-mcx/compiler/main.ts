@@ -1,4 +1,5 @@
-import { Plugin, TransformResult } from 'rollup'
+import type { Plugin, TransformResult } from 'rollup'
+import type { Plugin as RolldownPlugin } from 'rolldown'
 import { CompileOpt } from '../types'
 import { extname, isAbsolute, join } from 'node:path'
 import { CompileError, compileMCXFn } from '.'
@@ -10,7 +11,7 @@ import path from 'node:path'
 import { transformCtx } from '../../types'
 import * as ts from 'typescript'
 import { readFileSync } from 'node:fs'
-export function mcxPlugn(
+function createMcxPlugin(
   opt: CompileOpt,
   output: transformCtx['output'],
 ): Plugin {
@@ -156,14 +157,15 @@ export function mcxPlugn(
           pkgJson = JSON.parse(
             await readFile(path.join(d, 'package.json'), 'utf-8'),
           )
-        } catch (err: any) {
-          if (!err.code || err.code === 'ENOENT') {
+        } catch (err: unknown) {
+          const nodeErr = err as { code?: string; message?: string }
+          if (!nodeErr.code || nodeErr.code === 'ENOENT') {
             throw new Error(
               `[mcx resolveId]: package.json not found for '${id}' at '${d}'`,
             )
           } else {
             throw new Error(
-              `[mcx resolveId]: invalid package.json for '${id}': ${err.message}`,
+              `[mcx resolveId]: invalid package.json for '${id}': ${nodeErr.message}`,
             )
           }
         }
@@ -242,6 +244,21 @@ export function mcxPlugn(
     },
   }
 }
+
 function AbsoluteJoin(base: string, dir: string): string {
   return isAbsolute(dir) ? dir : join(base, dir)
+}
+
+export function rollupPlugin(
+  opt: CompileOpt,
+  output: transformCtx['output'],
+): Plugin {
+  return createMcxPlugin(opt, output)
+}
+
+export function rolldownPlugin(
+  opt: CompileOpt,
+  output: transformCtx['output'],
+): RolldownPlugin {
+  return createMcxPlugin(opt, output) as unknown as RolldownPlugin
 }

@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-core",
-  "version": "0.0.8-rc.4",
+  "version": "0.1.0",
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {
@@ -32,6 +32,7 @@
     "@volar/language-core": "^2.4.28",
     "magic-string": "0.30.21",
     "rollup": "4.59.0",
+    "rolldown": "1.0.0-rc.18",
     "typescript": "5.9.3"
   },
   "module": "commjs",

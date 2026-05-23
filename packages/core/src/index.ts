@@ -1,6 +1,7 @@
 import AST from "./ast/index.js";
 import {
-  plugin
+  rollupPlugin,
+  rolldownPlugin,
 } from "./compile-mcx/index.js";
 import utils from "./utils.js"
 import * as Compiler from "./compile-mcx/compiler"
@@ -16,7 +17,8 @@ export {
   utils,
   transform,
   compile_component,
-  plugin
+  rollupPlugin,
+  rolldownPlugin,
 };
 export { ItemComponent, BlockComponent, EntityComponent, PNGImageComponent, JPGImageComponent, SVGImageComponent, GIFImageComponent } from "./mcx-component/lib"
 export * as ComponentType from "./mcx-component/types"

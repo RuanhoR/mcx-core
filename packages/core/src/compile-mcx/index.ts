@@ -1,1 +1,1 @@
-export { mcxPlugn as plugin } from "./compiler/main";
+export { rollupPlugin, rolldownPlugin } from "./compiler/main";

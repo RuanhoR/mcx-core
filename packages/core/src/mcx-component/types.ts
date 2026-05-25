@@ -1,6 +1,7 @@
 import ParticleType from './types/ParticleType'
 import SoundEvent from './types/SoundEvent'
 import EnchantableSlot from './types/EnchantableSlot'
+import type { PNGImageComponent } from './lib'
 
 interface ItemComponentOpt {
   id: string
@@ -10,12 +11,7 @@ interface ItemComponentOpt {
     offHand: boolean
     damage: number
     DestroyInCreate: boolean
-    icon:
-      | string
-      | {
-          classId: 'mcx_png_2340192'
-          filePath: string
-        }
+    icon: string | PNGImageComponent
     block_placer?: {
       aligned_placement?: boolean
       block: string

@@ -2673,17 +2673,19 @@ class ItemComponent {
       throw new Error('[set error]: name type error')
     }
   }
-  public setIcon(
-    newValue: string | { classId: 'mcx_png_2340192'; filePath: string },
-  ): void {
+  public setIcon(newValue: string): void
+  public setIcon(newValue: t.ItemComponentOpt['components']['icon']): void
+  public setIcon(newValue: unknown): void {
     if (
       typeof newValue == 'string' ||
       (typeof newValue == 'object' &&
         newValue &&
-        newValue.classId == 'mcx_png_2340192' &&
-        typeof newValue.filePath == 'string')
+        'classId' in newValue &&
+        'filePath' in newValue &&
+        (newValue as { classId?: string }).classId == 'mcx_png_2340192' &&
+        typeof (newValue as { filePath?: unknown }).filePath == 'string')
     ) {
-      this.#opt.components.icon = newValue
+      this.#opt.components.icon = newValue as NonNullable<t.ItemComponentOpt['components']['icon']>
     } else {
       throw new Error('[set error]: icon: type error')
     }

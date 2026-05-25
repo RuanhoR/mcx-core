@@ -11,6 +11,11 @@
   "keywords": [
     "minecraft"
   ],
+  "repository": {
+    "directory": "/packages/client",
+    "type": "git",
+    "url": "https://github.com/RuanhoR/mcx-core"
+  },
   "module": "commjs",
   "files": [
     "dist",

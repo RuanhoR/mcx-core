@@ -4,9 +4,9 @@ export type I18nKey =
   | 'Description'
   | 'McVersion'
   | 'Need'
-  | 'PackageManager'
-export const LanguageList = ['zh', 'en'] as const
-export type Language = (typeof LanguageList)[number]
+  | 'PackageManager';
+export const LanguageList = ['zh', 'en'] as const;
+export type Language = (typeof LanguageList)[number];
 export const LanguageMap = {
   zh: {
     InputCreateAt: '创建在哪呢？',
@@ -26,9 +26,9 @@ export const LanguageMap = {
   },
 } satisfies {
   [key in Language]: {
-    [key in I18nKey]: string
-  }
-}
+    [key in I18nKey]: string;
+  };
+};
 export function getI18n(key: I18nKey, language: Language): string {
-  return LanguageMap[language][key]
+  return LanguageMap[language][key];
 }

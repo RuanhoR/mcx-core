@@ -3,6 +3,4 @@ class BlockComponent {
     return {}
   }
 }
-export {
-  BlockComponent
-}
+export { BlockComponent }

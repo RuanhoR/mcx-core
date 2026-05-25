@@ -1,6 +1,6 @@
-import ParticleType from "./types/ParticleType"
-import SoundEvent from "./types/SoundEvent"
-import EnchantableSlot from "./types/EnchantableSlot"
+import ParticleType from './types/ParticleType'
+import SoundEvent from './types/SoundEvent'
+import EnchantableSlot from './types/EnchantableSlot'
 
 interface ItemComponentOpt {
   id: string
@@ -18,10 +18,10 @@ interface ItemComponentOpt {
       use_on?: Array<
         | string
         | {
-          name: string
-          states?: Record<string, number | string | boolean>
-          tags?: string
-        }
+            name: string
+            states?: Record<string, number | string | boolean>
+            tags?: string
+          }
       >
     }
     cooldown?: {
@@ -38,12 +38,12 @@ interface ItemComponentOpt {
     /**
      * Enables an item to store data of the dynamic container associated with it.
      * A dynamic container is a container for storing items that is linked to an item instead of a block or an entity.
-     * 
-     * 注意：While this component can be defined on its own, to be able to interact with the item's storage container 
+     *
+     * 注意：While this component can be defined on its own, to be able to interact with the item's storage container
      * the item must have a minecraft:bundle_interaction item component defined.
-     * 
+     *
      * 注意：This item requires a format version of at least 1.21.40.
-     * 
+     *
      * @example {
      *   "max_slots": 64,
      *   "max_weight_limit": 64,
@@ -101,7 +101,7 @@ interface ItemComponentOpt {
     /**
      * Specifies the weight of an item when stored inside another storage item.
      * Controls how much weight this item contributes to storage's total weight.
-     * 
+     *
      * @example {"weight_in_storage_item": 4}
      */
     'minecraft:storage_weight_modifier'?: {
@@ -117,7 +117,7 @@ interface ItemComponentOpt {
     /**
      * Specifies the maximum weight limit that a storage item can hold.
      * Controls the total weight capacity of the storage container.
-     * 
+     *
      * @example {"max_weight_limit": 64}
      */
     'minecraft:storage_weight_limit'?: {
@@ -133,7 +133,7 @@ interface ItemComponentOpt {
     /**
      * Makes an item throwable by the player, similar to a snowball or ender pearl.
      * Use with minecraft:projectile to specify which entity is spawned when thrown.
-     * 
+     *
      * 注意：Combine with minecraft:projectile to define the projectile entity.
      * For charged throws (like tridents), set scale_power_by_draw_duration to true and configure min/max draw durations.
      */
@@ -223,24 +223,38 @@ interface ItemComponentOpt {
      * Use_animation specifies which animation is played when the player uses the item.
      * Supported animations: 'eat', 'drink', 'block', 'bow', 'camera', 'spear', 'crossbow', 'spyglass', 'toot_horn', 'brush'.
      */
-    'minecraft:use_animation'?: string | {
-      /**
-       * The animation type to play when the item is used.
-       */
-      value?: string
-    }
+    'minecraft:use_animation'?:
+      | string
+      | {
+          /**
+           * The animation type to play when the item is used.
+           */
+          value?: string
+        }
 
     /**
      * Sets the wearable item component, which allows an item to be worn by a player in a specified equipment slot.
-     * Valid slot values: slot.armor.head, slot.armor.chest, slot.armor.legs, slot.armor.feet, slot.armor.body, 
+     * Valid slot values: slot.armor.head, slot.armor.chest, slot.armor.legs, slot.armor.feet, slot.armor.body,
      * slot.weapon.mainhand, slot.weapon.offhand, slot.hotbar, slot.inventory, slot.enderchest, slot.saddle, slot.armor, slot.chest
      */
     'minecraft:wearable'?: {
       /**
        * Defines the equipment slot this item can be equipped to (required).
        */
-      slot: 'slot.armor.head' | 'slot.armor.chest' | 'slot.armor.legs' | 'slot.armor.feet' | 'slot.armor.body' | 'slot.weapon.mainhand' | 'slot.weapon.offhand' |
-      'slot.hotbar' | 'slot.inventory' | 'slot.enderchest' | 'slot.saddle' | 'slot.armor' | 'slot.chest'
+      slot:
+        | 'slot.armor.head'
+        | 'slot.armor.chest'
+        | 'slot.armor.legs'
+        | 'slot.armor.feet'
+        | 'slot.armor.body'
+        | 'slot.weapon.mainhand'
+        | 'slot.weapon.offhand'
+        | 'slot.hotbar'
+        | 'slot.inventory'
+        | 'slot.enderchest'
+        | 'slot.saddle'
+        | 'slot.armor'
+        | 'slot.chest'
       /**
        * Determines how much armor protection this wearable item provides (non-negative integer).
        */
@@ -298,13 +312,22 @@ interface ItemComponentOpt {
     }
 
     // Alias for minecraft:use_animation
-    use_animation?: string | {
-      value?: string
-    }
+    use_animation?:
+      | string
+      | {
+          value?: string
+        }
 
     // Alias for minecraft:wearable
     wearable?: {
-      slot: 'slot.armor.head' | 'slot.armor.chest' | 'slot.armor.legs' | 'slot.armor.feet' | 'slot.armor.body' | 'slot.weapon.mainhand' | 'slot.weapon.offhand'
+      slot:
+        | 'slot.armor.head'
+        | 'slot.armor.chest'
+        | 'slot.armor.legs'
+        | 'slot.armor.feet'
+        | 'slot.armor.body'
+        | 'slot.weapon.mainhand'
+        | 'slot.weapon.offhand'
       protection?: number
       hides_player_location?: boolean
       dispensable?: boolean
@@ -350,12 +373,12 @@ interface ItemComponentOpt {
       use_efficiency?: boolean
       destroy_speeds?: Array<{
         block:
-        | string
-        | {
-          name?: string
-          states?: Record<string, number | string | boolean>
-          tags?: string
-        }
+          | string
+          | {
+              name?: string
+              states?: Record<string, number | string | boolean>
+              tags?: string
+            }
         speed: number
       }>
     }
@@ -462,10 +485,10 @@ interface ItemComponentOpt {
       dispense_on?: Array<
         | string
         | {
-          name: string
-          states?: Record<string, number | string | boolean>
-          tags?: string
-        }
+            name: string
+            states?: Record<string, number | string | boolean>
+            tags?: string
+          }
       >
       /**
        * The entity to be placed in the world.
@@ -480,10 +503,10 @@ interface ItemComponentOpt {
       use_on?: Array<
         | string
         | {
-          name: string
-          states?: Record<string, number | string | boolean>
-          tags?: string
-        }
+            name: string
+            states?: Record<string, number | string | boolean>
+            tags?: string
+          }
       >
     }
 
@@ -672,7 +695,13 @@ interface ItemComponentOpt {
        * @type Decimal number | string
        * @example Apple: 0.3, AppleEnchanted: "supernatural", Baked Potato: "normal"
        */
-      saturation_modifier?: number | 'poor' | 'low' | 'normal' | 'good' | 'supernatural'
+      saturation_modifier?:
+        | number
+        | 'poor'
+        | 'low'
+        | 'normal'
+        | 'good'
+        | 'supernatural'
 
       /**
        * When used, converts to the item specified by the string in this field.
@@ -749,7 +778,13 @@ interface ItemComponentOpt {
        * @type Decimal number | string
        * @example Apple: 0.3, AppleEnchanted: "supernatural", Baked Potato: "normal"
        */
-      saturation_modifier?: number | 'poor' | 'low' | 'normal' | 'good' | 'supernatural'
+      saturation_modifier?:
+        | number
+        | 'poor'
+        | 'low'
+        | 'normal'
+        | 'good'
+        | 'supernatural'
 
       /**
        * When used, converts to the item specified by the string in this field.
@@ -787,10 +822,10 @@ interface ItemComponentOpt {
       dispense_on?: Array<
         | string
         | {
-          name: string
-          states?: Record<string, number | string | boolean>
-          tags?: string
-        }
+            name: string
+            states?: Record<string, number | string | boolean>
+            tags?: string
+          }
       >
       /**
        * The entity to be placed in the world.
@@ -805,10 +840,10 @@ interface ItemComponentOpt {
       use_on?: Array<
         | string
         | {
-          name: string
-          states?: Record<string, number | string | boolean>
-          tags?: string
-        }
+            name: string
+            states?: Record<string, number | string | boolean>
+            tags?: string
+          }
       >
     }
 
@@ -821,14 +856,30 @@ interface ItemComponentOpt {
     }
     kinetic_weapon?: {
       creative_reach?: { max?: number; min?: number }
-      damage_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number }
+      damage_conditions?: {
+        max_duration?: number
+        min_relative_speed?: number
+        min_speed?: number
+      }
       damage_modifier?: number
       damage_multiplier?: number
       delay?: number
-      dismount_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number }
+      dismount_conditions?: {
+        max_duration?: number
+        min_relative_speed?: number
+        min_speed?: number
+      }
       hitbox_margin?: number
-      knockback_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number }
-      kinetic_effect_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number }
+      knockback_conditions?: {
+        max_duration?: number
+        min_relative_speed?: number
+        min_speed?: number
+      }
+      kinetic_effect_conditions?: {
+        max_duration?: number
+        min_relative_speed?: number
+        min_speed?: number
+      }
       reach?: { max?: number; min?: number }
     }
     interact_button?: boolean | string
@@ -838,44 +889,52 @@ interface ItemComponentOpt {
      * To allow placement of blocks on liquids, see the 'placement_filter' block component.
      * This item can also be represented as a Boolean true/false.
      */
-    'minecraft:liquid_clipped'?: boolean | {
-      /**
-       * Determines whether the item interacts with liquid blocks on use.
-       */
-      value?: boolean
-    }
-    liquid_clipped?: boolean | {
-      /**
-       * Determines whether the item interacts with liquid blocks on use.
-       */
-      value?: boolean
-    }
+    'minecraft:liquid_clipped'?:
+      | boolean
+      | {
+          /**
+           * Determines whether the item interacts with liquid blocks on use.
+           */
+          value?: boolean
+        }
+    liquid_clipped?:
+      | boolean
+      | {
+          /**
+           * Determines whether the item interacts with liquid blocks on use.
+           */
+          value?: boolean
+        }
     /**
      * Determines how many of an item can be stacked together.
      * This item can also be represented as a Integer number.
      * @default 64
      */
-    'minecraft:max_stack_size'?: number | {
-      /**
-       * How many of an item that can be stacked together.
-       * @default 64
-       */
-      value?: number
-    }
-    max_stack_size?: number | {
-      /**
-       * How many of an item that can be stacked together.
-       * @default 64
-       */
-      value?: number
-    }
+    'minecraft:max_stack_size'?:
+      | number
+      | {
+          /**
+           * How many of an item that can be stacked together.
+           * @default 64
+           */
+          value?: number
+        }
+    max_stack_size?:
+      | number
+      | {
+          /**
+           * How many of an item that can be stacked together.
+           * @default 64
+           */
+          value?: number
+        }
   }>
 }
 type JSONValue<T> =
   | T
   | {
-    value: T
-  }
+      value: T
+    }
 
 /**
  * Food effects interface for minecraft:food component
@@ -1014,10 +1073,10 @@ interface ItemJSON {
         use_on?: Array<
           | string
           | {
-            name: string
-            states?: Record<string, number | string | boolean>
-            tags?: string
-          }
+              name: string
+              states?: Record<string, number | string | boolean>
+              tags?: string
+            }
         >
       }
       'minecraft:bundle_interaction'?: {
@@ -1052,12 +1111,12 @@ interface ItemJSON {
         use_efficiency?: boolean
         destroy_speeds?: Array<{
           block:
-          | string
-          | {
-            name?: string
-            states?: Record<string, number | string | boolean>
-            tags?: string
-          }
+            | string
+            | {
+                name?: string
+                states?: Record<string, number | string | boolean>
+                tags?: string
+              }
           speed: number
         }>
       }
@@ -1126,7 +1185,13 @@ interface ItemJSON {
         nutrition?: number
         on_use_action?: string
         on_use_range?: [number, number, number]
-        saturation_modifier?: number | 'poor' | 'low' | 'normal' | 'good' | 'supernatural'
+        saturation_modifier?:
+          | number
+          | 'poor'
+          | 'low'
+          | 'normal'
+          | 'good'
+          | 'supernatural'
         using_converts_to?: string
         remove_effects?: string[]
       }
@@ -1150,10 +1215,10 @@ interface ItemJSON {
         dispense_on?: Array<
           | string
           | {
-            name: string
-            states?: Record<string, number | string | boolean>
-            tags?: string
-          }
+              name: string
+              states?: Record<string, number | string | boolean>
+              tags?: string
+            }
         >
         /**
          * The entity to be placed in the world.
@@ -1168,10 +1233,10 @@ interface ItemJSON {
         use_on?: Array<
           | string
           | {
-            name: string
-            states?: Record<string, number | string | boolean>
-            tags?: string
-          }
+              name: string
+              states?: Record<string, number | string | boolean>
+              tags?: string
+            }
         >
       }
 
@@ -1196,7 +1261,11 @@ interface ItemJSON {
          * Conditions that need to be satisfied for damage to be applied.
          * If not specified, damage is not applied.
          */
-        damage_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number }
+        damage_conditions?: {
+          max_duration?: number
+          min_relative_speed?: number
+          min_speed?: number
+        }
         /**
          * Value added to the the scaled dot product (after applying "damage_multiplier").
          * @default 0
@@ -1216,7 +1285,11 @@ interface ItemJSON {
          * Conditions that need to be satisfied for riders to be dismounted.
          * If not specified, riders cannot be dismounted.
          */
-        dismount_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number }
+        dismount_conditions?: {
+          max_duration?: number
+          min_relative_speed?: number
+          min_speed?: number
+        }
         /**
          * Added tolerance to the view vector raycast for detecting entity collisions.
          * @default 0
@@ -1226,11 +1299,19 @@ interface ItemJSON {
          * Conditions that need to be satisfied for knockback to be applied.
          * If not specified, knockback is not applied.
          */
-        knockback_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number }
+        knockback_conditions?: {
+          max_duration?: number
+          min_relative_speed?: number
+          min_speed?: number
+        }
         /**
          * Conditions that need to be satisfied for a specific effect of a kinetic weapon to be applied.
          */
-        kinetic_effect_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number }
+        kinetic_effect_conditions?: {
+          max_duration?: number
+          min_relative_speed?: number
+          min_speed?: number
+        }
         /**
          * Defines the reach used for kinetic weapon effects.
          */
@@ -1248,24 +1329,28 @@ interface ItemJSON {
        * To allow placement of blocks on liquids, see the 'placement_filter' block component.
        * This item can also be represented as a Boolean true/false.
        */
-      'minecraft:liquid_clipped'?: boolean | {
-        /**
-         * Determines whether the item interacts with liquid blocks on use.
-         */
-        value?: boolean
-      }
+      'minecraft:liquid_clipped'?:
+        | boolean
+        | {
+            /**
+             * Determines whether the item interacts with liquid blocks on use.
+             */
+            value?: boolean
+          }
       /**
        * Determines how many of an item can be stacked together.
        * This item can also be represented as a Integer number.
        * @default 64
        */
-      'minecraft:max_stack_size'?: number | {
-        /**
-         * How many of an item that can be stacked together.
-         * @default 64
-         */
-        value?: number
-      }
+      'minecraft:max_stack_size'?:
+        | number
+        | {
+            /**
+             * How many of an item that can be stacked together.
+             * @default 64
+             */
+            value?: number
+          }
       /**
        * Allows an item to deal damage to all entities detected in a straight line along the user's view vector.
        * Items with this component cannot destroy blocks, as the attack action always takes priority, regardless of what the user is looking at.
@@ -1379,22 +1464,25 @@ interface ItemJSON {
          * List of repair item entries.
          * Each entry needs to define a list of strings for items that can be used for the repair and an optional repair_amount for how much durability is gained.
          */
-        repair_items?: Array<string | {
-          /**
-           * Items that can be used to repair an item.
-           * @example ["minecraft:stick"]
-           * @example ["minecraft:diamond"]
-           */
-          items: string[]
+        repair_items?: Array<
+          | string
+          | {
+              /**
+               * Items that can be used to repair an item.
+               * @example ["minecraft:stick"]
+               * @example ["minecraft:diamond"]
+               */
+              items: string[]
 
-          /**
-           * How much the item is repaired.
-           * Can be a string expression or a numeric value.
-           * @example "context.other->query.remaining_durability + 0.05 * context.other->query.max_durability"
-           * @example "query.max_durability * 0.25"
-           */
-          repair_amount?: string | number
-        }>
+              /**
+               * How much the item is repaired.
+               * Can be a string expression or a numeric value.
+               * @example "context.other->query.remaining_durability + 0.05 * context.other->query.max_durability"
+               * @example "query.max_durability * 0.25"
+               */
+              repair_amount?: string | number
+            }
+        >
       }
 
       /**
@@ -1488,10 +1576,13 @@ interface ItemJSON {
        */
       repairable?: {
         on_repaired?: string
-        repair_items?: Array<string | {
-          items: string[]
-          repair_amount?: string | number
-        }>
+        repair_items?: Array<
+          | string
+          | {
+              items: string[]
+              repair_amount?: string | number
+            }
+        >
       }
 
       /**
@@ -1542,15 +1633,15 @@ interface ItemJSON {
         ammunition: Array<
           | string
           | {
-            /** Specific item identifier */
-            item: string
-            /** Scale factor for launch power (default 1.0) */
-            launch_power_scale?: number
-            /** Maximum draw duration in seconds (optional override) */
-            max_draw_duration?: number
-            /** Whether to apply charge effects (optional override) */
-            charge_on_draw?: boolean
-          }
+              /** Specific item identifier */
+              item: string
+              /** Scale factor for launch power (default 1.0) */
+              launch_power_scale?: number
+              /** Maximum draw duration in seconds (optional override) */
+              max_draw_duration?: number
+              /** Whether to apply charge effects (optional override) */
+              charge_on_draw?: boolean
+            }
         >
 
         /**
@@ -1606,7 +1697,7 @@ interface ItemJSON {
       /**
        * Makes an item throwable by the player, similar to a snowball or ender pearl.
        * Use with minecraft:projectile to specify which entity is spawned when thrown.
-       * 
+       *
        * 注意：Combine with minecraft:projectile to define the projectile entity.
        * For charged throws (like tridents), set scale_power_by_draw_duration to true and configure min/max draw durations.
        */
@@ -1677,17 +1768,21 @@ interface ItemJSON {
        * This item can also be represented as a String.
        * Supported animations: 'eat', 'drink', 'block', 'bow', 'camera', 'spear', 'crossbow', 'spyglass', 'toot_horn', 'brush'.
        */
-      'minecraft:use_animation'?: string | {
-        /**
-         * The animation type to play when the item is used.
-         */
-        value?: string
-      }
+      'minecraft:use_animation'?:
+        | string
+        | {
+            /**
+             * The animation type to play when the item is used.
+             */
+            value?: string
+          }
 
       // Alias for minecraft:use_animation
-      use_animation?: string | {
-        value?: string
-      }
+      use_animation?:
+        | string
+        | {
+            value?: string
+          }
 
       /**
        * Sets the wearable item component, which allows an item to be worn by a player in a specified equipment slot.
@@ -1700,7 +1795,14 @@ interface ItemJSON {
          * If any non-hand slot is chosen, the max stack size is set to 1.
          * @example "slot.armor.chest", "slot.armor.head", "slot.armor.feet"
          */
-        slot: 'slot.armor.head' | 'slot.armor.chest' | 'slot.armor.legs' | 'slot.armor.feet' | 'slot.armor.body' | 'slot.weapon.mainhand' | 'slot.weapon.offhand'
+        slot:
+          | 'slot.armor.head'
+          | 'slot.armor.chest'
+          | 'slot.armor.legs'
+          | 'slot.armor.feet'
+          | 'slot.armor.body'
+          | 'slot.weapon.mainhand'
+          | 'slot.weapon.offhand'
 
         /**
          * How much protection the wearable item provides.
@@ -1724,7 +1826,14 @@ interface ItemJSON {
 
       // Alias for minecraft:wearable
       wearable?: {
-        slot: 'slot.armor.head' | 'slot.armor.chest' | 'slot.armor.legs' | 'slot.armor.feet' | 'slot.armor.body' | 'slot.weapon.mainhand' | 'slot.weapon.offhand'
+        slot:
+          | 'slot.armor.head'
+          | 'slot.armor.chest'
+          | 'slot.armor.legs'
+          | 'slot.armor.feet'
+          | 'slot.armor.body'
+          | 'slot.weapon.mainhand'
+          | 'slot.weapon.offhand'
         protection?: number
         hides_player_location?: boolean
         dispensable?: boolean
@@ -1809,11 +1918,11 @@ interface ItemJSON {
         ammunition: Array<
           | string
           | {
-            item: string
-            launch_power_scale?: number
-            max_draw_duration?: number
-            charge_on_draw?: boolean
-          }
+              item: string
+              launch_power_scale?: number
+              max_draw_duration?: number
+              charge_on_draw?: boolean
+            }
         >
         charge_on_draw?: boolean
         max_draw_duration?: number
@@ -1840,9 +1949,9 @@ type Rarity = 'common' | 'uncommon' | 'rare' | 'epic'
 
 const RarityEnum = ['common', 'uncommon', 'rare', 'epic'] as const
 
-export { SoundEventEnum } from "./types/SoundEvent"
-export { ParticleTypeEnum } from "./types/ParticleType"
-export { EnchantableSlotEnum } from "./types/EnchantableSlot"
+export { SoundEventEnum } from './types/SoundEvent'
+export { ParticleTypeEnum } from './types/ParticleType'
+export { EnchantableSlotEnum } from './types/EnchantableSlot'
 export { RarityEnum }
 export type { Rarity }
 
@@ -1887,7 +1996,7 @@ type RepairAmountExpression = {
 
 const RepairItemSchema = {
   items: 'string[]',
-  repair_amount: 'string | number'
+  repair_amount: 'string | number',
 } as const
 
 // Seed types
@@ -1907,13 +2016,13 @@ type SeedProperties = {
   plant_at?: string[]
 
   /**
-   * Deprecated - no longer in use. 
+   * Deprecated - no longer in use.
    * This property was available in versions 1.16.0 through 1.18.x for items like glow berries.
    * This property no longer works after format versions of at least 1.19.0.
    */
   plant_at_any_solid_surface?: boolean
 
-  /** 
+  /**
    * Deprecated - no longer in use.
    * The face of a block where this seed can be planted.
    * Values: 'UP' for top of blocks (normal crops), 'DOWN' for bottom (hanging plants like glow berries).
@@ -1926,7 +2035,7 @@ const SeedPropertiesSchema = {
   crop_result: 'string',
   plant_at: 'string[]',
   plant_at_any_solid_surface: 'boolean',
-  plant_at_face: '"UP" | "DOWN"'
+  plant_at_face: '"UP" | "DOWN"',
 } as const
 
 // Entity Component Interfaces
@@ -1944,8 +2053,8 @@ interface EntityComponentOpt {
     addrider?: {
       /** Type of entity to acquire as a rider */
       entity_type?: string
-      /** 
-       * List of riders to be added to the entity. Can only spawn as many riders as 
+      /**
+       * List of riders to be added to the entity. Can only spawn as many riders as
        * "minecraft:rideable" has "seat_count".
        */
       riders?: Array<{
@@ -1959,34 +2068,39 @@ interface EntityComponentOpt {
     /**
      * Allows an entity to ignore attackable targets for a given duration.
      */
-    "minecraft:admire_item"?: {
+    'minecraft:admire_item'?: {
       /** Duration, in seconds, for which mob won't admire items if it was hurt */
       cooldown_after_being_attacked?: number
       /** Duration, in seconds, that the mob is pacified */
       duration?: number
     }
     /**
-     * Adds a timer for the entity to grow up. It can be accelerated by giving the entity 
+     * Adds a timer for the entity to grow up. It can be accelerated by giving the entity
      * the items it likes as defined by feed_items.
      */
-    "minecraft:ageable"?: {
+    'minecraft:ageable'?: {
       /** List of items that are dropped when an entity grows up */
       drop_items?: string[]
       /** Length of time before an entity grows up (-1 to always stay a baby) */
       duration?: number
-      /** 
-       * List of items that can be fed to an entity to age them up. Can be a single item string, 
+      /**
+       * List of items that can be fed to an entity to age them up. Can be a single item string,
        * an array of strings, or an array of objects with item and growth properties.
        */
-      feed_items?: string | string[] | Array<{
-        growth?: number
-        item: string
-      }>
+      feed_items?:
+        | string
+        | string[]
+        | Array<{
+            growth?: number
+            item: string
+          }>
       /** Event to fire when an entity grows up. Can be an object with event and target properties, or a simple event string. */
-      grow_up?: string | {
-        event: string
-        target: string
-      }
+      grow_up?:
+        | string
+        | {
+            event: string
+            target: string
+          }
       /** List of conditions to meet so that the entity can be fed. */
       interact_filters?: any
       /** List of items that can be fed to the entity to pause growth for baby entities. */
@@ -1997,11 +2111,11 @@ interface EntityComponentOpt {
     /**
      * Delay for an entity playing its sound.
      */
-    "minecraft:ambient_sound_interval"?: {
+    'minecraft:ambient_sound_interval'?: {
       /** Level sound event to be played as the ambient sound. */
       event_name?: string
-      /** 
-       * List of dynamic level sound events, with conditions for choosing between them. 
+      /**
+       * List of dynamic level sound events, with conditions for choosing between them.
        * Evaluated in order, first one wins. If none evaluate to true, 'event_name' will take precedence.
        */
       event_names?: Array<{
@@ -2015,13 +2129,13 @@ interface EntityComponentOpt {
       /** Minimum time in seconds before the entity plays its ambient sound again. */
       value?: number
     }
-    "minecraft:attack_damage"?: {
-      value?: number | { min: number, max: number }
+    'minecraft:attack_damage'?: {
+      value?: number | { min: number; max: number }
     }
     /**
      * Compels the entity to track anger towards a set of nuisances.
      */
-    "minecraft:anger_level"?: {
+    'minecraft:anger_level'?: {
       /** Anger level will decay over time. Defines how often anger towards all nuisances will decrease by one. */
       anger_decrement_interval?: number
       /** Anger boost applied to angry threshold when mob gets angry Value must be >= 0. */
@@ -2054,8 +2168,8 @@ interface EntityComponentOpt {
       max_anger?: number
       /** Filter that is applied to determine if a mob can be a nuisance */
       nuisance_filter?: any
-      /** 
-       * Sounds to play when the entity is getting provoked. Evaluated in order. 
+      /**
+       * Sounds to play when the entity is getting provoked. Evaluated in order.
        * First matching condition wins
        */
       on_increase_sounds?: Array<{
@@ -2067,12 +2181,12 @@ interface EntityComponentOpt {
       /** Defines if the mob should remove target if it falls below 'angry' threshold */
       remove_targets_below_angry_threshold?: boolean
       /** The range of time in seconds to randomly wait before playing the sound again. */
-      sound_interval?: { min: number, max: number }
+      sound_interval?: { min: number; max: number }
     }
     /**
      * Defines an entity's 'angry' state using a timer.
      */
-    "minecraft:angry"?: {
+    'minecraft:angry'?: {
       /** The sound event to play when the mob is angry */
       angry_sound?: string
       /** If set, other entities of the same entity definition within the broadcastRange will also become angry */
@@ -2090,7 +2204,7 @@ interface EntityComponentOpt {
       /** A list of entity families to broadcast anger to */
       broadcast_targets?: string[]
       /** Event to fire when this entity is calmed down. Can be a simple event name string or an object with event and target properties. */
-      calm_event?: string | { event: string, target: string }
+      calm_event?: string | { event: string; target: string }
       /** The amount of time in seconds that the entity will be angry. */
       duration?: number
       /** Variance in seconds added to the duration [-delta, delta]. */
@@ -2098,25 +2212,28 @@ interface EntityComponentOpt {
       /** Filter out mob types that it should not attack while angry (other Piglins) */
       filters?: any
       /** The range of time in seconds to randomly wait before playing the sound again. */
-      sound_interval?: { min: number, max: number }
+      sound_interval?: { min: number; max: number }
     }
     /**
      * Allows an entity to break doors, assuming that that flags set up for the component to use in navigation.
      * 注意: Requires the entity's navigation component to have the parameter can_break_doors set to true.
      */
-    "minecraft:annotation.break_door"?: {
+    'minecraft:annotation.break_door'?: {
       /** The time in seconds required to break through doors. */
       break_time?: number
       /** The minimum difficulty that the world must be on for this entity to break doors. */
       min_difficulty?: 'hard' | 'normal' | 'easy' | 'peaceful'
     }
-    "minecraft:annotation.open_door"?: {}
-    "minecraft:attack"?: {
-      damage?: number | [number, number] | { range_min: number, range_max: number }
+    'minecraft:annotation.open_door'?: {}
+    'minecraft:attack'?: {
+      damage?:
+        | number
+        | [number, number]
+        | { range_min: number; range_max: number }
       effect_duration?: number
       effect_name?: string
     }
-    "minecraft:area_attack"?: {
+    'minecraft:area_attack'?: {
       cause?: string
       damage_cooldown?: number
       damage_per_tick?: number
@@ -2124,23 +2241,25 @@ interface EntityComponentOpt {
       entity_filter?: any
       play_attack_sound?: boolean
     }
-    "minecraft:attack_cooldown"?: {
-      attack_cooldown_complete_event?: string | { event: string, target?: string }
-      attack_cooldown_time?: number | { min: number, max: number }
+    'minecraft:attack_cooldown'?: {
+      attack_cooldown_complete_event?:
+        | string
+        | { event: string; target?: string }
+      attack_cooldown_time?: number | { min: number; max: number }
     }
-    "minecraft:balloonable"?: {
+    'minecraft:balloonable'?: {
       mass?: number
       max_distance?: number
       on_balloon?: any
       on_unballoon?: any
       soft_distance?: number
     }
-    "minecraft:barter"?: {
+    'minecraft:barter'?: {
       barter_table?: string
-      cooldown_after_being_attacked?: { min: number, max: number }
+      cooldown_after_being_attacked?: { min: number; max: number }
     }
-    "minecraft:block_climber"?: {}
-    "minecraft:block_sensor"?: {
+    'minecraft:block_climber'?: {}
+    'minecraft:block_sensor'?: {
       on_break?: Array<{
         block_list?: string[]
         on_block_broken?: string
@@ -2148,11 +2267,11 @@ interface EntityComponentOpt {
       sensor_radius?: number
       sources?: any
     }
-    "minecraft:body_rotation_axis_aligned"?: {}
-    "minecraft:body_rotation_always_follows_head"?: {}
-    "minecraft:body_rotation_blocked"?: {}
-    "minecraft:body_rotation_locked_to_vehicle"?: {}
-    "minecraft:boostable"?: {
+    'minecraft:body_rotation_axis_aligned'?: {}
+    'minecraft:body_rotation_always_follows_head'?: {}
+    'minecraft:body_rotation_blocked'?: {}
+    'minecraft:body_rotation_locked_to_vehicle'?: {}
+    'minecraft:boostable'?: {
       boost_items?: Array<{
         damage?: number
         item: string
@@ -2161,15 +2280,15 @@ interface EntityComponentOpt {
       duration?: number
       speed_multiplier?: number
     }
-    "minecraft:boss"?: {
+    'minecraft:boss'?: {
       hud_range?: number
       name?: string
       should_darken_sky?: boolean
     }
-    "minecraft:break_blocks"?: {
+    'minecraft:break_blocks'?: {
       breakable_blocks?: string[]
     }
-    "minecraft:breathable"?: {
+    'minecraft:breathable'?: {
       breathe_blocks?: string[]
       breathes_air?: boolean
       breathes_lava?: boolean
@@ -2183,20 +2302,26 @@ interface EntityComponentOpt {
       total_supply?: number
       totalSupply?: number
     }
-    "minecraft:bribeable"?: {
+    'minecraft:bribeable'?: {
       bribe_cooldown?: number
       bribe_items?: string[] | string
     }
-    "minecraft:breedable"?: {
+    'minecraft:breedable'?: {
       allow_sitting?: boolean
       blend_attributes?: boolean
       breed_cooldown?: number
       breed_items?: string[] | string
-      breeds_with?: Array<{
-        baby_type?: string
-        breed_event?: string | { event: string; filters?: any }
-        mate_type?: string
-      }> | { baby_type?: string; breed_event?: string | { event: string; filters?: any }; mate_type?: string }
+      breeds_with?:
+        | Array<{
+            baby_type?: string
+            breed_event?: string | { event: string; filters?: any }
+            mate_type?: string
+          }>
+        | {
+            baby_type?: string
+            breed_event?: string | { event: string; filters?: any }
+            mate_type?: string
+          }
       causes_pregnancy?: boolean
       deny_parents_variant?: {
         chance?: number
@@ -2219,7 +2344,7 @@ interface EntityComponentOpt {
       require_full_health?: boolean
       require_tame?: boolean
     }
-    "minecraft:buoyant"?: {
+    'minecraft:buoyant'?: {
       apply_gravity?: boolean
       base_buoyancy?: number
       big_wave_probability?: number
@@ -2227,17 +2352,24 @@ interface EntityComponentOpt {
       can_auto_step_from_liquid?: boolean
       drag_down_on_buoyancy_removed?: number
       liquid_blocks?: string[]
-      movement_type?: "waves" | "bobbing" | "none"
+      movement_type?: 'waves' | 'bobbing' | 'none'
     }
-    "minecraft:burns_in_daylight"?: {
-      protection_slot?: "slot.armor.body" | "slot.armor.chest" | "slot.armor.feet" | "slot.armor.head" | "slot.armor.legs" | "slot.weapon.mainhand" | "slot.weapon.offhand"
+    'minecraft:burns_in_daylight'?: {
+      protection_slot?:
+        | 'slot.armor.body'
+        | 'slot.armor.chest'
+        | 'slot.armor.feet'
+        | 'slot.armor.head'
+        | 'slot.armor.legs'
+        | 'slot.weapon.mainhand'
+        | 'slot.weapon.offhand'
     }
-    "minecraft:cannot_be_attacked"?: {}
-    "minecraft:can_climb"?: {}
-    "minecraft:can_fly"?: {}
-    "minecraft:can_join_raid"?: {}
-    "minecraft:can_power_jump"?: {}
-    "minecraft:celebrate_hunt"?: {
+    'minecraft:cannot_be_attacked'?: {}
+    'minecraft:can_climb'?: {}
+    'minecraft:can_fly'?: {}
+    'minecraft:can_join_raid'?: {}
+    'minecraft:can_power_jump'?: {}
+    'minecraft:celebrate_hunt'?: {
       broadcast?: boolean
       celeberation_targets?: any
       celebrate_sound?: string
@@ -2245,22 +2377,22 @@ interface EntityComponentOpt {
       radius?: number
       sound_interval?: { min: number; max: number }
     }
-    "minecraft:collision_box"?: {
+    'minecraft:collision_box'?: {
       height?: number
       width?: number
     }
-    "minecraft:color"?: {
+    'minecraft:color'?: {
       value?: number
     }
-    "minecraft:color2"?: {
+    'minecraft:color2'?: {
       value?: number
     }
-    "minecraft:combat_regeneration"?: {
+    'minecraft:combat_regeneration'?: {
       apply_to_family?: boolean
       apply_to_self?: boolean
-      regeneration_duration?: number | "infinite"
+      regeneration_duration?: number | 'infinite'
     }
-    "minecraft:conditional_bandwidth_optimization"?: {
+    'minecraft:conditional_bandwidth_optimization'?: {
       conditional_values?: Array<{
         conditional_values?: any
         max_dropped_ticks?: number
@@ -2273,59 +2405,61 @@ interface EntityComponentOpt {
         use_motion_prediction_hints?: boolean
       }
     }
-    "minecraft:custom_hit_test"?: {
+    'minecraft:custom_hit_test'?: {
       hitboxes?: Array<{
         height?: number
         pivot?: [number, number, number]
         width?: number
       }>
     }
-    "minecraft:damage_over_time"?: {
+    'minecraft:damage_over_time'?: {
       damage_per_hurt?: number
       time_between_hurt?: number
     }
-    "minecraft:damage_sensor"?: {
-      deals_damage?: boolean | "yes" | "no" | "no_but_side_effects_apply"
-      triggers?: Array<{
-        cause?: string
-        damage_modifier?: number
-        damage_multiplier?: number
-        deals_damage?: boolean | string
-        event?: string
-        filters?: any
-        on_damage?: {
-          filters?: any
-        }
-        on_damage_sound_event?: string
-      }> | {
-        cause?: string
-        damage_modifier?: number
-        damage_multiplier?: number
-        deals_damage?: boolean | string
-        event?: string
-        filters?: any
-        on_damage?: {
-          filters?: any
-        }
-        on_damage_sound_event?: string
-      }
+    'minecraft:damage_sensor'?: {
+      deals_damage?: boolean | 'yes' | 'no' | 'no_but_side_effects_apply'
+      triggers?:
+        | Array<{
+            cause?: string
+            damage_modifier?: number
+            damage_multiplier?: number
+            deals_damage?: boolean | string
+            event?: string
+            filters?: any
+            on_damage?: {
+              filters?: any
+            }
+            on_damage_sound_event?: string
+          }>
+        | {
+            cause?: string
+            damage_modifier?: number
+            damage_multiplier?: number
+            deals_damage?: boolean | string
+            event?: string
+            filters?: any
+            on_damage?: {
+              filters?: any
+            }
+            on_damage_sound_event?: string
+          }
     }
-    "minecraft:dash"?: {
+    'minecraft:dash'?: {
       cooldown_time?: number
       horizontal_momentum?: number
       vertical_momentum?: number
     }
-    "minecraft:dash_action"?: {
+    'minecraft:dash_action'?: {
       can_dash_underwater?: boolean
       cooldown_time?: number
-      direction?: "entity" | "passenger"
+      direction?: 'entity' | 'passenger'
       horizontal_momentum?: number
       vertical_momentum?: number
     }
-    "minecraft:default_look_angle"?: {
+    'minecraft:default_look_angle'?: {
       value?: number
     }
-    "minecraft:despawn"?: {
+    'minecraft:despawn'?: {
       despawn_from_chance?: boolean
       despawn_from_distance?: {
         max_distance?: number
@@ -2338,15 +2472,17 @@ interface EntityComponentOpt {
       min_range_random_chance?: number
       remove_child_entities?: boolean
     }
-    "minecraft:dimension_bound"?: {}
-    "minecraft:drying_out_timer"?: {
-      dried_out_event?: string | { event: string, target?: string }
-      recover_after_dried_out_event?: string | { event: string, target?: string }
-      stopped_drying_out_event?: string | { event: string, target?: string }
+    'minecraft:dimension_bound'?: {}
+    'minecraft:drying_out_timer'?: {
+      dried_out_event?: string | { event: string; target?: string }
+      recover_after_dried_out_event?:
+        | string
+        | { event: string; target?: string }
+      stopped_drying_out_event?: string | { event: string; target?: string }
       total_time?: number
       water_bottle_refill_time?: number
     }
-    "minecraft:dweller"?: {
+    'minecraft:dweller'?: {
       can_find_poi?: boolean
       can_migrate?: boolean
       dweller_role?: string
@@ -2358,7 +2494,7 @@ interface EntityComponentOpt {
       update_interval_base?: number
       update_interval_variant?: number
     }
-    "minecraft:economy_trade_table"?: {
+    'minecraft:economy_trade_table'?: {
       convert_trades_economy?: boolean
       cured_discount?: number | [number, number]
       display_name?: string
@@ -2372,15 +2508,15 @@ interface EntityComponentOpt {
       table?: string
       use_legacy_price_formula?: boolean
     }
-    "minecraft:entity_armor_equipment_slot_mapping"?: {
+    'minecraft:entity_armor_equipment_slot_mapping'?: {
       armor_slot?: string
     }
-    "minecraft:entity_sensor"?: {
+    'minecraft:entity_sensor'?: {
       find_players_only?: boolean
       relative_range?: boolean
       subsensors?: Array<{
         cooldown?: number
-        event?: string | { event: string, target?: string }
+        event?: string | { event: string; target?: string }
         event_filters?: any // Minecraft filter can be complex
         maximum_count?: number
         minimum_count?: number
@@ -2389,17 +2525,17 @@ interface EntityComponentOpt {
         y_offset?: number
       }>
     }
-    "minecraft:equipment"?: {
+    'minecraft:equipment'?: {
       slot_drop_chance?: Array<
         | string // Slot name string
         | {
-          drop_chance?: number // Decimal number (0.0 to 1.0)
-          slot?: string // Equipment slot name
-        }
+            drop_chance?: number // Decimal number (0.0 to 1.0)
+            slot?: string // Equipment slot name
+          }
       >
       table?: string // File path to equipment table
     }
-    "minecraft:equippable"?: {
+    'minecraft:equippable'?: {
       slots?: Array<{
         accepted_items?: string[] // List of items that can go in this slot
         interact_text?: string // Text for touch-screen controls
@@ -2410,25 +2546,27 @@ interface EntityComponentOpt {
         [key: string]: any // Allow additional slot properties
       }>
     }
-    "minecraft:equip_item"?: {
+    'minecraft:equip_item'?: {
       can_wear_armor?: boolean // If true, entity can pick up armor
       excluded_items?: Array<{
         item?: string // Excluded item identifier
         [key: string]: any // Allow additional excluded item properties
       }>
     }
-    "minecraft:environment_sensor"?: {
-      triggers?: {
-        event?: string | { event: string, target?: string }
-        filters?: any // Can be complex filter objects
-        [key: string]: any // Allow additional trigger properties
-      } | Array<{
-        event?: string | { event: string, target?: string }
-        filters?: any // Can be complex filter objects
-        [key: string]: any // Allow additional trigger properties
-      }>
+    'minecraft:environment_sensor'?: {
+      triggers?:
+        | {
+            event?: string | { event: string; target?: string }
+            filters?: any // Can be complex filter objects
+            [key: string]: any // Allow additional trigger properties
+          }
+        | Array<{
+            event?: string | { event: string; target?: string }
+            filters?: any // Can be complex filter objects
+            [key: string]: any // Allow additional trigger properties
+          }>
     }
-    "minecraft:exhaustion_values"?: {
+    'minecraft:exhaustion_values'?: {
       attack?: number // Amount of exhaustion when attacking
       damage?: number // Amount of exhaustion when taking damage
       heal?: number // Amount of exhaustion when healed
@@ -2441,19 +2579,28 @@ interface EntityComponentOpt {
       walk?: number // Amount of exhaustion when walking
       [key: string]: any // Allow additional exhaustion properties
     }
-    "minecraft:experience_reward"?: {
-      on_bred?: string | number | { // Molang expression or decimal number
-        expression?: string
-        version?: number
-      }
-      on_death?: string | number | { // Molang expression or decimal number
-        expression?: string
-        version?: number
-      }
+    'minecraft:experience_reward'?: {
+      on_bred?:
+        | string
+        | number
+        | {
+            // Molang expression or decimal number
+            expression?: string
+            version?: number
+          }
+      on_death?:
+        | string
+        | number
+        | {
+            // Molang expression or decimal number
+            expression?: string
+            version?: number
+          }
       [key: string]: any // Allow additional experience reward properties
     }
-    "minecraft:explode"?: {
-      add?: { // Add component groups
+    'minecraft:explode'?: {
+      add?: {
+        // Add component groups
         component_groups?: string[]
         [key: string]: any // Allow additional add properties
       }
@@ -2474,13 +2621,13 @@ interface EntityComponentOpt {
       toggles_blocks?: boolean // If true, toggles blocks in explosion radius
       [key: string]: any // Allow additional explosion properties
     }
-    "minecraft:fire_immune"?: {
+    'minecraft:fire_immune'?: {
       // Empty object indicates entity is immune to fire damage
     }
-    "minecraft:floats_in_liquid"?: {
+    'minecraft:floats_in_liquid'?: {
       // Empty object indicates entity can float in liquid blocks
     }
-    "minecraft:flocking"?: {
+    'minecraft:flocking'?: {
       block_distance?: number // The amount of blocks away the entity will look at to push away from
       block_weight?: number // The weight of the push back away from blocks
       breach_influence?: number // The amount of push back given to a flocker that breaches out of the water
@@ -2501,102 +2648,127 @@ interface EntityComponentOpt {
       use_center_of_mass?: boolean // Tells the flockers that they will follow flocks based on the center of mass
       [key: string]: any
     }
-    "minecraft:flying_speed"?: {
+    'minecraft:flying_speed'?: {
       value?: number // Flying speed in blocks per tick
     }
-    "minecraft:follow_range"?: {
+    'minecraft:follow_range'?: {
       max?: number // Maximum follow distance in blocks
       value?: number // The default follow range in blocks
     }
-    "minecraft:free_camera_controlled"?: {
+    'minecraft:free_camera_controlled'?: {
       backwards_movement_modifier?: number // Modifies speed going backwards
       strafe_speed_modifier?: number // Modifies the strafe speed
     }
-    "minecraft:friction_modifier"?: {
+    'minecraft:friction_modifier'?: {
       value?: number // The higher the number, the more friction affects this entity
     }
-    "minecraft:game_event_movement_tracking"?: {
+    'minecraft:game_event_movement_tracking'?: {
       emit_flap?: boolean // If true, the flap game event will be emitted when the entity moves through air
       emit_move?: boolean // If true, the entityMove game event will be emitted when the entity moves on ground or through a solid
       emit_swim?: boolean // If true, the swim game event will be emitted when the entity moves through a liquid
     }
-    "minecraft:genetics"?: {
+    'minecraft:genetics'?: {
       mutation_rate?: number // Chance that an allele will be replaced with a random one instead of the parent's allele during birth
       genes?: Array<{
         name: string // The name of the gene
         use_simplified_breeding?: boolean // If true, mobs will inherit main alleles from parents' main alleles
         mutation_rate?: number // Override for this gene's mutation rate
-        allele_range?: number | { // The range of positive integer allele values
-          range_min: number // Minimum allele value
-          range_max: number // Maximum allele value
-        }
+        allele_range?:
+          | number
+          | {
+              // The range of positive integer allele values
+              range_min: number // Minimum allele value
+              range_max: number // Maximum allele value
+            }
         genetic_variants?: Array<{
-          birth_event?: string | { // Event to run when this mob is created and matches the allele conditions
-            event: string
-            target?: string
-          }
-          main_allele?: number | { // Compare the mob's main allele with this value
-            range_min: number
-            range_max: number
-          }
-          hidden_allele?: number | { // Compare the mob's hidden allele with this value
-            range_min: number
-            range_max: number
-          }
-          both_allele?: number | { // Compare both main and hidden alleles with this value
-            range_min: number
-            range_max: number
-          }
-          either_allele?: number | { // Compare either main or hidden allele with this value
-            range_min: number
-            range_max: number
-          }
+          birth_event?:
+            | string
+            | {
+                // Event to run when this mob is created and matches the allele conditions
+                event: string
+                target?: string
+              }
+          main_allele?:
+            | number
+            | {
+                // Compare the mob's main allele with this value
+                range_min: number
+                range_max: number
+              }
+          hidden_allele?:
+            | number
+            | {
+                // Compare the mob's hidden allele with this value
+                range_min: number
+                range_max: number
+              }
+          both_allele?:
+            | number
+            | {
+                // Compare both main and hidden alleles with this value
+                range_min: number
+                range_max: number
+              }
+          either_allele?:
+            | number
+            | {
+                // Compare either main or hidden allele with this value
+                range_min: number
+                range_max: number
+              }
         }>
       }>
     }
-    "minecraft:giveable"?: {
+    'minecraft:giveable'?: {
       cooldown?: number // An optional cool down in seconds to prevent spamming interactions
       items?: string | string[] // The list of items that can be given to the entity
-      on_give?: string | { // Event to fire when the correct item is given
-        event: string
-        target?: string
-      }
+      on_give?:
+        | string
+        | {
+            // Event to fire when the correct item is given
+            event: string
+            target?: string
+          }
     }
-    "minecraft:ground_offset"?: {
+    'minecraft:ground_offset'?: {
       value?: number // The value of the entity's offset from the terrain, in blocks
     }
-    "minecraft:group_size"?: {
+    'minecraft:group_size'?: {
       radius?: number // Radius from center of entity
       filters?: any // The list of conditions that must be satisfied for other entities to be counted
     }
-    "minecraft:grows_crop"?: {
+    'minecraft:grows_crop'?: {
       chance?: number // Value between 0-1. Chance of success per tick
       charges?: number // Number of charges
     }
-    "minecraft:health"?: {
+    'minecraft:health'?: {
       max?: number // Maximum health this entity can have
-      value?: number | {
-        range_min?: number // Minimum health value
-        range_max?: number // Maximum health value
-      }
+      value?:
+        | number
+        | {
+            range_min?: number // Minimum health value
+            range_max?: number // Maximum health value
+          }
     }
-    "minecraft:heartbeat"?: {
+    'minecraft:heartbeat'?: {
       interval?: string // A Molang expression defining the inter-beat interval in seconds
       sound_event?: string // Level sound event to be played as the heartbeat sound
     }
-    "minecraft:hide"?: {} // Moves to and hides at their owned POI or the closest nearby
-    "minecraft:home"?: {
+    'minecraft:hide'?: {} // Moves to and hides at their owned POI or the closest nearby
+    'minecraft:home'?: {
       home_block_list?: string[] // Optional list of blocks that can be considered a valid home
       restriction_radius?: number // Optional radius that the entity will be restricted to
       restriction_type?: 'none' | 'random_movement' | 'all_movement' // How the entity will be restricted to its home
     }
-    "minecraft:horse.jump_strength"?: {
-      value?: number | {
-        range_min?: number // Minimum jump strength value
-        range_max?: number // Maximum jump strength value
-      }
+    'minecraft:horse.jump_strength'?: {
+      value?:
+        | number
+        | {
+            range_min?: number // Minimum jump strength value
+            range_max?: number // Maximum jump strength value
+          }
     }
-    "minecraft:hurt_on_condition"?: {
+    'minecraft:hurt_on_condition'?: {
       damage_conditions?: Array<{
         cause?: string // The kind of damage that is caused to the entity
         damage_per_tick?: number // The amount of damage done each tick that the conditions are met
@@ -2609,7 +2781,7 @@ interface EntityComponentOpt {
         }
       }>
     }
-    "minecraft:ignore_cannot_be_attacked"?: {
+    'minecraft:ignore_cannot_be_attacked'?: {
       filters?: {
         subject?: string // The subject of the filter test
         test?: string // The test to perform
@@ -2618,13 +2790,13 @@ interface EntityComponentOpt {
         [key: string]: any // Allow for other filter properties
       }
     }
-    "minecraft:input_air_controlled"?: {
+    'minecraft:input_air_controlled'?: {
       [key: string]: any // Flexible structure for movement modifiers
     }
-    "minecraft:input_ground_controlled"?: {
+    'minecraft:input_ground_controlled'?: {
       // Empty object as specified
     }
-    "minecraft:inside_block_notifier"?: {
+    'minecraft:inside_block_notifier'?: {
       block_list?: Array<{
         block?: {
           name?: string // The name of the block to listen for
@@ -2642,13 +2814,13 @@ interface EntityComponentOpt {
         }
       }>
     }
-    "minecraft:insomnia"?: {
+    'minecraft:insomnia'?: {
       days_until_insomnia?: number // Number of days the mob has to stay up until the insomnia effect begins
     }
-    "minecraft:instant_despawn"?: {
+    'minecraft:instant_despawn'?: {
       remove_child_entities?: boolean // If true, all entities linked to this entity in a child relationship will also be despawned
     }
-    "minecraft:interact"?: {
+    'minecraft:interact'?: {
       cooldown?: number // Time in seconds before this entity can be interacted with again
       cooldown_after_being_attacked?: number // Time in seconds before this entity can be interacted with after being attacked
       drop_item_slot?: string | number // The entity's slot to remove and drop the item from
@@ -2661,15 +2833,18 @@ interface EntityComponentOpt {
         give_item?: boolean // If true, the player can give items to the entity
         hurt_item?: number // Amount of damage the item will take
         interact_text?: string // Interaction text
-        on_interact?: string | { // Event to fire when the interaction occurs
-          filters?: {
-            subject?: string
-            test?: string
-            value?: any
-            operator?: string
-            [key: string]: any
-          }
-        }
+        on_interact?:
+          | string
+          | {
+              // Event to fire when the interaction occurs
+              filters?: {
+                subject?: string
+                test?: string
+                value?: any
+                operator?: string
+                [key: string]: any
+              }
+            }
         particle_on_start?: Array<{
           particle_offset_towards_interactor?: boolean // Whether particle appears closer to interactor
           particle_type?: string // The type of particle to spawn
@@ -2689,10 +2864,15 @@ interface EntityComponentOpt {
         take_item?: boolean // If true, player can take items from the entity
         transform_to_item?: string // Item used will transform to this item
         use_item?: boolean // If true, interaction will use an item
-        vibration?: 'none' | 'shear' | 'entity_die' | 'entity_act' | 'entity_interact' // Vibration to emit
+        vibration?:
+          | 'none'
+          | 'shear'
+          | 'entity_die'
+          | 'entity_act'
+          | 'entity_interact' // Vibration to emit
       }>
     }
-    "minecraft:inventory"?: {
+    'minecraft:inventory'?: {
       additional_slots_per_strength?: number // Number of slots that this entity can gain per extra strength
       can_be_siphoned_from?: boolean // If true, the contents of this inventory can be removed by a hopper
       container_type?: string // Type of container this entity has
@@ -2700,31 +2880,31 @@ interface EntityComponentOpt {
       private?: boolean // If true, the entity will not drop its inventory on death
       restrict_to_owner?: boolean // If true, the entity's inventory can only be accessed by its owner
     }
-    "minecraft:is_baby"?: {
+    'minecraft:is_baby'?: {
       // Empty object as specified
     }
-    "minecraft:is_charged"?: {
+    'minecraft:is_charged'?: {
       // Empty object as specified
     }
-    "minecraft:is_chested"?: {
+    'minecraft:is_chested'?: {
       // Empty object as specified
     }
-    "minecraft:is_dyeable"?: {
+    'minecraft:is_dyeable'?: {
       interact_text?: string // The text that will display when interacting with this entity with a dye
     }
-    "minecraft:is_ignited"?: {
+    'minecraft:is_ignited'?: {
       // Empty object as specified
     }
-    "minecraft:is_pregnant"?: {
+    'minecraft:is_pregnant'?: {
       // Empty object as specified
     }
-    "minecraft:item_controllable"?: {
+    'minecraft:item_controllable'?: {
       control_items?: string | string[] // List of items that can be used to control this entity while ridden
     }
-    "minecraft:item_hopper"?: {
+    'minecraft:item_hopper'?: {
       // Empty object as specified
     }
-    "minecraft:jump.dynamic"?: {
+    'minecraft:jump.dynamic'?: {
       fast_skip_data?: {
         animation_duration?: number // Duration of the jump animation
         distance_scale?: number // The multiplier applied to horizontal velocity when jumping
@@ -2738,23 +2918,25 @@ interface EntityComponentOpt {
         jump_delay?: number // Amount of ticks between sequential jumps
       }
     }
-    "minecraft:jump.static"?: {
+    'minecraft:jump.static'?: {
       jump_power?: number // The initial vertical velocity for the jump (default 0.42)
     }
-    "minecraft:knockback_resistance"?: number | {
-      max?: number // Maximum potential knockback resistance
-      value?: number // The amount of knockback resistance from 0.0 to 1.0
-    }
-    "minecraft:lava_movement"?: {
+    'minecraft:knockback_resistance'?:
+      | number
+      | {
+          max?: number // Maximum potential knockback resistance
+          value?: number // The amount of knockback resistance from 0.0 to 1.0
+        }
+    'minecraft:lava_movement'?: {
       value?: number // The speed the mob moves over a lava block
     }
-    "minecraft:leashable"?: {
+    'minecraft:leashable'?: {
       can_be_cut?: boolean // If true, players can cut both incoming and outgoing leashes
       can_be_stolen?: boolean // If true, players can leash this entity even if already leashed
       hard_distance?: number // Distance in blocks at which the leash stiffens
       max_distance?: number // Distance in blocks at which the leash breaks
-      on_leash?: string | { event: string, target?: string } // Event to call when leashed
-      on_unleash?: string | { event: string, target?: string } // Event to call when unleashed
+      on_leash?: string | { event: string; target?: string } // Event to call when leashed
+      on_unleash?: string | { event: string; target?: string } // Event to call when unleashed
       on_unleash_interact_only?: boolean // Triggers only for player interactions
       presets?: Array<{
         filter?: {
@@ -2768,14 +2950,14 @@ interface EntityComponentOpt {
         max_distance?: number // Distance at which leash breaks
         rotation_adjustment?: number // Rotation adjustment for equilibrium
         soft_distance?: number // Distance for pathfinding
-        spring_type?: "bouncy" | "dampened" | "quad_dampened" // Type of spring force
+        spring_type?: 'bouncy' | 'dampened' | 'quad_dampened' // Type of spring force
       }> // Behavior presets for different leashed scenarios
       soft_distance?: number // Distance for spring effect start
     }
-    "minecraft:leashable_to"?: {
+    'minecraft:leashable_to'?: {
       can_retrieve_from?: boolean // Allows retrieving entities leashed to this entity
     }
-    "minecraft:looked_at"?: {
+    'minecraft:looked_at'?: {
       field_of_view?: number // Width of field of view in degrees
       filters?: {
         subject?: string
@@ -2785,31 +2967,38 @@ interface EntityComponentOpt {
         [key: string]: any
       } // Which entities are considered
       find_players_only?: boolean // Limit search to nearest Player only
-      line_of_sight_obstruction_type?: "outline" | "collision" | "collision_for_camera" // Block shape for obstruction
+      line_of_sight_obstruction_type?:
+        | 'outline'
+        | 'collision'
+        | 'collision_for_camera' // Block shape for obstruction
       look_at_locations?: string[] // Locations on entity for line of sight checks
-      looked_at_cooldown?: { min: number, max: number } // Range for cooldown
-      looked_at_event?: string | { event: string, target?: string } // Event when looked at
+      looked_at_cooldown?: { min: number; max: number } // Range for cooldown
+      looked_at_event?: string | { event: string; target?: string } // Event when looked at
       min_looked_at_duration?: number // Minimum continuous look time
-      not_looked_at_event?: string | { event: string, target?: string } // Event when not looked at
+      not_looked_at_event?: string | { event: string; target?: string } // Event when not looked at
       scale_fov_by_distance?: boolean // Narrow FOV with distance
       search_radius?: number // Maximum search distance
-      set_target?: boolean | "never" | "once_and_stop_scanning" | "once_and_keep_scanning" // Combat targeting behavior
+      set_target?:
+        | boolean
+        | 'never'
+        | 'once_and_stop_scanning'
+        | 'once_and_keep_scanning' // Combat targeting behavior
     }
-    "minecraft:loot"?: {
+    'minecraft:loot'?: {
       table?: string // Path to loot table JSON file
     }
-    "minecraft:managed_wandering_trader"?: {
+    'minecraft:managed_wandering_trader'?: {
       // Component that manages the wandering trader's ability to trade
       // Can only be used on wandering_trader entities
     }
-    "minecraft:mark_variant"?: {
+    'minecraft:mark_variant'?: {
       value: number // The ID of the mark_variant (0 for base entity)
     }
-    "minecraft:mob_effect"?: {
+    'minecraft:mob_effect'?: {
       ambient?: boolean // If the effect is considered an ambient effect
       cooldown_time?: number // Time in seconds between effect applications
       effect_range?: number // How close an entity must be to have effect applied
-      effect_time?: number | "infinite" // Duration in seconds or infinite
+      effect_time?: number | 'infinite' // Duration in seconds or infinite
       entity_filter?: {
         subject?: string
         test?: string
@@ -2819,63 +3008,66 @@ interface EntityComponentOpt {
       } // Set of entities valid for the effect
       mob_effect: string // The mob effect that is applied
     }
-    "minecraft:mob_effect_immunity"?: {
+    'minecraft:mob_effect_immunity'?: {
       mob_effects: string[] // List of effect names the entity is immune to
     }
-    "minecraft:movement"?: {
+    'minecraft:movement'?: {
       max?: number // Maximum movement speed this entity can have
-      value?: number | { range_min: number, range_max: number } // Base movement speed value or range
+      value?: number | { range_min: number; range_max: number } // Base movement speed value or range
     }
-    "minecraft:movement.amphibious"?: {
+    'minecraft:movement.amphibious'?: {
       max_turn?: number // The maximum number in degrees the mob can turn per tick
     }
-    "minecraft:movement.basic"?: {
+    'minecraft:movement.basic'?: {
       max_turn?: number // The maximum number in degrees the mob can turn per tick
     }
-    "minecraft:movement.dolphin"?: {
+    'minecraft:movement.dolphin'?: {
       // This movement is not currently being used in game
       // 组件占位符，用于海豚式移动控制
     }
-    "minecraft:movement.fly"?: {
+    'minecraft:movement.fly'?: {
       max_turn?: number // The maximum number in degrees the mob can turn per tick
       speed_when_turning?: number // Speed that the mob adjusts to when it has to turn quickly
       start_speed?: number // Initial speed of the mob when it starts gliding
     }
-    "minecraft:movement.generic"?: {
+    'minecraft:movement.generic'?: {
       max_turn?: number // The maximum number in degrees the mob can turn per tick
     }
-    "minecraft:movement.glide"?: {
+    'minecraft:movement.glide'?: {
       max_turn?: number // The maximum number in degrees the mob can turn per tick
       speed_when_turning?: number // Speed that the mob adjusts to when it has to turn quickly
     }
-    "minecraft:movement.hover"?: {
+    'minecraft:movement.hover'?: {
       max_turn?: number // The maximum number in degrees the mob can turn per tick
     }
-    "minecraft:movement.jump"?: {
-      jump_delay?: number | [number, number] | { range_min: number, range_max: number } // Delay in seconds after landing
+    'minecraft:movement.jump'?: {
+      jump_delay?:
+        | number
+        | [number, number]
+        | { range_min: number; range_max: number } // Delay in seconds after landing
       max_turn?: number // The maximum number in degrees the mob can turn per tick
     }
-    "minecraft:movement.skip"?: {
+    'minecraft:movement.skip'?: {
       max_turn?: number // The maximum number in degrees the mob can turn per tick
     }
-    "minecraft:movement.sound_distance_offset"?: {
+    'minecraft:movement.sound_distance_offset'?: {
       value?: number // The higher the number, the less often the movement sound will be played
     }
-    "minecraft:movement.sway"?: {
+    'minecraft:movement.sway'?: {
       max_turn?: number // The maximum number in degrees the mob can turn per tick
       sway_amplitude?: number // Strength of the sway movement
       sway_frequency?: number // Multiplier for the frequency of the sway movement
     }
-    "minecraft:nameable"?: {
+    'minecraft:nameable'?: {
       allow_name_tag_renaming?: boolean // If true, this entity can be renamed with name tags
       always_show?: boolean // If true, the name will always be shown
       default_trigger?: string // Trigger to run when the entity gets named
       name_actions?: Array<{
         name_filter?: string[] // List of special names that will cause the events to fire
-        on_named?: string | { event: string, target?: string } // Event to be called when this entity acquires the name
+        on_named?: string | { event: string; target?: string } // Event to be called when this entity acquires the name
       }> // Describes special names and corresponding events
     }
-    "minecraft:navigation.climb"?: {
+    'minecraft:navigation.climb'?: {
       avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
       avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
       avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
@@ -2897,7 +3089,7 @@ interface EntityComponentOpt {
       is_amphibious?: boolean // Tells the pathfinder whether or not it can walk underwater
       using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
     }
-    "minecraft:navigation.float"?: {
+    'minecraft:navigation.float'?: {
       avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
       avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
       avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
@@ -2919,7 +3111,7 @@ interface EntityComponentOpt {
       is_amphibious?: boolean // Tells the pathfinder whether or not it can walk underwater
       using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
     }
-    "minecraft:navigation.fly"?: {
+    'minecraft:navigation.fly'?: {
       avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
       avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
       avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
@@ -2941,7 +3133,7 @@ interface EntityComponentOpt {
       is_amphibious?: boolean // Tells the pathfinder whether or not it can walk underwater
       using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
     }
-    "minecraft:navigation.generic"?: {
+    'minecraft:navigation.generic'?: {
       avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
       avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
       avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
@@ -2963,7 +3155,7 @@ interface EntityComponentOpt {
       is_amphibious?: boolean // Tells the pathfinder whether or not it can walk underwater
       using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
     }
-    "minecraft:navigation.hover"?: {
+    'minecraft:navigation.hover'?: {
       avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
       avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
       avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
@@ -2985,15 +3177,17 @@ interface EntityComponentOpt {
       is_amphibious?: boolean // Tells the pathfinder whether or not it can walk underwater
       using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
     }
-    "minecraft:navigation.swim"?: {
+    'minecraft:navigation.swim'?: {
       avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage
       avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals)
       avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles exposed to the sun
       avoid_water?: boolean // Tells the pathfinder to avoid water when creating a path
-      blocks_to_avoid?: string[] | Array<{
-        name?: string // Block identifier to avoid
-        tags?: string // Molang expression to match block tags, e.g. query.any_tag('trapdoors')
-      }> // Tells the pathfinder which blocks to avoid
+      blocks_to_avoid?:
+        | string[]
+        | Array<{
+            name?: string // Block identifier to avoid
+            tags?: string // Molang expression to match block tags, e.g. query.any_tag('trapdoors')
+          }> // Tells the pathfinder which blocks to avoid
       can_breach?: boolean // Tells the pathfinder whether or not it can jump out of water (like a dolphin)
       can_break_doors?: boolean // Tells the pathfinder that it can path through a closed door and break it
       can_jump?: boolean // Tells the pathfinder whether or not it can jump up blocks
@@ -3010,15 +3204,17 @@ interface EntityComponentOpt {
       is_amphibious?: boolean // Tells the pathfinder whether or not it can walk on the ground underwater
       using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
     }
-    "minecraft:navigation.walk"?: {
+    'minecraft:navigation.walk'?: {
       avoid_damage_blocks?: boolean // Tells the pathfinder to avoid blocks that cause damage when finding a path
       avoid_portals?: boolean // Tells the pathfinder to avoid portals (like nether portals) when finding a path
       avoid_sun?: boolean // Whether or not the pathfinder should avoid tiles that are exposed to the sun when creating paths
       avoid_water?: boolean // Tells the pathfinder to avoid water when creating a path
-      blocks_to_avoid?: string[] | Array<{
-        name?: string // Block identifier to avoid
-        tags?: string // Molang expression to match block tags, e.g. query.any_tag('trapdoors')
-      }> // Tells the pathfinder which blocks to avoid
+      blocks_to_avoid?:
+        | string[]
+        | Array<{
+            name?: string // Block identifier to avoid
+            tags?: string // Molang expression to match block tags, e.g. query.any_tag('trapdoors')
+          }> // Tells the pathfinder which blocks to avoid
       can_breach?: boolean // Tells the pathfinder whether or not it can jump out of water (like a dolphin)
       can_break_doors?: boolean // Tells the pathfinder that it can path through a closed door and break it
       can_float?: boolean // Tells the pathfinder whether or not it can float
@@ -3036,7 +3232,7 @@ interface EntityComponentOpt {
       is_amphibious?: boolean // Tells the pathfinder whether or not it can walk on the ground underwater
       using_door_annotation?: boolean // Tells the pathfinder whether to use door annotations
     }
-    "minecraft:preferred_path"?: {
+    'minecraft:preferred_path'?: {
       /** Cost for non-preferred blocks */
       default_block_cost?: number
       /** Added cost for jumping up a node */
@@ -3051,29 +3247,29 @@ interface EntityComponentOpt {
         cost: number
       }>
     }
-    "minecraft:out_of_control"?: {} // Defines the entity's 'out of control' state
-    "minecraft:peek"?: {
+    'minecraft:out_of_control'?: {} // Defines the entity's 'out of control' state
+    'minecraft:peek'?: {
       on_close?: {
         event?: string // Event to call when the entity is done peeking
       }
       on_open?: {
-        event?: string // Event to call when the entity starts peeking  
+        event?: string // Event to call when the entity starts peeking
       }
       on_target_open?: {
         event?: string // Event to call when the entity's target entity starts peeking
       }
     } // Defines the entity's 'peek' behavior
-    "minecraft:persistent"?: {} // Defines whether an entity should be persistent in the game world
-    "minecraft:physics"?: {
+    'minecraft:persistent'?: {} // Defines whether an entity should be persistent in the game world
+    'minecraft:physics'?: {
       has_collision?: boolean // Whether or not the entity collides with things
       has_gravity?: boolean // Whether or not the entity is affected by gravity
       push_towards_closest_space?: boolean // Whether or not the entity should be pushed towards the nearest open area when stuck inside a block
     } // Defines physics properties of an actor
-    "minecraft:player.exhaustion"?: {
+    'minecraft:player.exhaustion'?: {
       max?: number // A maximum value for a player's exhaustion
       value?: number // The initial value of a player's exhaustion level
     } // Defines the player's exhaustion level
-    "minecraft:offspring"?: {
+    'minecraft:offspring'?: {
       born_event?: {
         event?: string
         target?: string
@@ -3135,13 +3331,13 @@ interface EntityComponentOpt {
 
 interface EntityJSON {
   format_version: string
-  "minecraft:entity": {
+  'minecraft:entity': {
     description: {
       identifier: string
       is_spawnable?: boolean
       is_summonable?: boolean
     }
-    components?: EntityComponentOpt["components"]
+    components?: EntityComponentOpt['components']
     component_groups?: Record<string, {}>
   }
 }

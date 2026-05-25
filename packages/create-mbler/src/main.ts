@@ -1,25 +1,25 @@
-import { Argument, Command } from 'commander'
-import inpurer from 'inquirer'
-import { getI18n, LanguageList } from './i18n'
-import { showText, verifyType } from './utils'
-import { InputResult } from './types'
-import { initProject } from './init'
+import { Argument, Command } from 'commander';
+import inpurer from 'inquirer';
+import { getI18n, LanguageList } from './i18n';
+import { showText, verifyType } from './utils';
+import { InputResult } from './types';
+import { initProject } from './init';
 function throwErr(text: string) {
-  showText('×: ERR: ' + text)
-  process.exit(1)
+  showText('×: ERR: ' + text);
+  process.exit(1);
 }
-const program = new Command('create-mbler')
+const program = new Command('create-mbler');
 program
   .name('create-mbler')
   .description('Create mbler project')
   .addArgument(new Argument('[dir]', 'Where to create mbler project'))
   .option('-l, --language <value>', 'Define Create mbler tool language', 'en')
   .action(async function (...argv) {
-    const language = this.getOptionValue('language')
+    const language = this.getOptionValue('language');
     if (!LanguageList.includes(language)) {
       throwErr(
         'Invaild Language, should such as ' + JSON.stringify(LanguageList),
-      )
+      );
     }
     const inputResult = (await inpurer.prompt([
       {
@@ -63,7 +63,7 @@ program
         message: getI18n('PackageManager', language),
         choices: ['npm', 'pnpm'],
       },
-    ])) as InputResult
+    ])) as InputResult;
     if (
       !verifyType(inputResult, {
         createAt: 'string',
@@ -75,13 +75,13 @@ program
         OtherModule: 'object',
       })
     ) {
-      throwErr('basic type error')
+      throwErr('basic type error');
     }
-    await initProject(inputResult)
-  })
+    await initProject(inputResult);
+  });
 export const cli = () => {
-  program.parse()
-}
-export * from './i18n'
-export * from './types'
-export * from './utils'
+  program.parse();
+};
+export * from './i18n';
+export * from './types';
+export * from './utils';

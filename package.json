@@ -8,12 +8,18 @@
     "email": "a@ruanhor.dpdns.org",
     "url": "https://github.com/RuanhoR/"
   },
+  "readme": "./README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ruanhor/mcx-core"
+  },
   "type": "module",
   "scripts": {
     "lint": "eslint . --ext .js,.ts",
     "lint:fix": "eslint . --ext .js,.ts --fix",
     "lint:packages": "pnpm -r lint",
     "lint:packages:fix": "pnpm -r lint:fix",
+    "format": "prettier ./packages/create-mbler/src ./packages/core/src ./packages/types/index.d.ts ./packages/client/src --write",
     "test": "pnpm -r test",
     "build": "pnpm -r --filter=@mbler/mcx-core --filter=@mbler/mcx build",
     "check": "pnpm test && pnpm lint:packages && pnpm -r exec tsc --noEmit",
@@ -35,6 +41,7 @@
     "@minecraft/server-ui": "2.0.0",
     "simple-git-hooks": "^2.13.1",
     "@rollup/plugin-commonjs": "29.0.1",
+    "prettier": "3.8.3",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.3",
     "@rollup/plugin-terser": "0.4.4",

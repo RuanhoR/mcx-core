@@ -1,9 +1,9 @@
-import { TransformPluginContext } from "rollup";
-import { MCXCompileData } from "../compile-mcx/compiler/compileData";
-import { CompileOpt } from "@mbler/mcx-types";
-import { transformCtx } from "../types";
-import { _transform } from "./main";
-import { program } from "@babel/types";
+import { TransformPluginContext } from 'rollup'
+import { MCXCompileData } from '../compile-mcx/compiler/compileData'
+import { CompileOpt } from '@mbler/mcx-types'
+import { transformCtx } from '../types'
+import { _transform } from './main'
+import { program } from '@babel/types'
 
 export async function transform(
   code: MCXCompileData,
@@ -11,12 +11,12 @@ export async function transform(
   id: string,
   context: TransformPluginContext,
   opt: CompileOpt,
-  output: transformCtx["output"]
+  output: transformCtx['output'],
 ): Promise<string> {
   const scriptTag = code.raw.find(node => {
-    return node.name == "script";
-  });
-  if (!scriptTag) throw new Error("[transform check]: not found mcx script tag")
+    return node.name == 'script'
+  })
+  if (!scriptTag) throw new Error('[transform check]: not found mcx script tag')
   const transformContext: transformCtx = {
     rollupContext: context,
     impAST: [],
@@ -28,9 +28,9 @@ export async function transform(
     scriptTag: scriptTag,
     mainFn: {
       param: [],
-      body: []
+      body: [],
     },
-    output
+    output,
   }
   return await _transform(transformContext)
 }

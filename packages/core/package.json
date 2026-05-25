@@ -24,6 +24,11 @@
       "types": "./client.d.ts"
     }
   },
+  "repository": {
+    "directory": "/packages/core",
+    "type": "git",
+    "url": "https://github.com/RuanhoR/mcx-core"
+  },
   "dependencies": {
     "@babel/generator": "7.28.5",
     "@babel/parser": "7.28.5",

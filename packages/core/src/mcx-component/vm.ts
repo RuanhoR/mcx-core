@@ -343,7 +343,7 @@ export class RunScript {
           code,
           this.pluginContext,
           transformCjsHook,
-        );
+        )
         const script = new vm.Script(compiledCode, { filename: this.filePath })
         const rel = script.runInContext(this._context)
         return this._context.exports || rel

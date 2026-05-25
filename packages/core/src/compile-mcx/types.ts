@@ -1,6 +1,4 @@
-import type {
-  ParserOptions
-} from "@babel/parser";
+import type { ParserOptions } from '@babel/parser'
 import type {
   ImportDeclaration,
   ExportAllDeclaration,
@@ -9,12 +7,10 @@ import type {
   Expression,
   SpreadElement,
   ArgumentPlaceholder,
-  CallExpression
-} from "@babel/types"
-import {
-  CompileOpt
-} from "@mbler/mcx-types"
-import { ParsedTagNode } from "../types";
+  CallExpression,
+} from '@babel/types'
+import { CompileOpt } from '@mbler/mcx-types'
+import { ParsedTagNode } from '../types'
 interface callList {
   source: Expression
   set: (callEXp: CallExpression) => boolean
@@ -34,28 +30,34 @@ interface ImportList {
 interface BuildCache {
   call: callList[]
   import: ImportList[]
-  export: Array<ExportNamedDeclaration | ExportAllDeclaration | ExportDefaultDeclaration>
+  export: Array<
+    ExportNamedDeclaration | ExportAllDeclaration | ExportDefaultDeclaration
+  >
 }
 export const _MCXstructureLocComponentTypes = {
-  "items": "item",
-  "blocks": "block",
-  "entities": "entity"
-} as const;
-type MCXstructureLocComponentType = typeof _MCXstructureLocComponentTypes[keyof typeof _MCXstructureLocComponentTypes]
+  items: 'item',
+  blocks: 'block',
+  entities: 'entity',
+} as const
+type MCXstructureLocComponentType =
+  (typeof _MCXstructureLocComponentTypes)[keyof typeof _MCXstructureLocComponentTypes]
 interface MCXstructureLoc {
   script: string
   Event: {
-    on: "after" | "before"
+    on: 'after' | 'before'
     subscribe: Record<string, string>
     loc: { line: number; column: number }
     isLoad: boolean
   }
-  Component: Record<string, {
-    type: MCXstructureLocComponentType
-    useExpore: string
-    loc: { line: number; column: number }
-  }>
-  UI: ParsedTagNode | null;
+  Component: Record<
+    string,
+    {
+      type: MCXstructureLocComponentType
+      useExpore: string
+      loc: { line: number; column: number }
+    }
+  >
+  UI: ParsedTagNode | null
 }
 export type {
   BuildCache,
@@ -64,5 +66,5 @@ export type {
   callList,
   CompileOpt,
   MCXstructureLoc,
-  MCXstructureLocComponentType
+  MCXstructureLocComponentType,
 }

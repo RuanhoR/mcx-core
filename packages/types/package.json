@@ -10,6 +10,11 @@
       "types": "./index.d.ts"
     }
   },
+  "repository": {
+    "url": "https://github.com/RuanhoR/mcx-core",
+    "type": "git",
+    "directory": "/packages/types"
+  },
   "scripts": {
     "lint": "tsc --noEmit --skipLibCheck index.d.ts"
   },

@@ -1065,7 +1065,9 @@ interface ItemJSON {
         type: 'use' | 'attack'
       }
       'minecraft:damage'?: JSONValue<number>
-      'minecraft:icon'?: JSONValue<string>
+      'minecraft:icon'?: {
+        textures: string
+      }
       'minecraft:block_placer'?: {
         aligned_placement?: boolean
         block: string

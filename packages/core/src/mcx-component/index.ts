@@ -1,7 +1,8 @@
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { MCXCompileData } from '../compile-mcx/compiler/compileData'
 import { execESMMethod, RunScript } from './vm'
 import path from 'node:path'
+import zlib from 'node:zlib'
 import lib from './lib'
 import { MCXstructureLocComponentType } from '../compile-mcx/types'
 import McxUtlis from '../utils'
@@ -11,6 +12,50 @@ export async function compileComponent(
   compiledCode: MCXCompileData,
   ctx: transformCtx,
 ) {
+  const crc32 = (buf: Buffer) => {
+    let crc = ~0
+    for (let i = 0; i < buf.length; i++) {
+      crc ^= buf[i] as number
+      for (let j = 0; j < 8; j++) {
+        crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1))
+      }
+    }
+    return (~crc >>> 0) as number
+  }
+  const pngChunk = (type: string, data: Buffer) => {
+    const typeBuf = Buffer.from(type)
+    const lenBuf = Buffer.alloc(4)
+    lenBuf.writeUInt32BE(data.length, 0)
+    const crcBuf = Buffer.alloc(4)
+    crcBuf.writeUInt32BE(crc32(Buffer.concat([typeBuf, data])), 0)
+    return Buffer.concat([lenBuf, typeBuf, data, crcBuf])
+  }
+  const createSolidPng = (hexColor: string) => {
+    const color = hexColor.replace('#', '')
+    const rgb =
+      color.length === 3
+        ? color
+            .split('')
+            .map((c) => c + c)
+            .join('')
+        : color
+    const r = parseInt(rgb.slice(0, 2), 16)
+    const g = parseInt(rgb.slice(2, 4), 16)
+    const b = parseInt(rgb.slice(4, 6), 16)
+    const signature = Buffer.from('89504e470d0a1a0a', 'hex')
+    const ihdr = Buffer.alloc(13)
+    ihdr.writeUInt32BE(1, 0)
+    ihdr.writeUInt32BE(1, 4)
+    ihdr[8] = 8
+    ihdr[9] = 6
+    const idat = zlib.deflateSync(Buffer.from([0, r, g, b, 255]))
+    return Buffer.concat([
+      signature,
+      pngChunk('IHDR', ihdr),
+      pngChunk('IDAT', idat),
+      pngChunk('IEND', Buffer.alloc(0)),
+    ])
+  }
   const component = compiledCode.strLoc.Component
   const src = compiledCode.strLoc.script
   // run component in vm(no console and more)
@@ -85,7 +130,6 @@ export async function compileComponent(
     const pointData = scriptRunResult[pointExport] as InstanceType<
       (typeof lib)[keyof typeof lib]
     >
-    // TODO: Add overload ItemJSON.prototype.setIcon() => set resources files(use hex value)
     if (!pointExport /* || !(pointData instanceof pointComponentClass) */) {
       throw new Error(
         '[component]: compile: check: not found Component class of file: ' +
@@ -98,8 +142,28 @@ export async function compileComponent(
         recursive: true,
       })
     }
+    const jsonData = pointData.toJSON() as any
+    const iconComp =
+      jsonData['minecraft:item']?.components?.['minecraft:icon']?.textures
+    if (typeof iconComp == 'string' && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(iconComp)) {
+      const id = jsonData['minecraft:item'].description.identifier
+      const texKey = `${id.replace(/[:/]/g, '_')}_icon`
+      const texFile = path.join(ctx.output.resources, 'textures', 'items', `${texKey}.png`)
+      const itemTextureFile = path.join(ctx.output.resources, 'textures', 'item_texture.json')
+      if (!(await McxUtlis.FileExsit(path.dirname(texFile)))) {
+        await mkdir(path.dirname(texFile), { recursive: true })
+      }
+      await writeFile(texFile, createSolidPng(iconComp))
+      const textureJson = (await McxUtlis.FileExsit(itemTextureFile))
+        ? JSON.parse(await readFile(itemTextureFile, 'utf-8'))
+        : { resource_pack_name: 'vanilla', texture_name: 'atlas.items', texture_data: {} }
+      textureJson.texture_data = textureJson.texture_data || {}
+      textureJson.texture_data[texKey] = { textures: `textures/items/${texKey}` }
+      await writeFile(itemTextureFile, JSON.stringify(textureJson, null, 2))
+      jsonData['minecraft:item'].components['minecraft:icon'] = { textures: texKey }
+    }
     // write file
-    await writeFile(filePoint, JSON.stringify(pointData.toJSON(), null, 2))
+    await writeFile(filePoint, JSON.stringify(jsonData, null, 2))
   }
 }
 export * from './vm'

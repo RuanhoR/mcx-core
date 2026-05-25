@@ -54,6 +54,11 @@ class ItemComponent {
           value: components.DestroyInCreate,
         }
       }
+      if (typeof components.icon == 'string' && components.icon.trim()) {
+        ApplyComponents['minecraft:icon'] = {
+          textures: components.icon.trim(),
+        }
+      }
 
       if (components.block_placer) {
         // Validate format version for block_placer (requires 1.21.50+)

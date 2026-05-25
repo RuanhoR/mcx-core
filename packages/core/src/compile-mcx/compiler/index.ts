@@ -863,7 +863,8 @@ class CompileMCX {
     return comiler
   }
 }
-export function compileJSFn(code: string): CompileData.JsCompileData {
+export const compileJSFn = ((code: string): CompileData.JsCompileData => {
+  if (compileJSFn.cache[code]) return compileJSFn.cache[code]
   let parsedCode: t.File
   try {
     parsedCode = parse(code, {
@@ -886,24 +887,22 @@ export function compileJSFn(code: string): CompileData.JsCompileData {
     }
     throw makeError(`[parse error]: ${String(err)}`)
   }
-  // 检查解析过程中的错误（当启用 errorRecovery 时）
-  const parseErrors = (parsedCode as any).errors
-  if (parseErrors && Array.isArray(parseErrors) && parseErrors.length > 0) {
-    const firstError = parseErrors[0]
-    if (firstError && firstError.loc) {
-      throw makeError(
-        `[babel parse error]: ${firstError.message || 'Unknown parse error'}`,
-        { loc: firstError.loc },
-      )
-    }
-  }
   const comiler = new CompileJS(parsedCode.program)
   comiler.run()
-  return comiler.getCompileData()
+  const data = comiler.getCompileData()
+  compileJSFn.cache[code] = data
+  return data
+}) as ((code: string) => CompileData.JsCompileData) & {
+  cache: Record<string, CompileData.JsCompileData>
 }
-export function compileMCXFn(mcxCode: string): CompileData.MCXCompileData {
+export const compileMCXFn = ((mcxCode: string): CompileData.MCXCompileData => {
+  if (compileMCXFn.cache[mcxCode]) return compileMCXFn.cache[mcxCode]
   const compiler = new CompileMCX(mcxCode)
-  return compiler.getCompileData()
+  const data = compiler.getCompileData()
+  compileMCXFn.cache[mcxCode] = data
+  return data
+}) as ((mcxCode: string) => CompileData.MCXCompileData) & {
+  cache: Record<string, CompileData.MCXCompileData>
 }
 export * from './compileData'
 export { Utils as MCXNodeUtils }

@@ -6,7 +6,7 @@ import { stat, mkdir, cp, writeFile } from 'node:fs/promises'
 function spawnCmd(cmd: string, args: string[], cwd: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, { cwd, stdio: 'inherit', shell: true })
-    child.on('close', (code) => {
+    child.on('close', code => {
       if (code === 0) resolve()
       else reject(new Error(`${cmd} exited with code ${code}`))
     })
@@ -64,12 +64,12 @@ export async function initProject(inputOpt: InputResult) {
       '@minecraft/server': mcVersionToGameTest(inputOpt.McVersion),
     },
     devDependencies: {
-      mbler: '0.2.4-rc.6',
+      mbler: 'latest',
     },
   }
   if (isMcx) {
     packageJson.dependencies['@mbler/mcx'] = '0.0.3-alpha.r1'
-    packageJson.devDependencies['@mbler/mcx-core'] = '0.0.8-rc.4'
+    packageJson.devDependencies['@mbler/mcx-core'] = 'latest'
   }
   await writeFile(
     path.join(dir, 'package.json'),
@@ -79,10 +79,8 @@ export async function initProject(inputOpt: InputResult) {
   const beta = inputOpt.OtherModule.includes('beta-api')
   const mblerConfig = `import { defineConfig } from "mbler"
 export default defineConfig({
-  name: '${inputOpt.Name}',
   description: '${inputOpt.Description}',
   mcVersion: '${inputOpt.McVersion}',
-  version: '0.0.1',
   minify: false,
   script: { main: 'index.ts', ui: ${ui}, lang: '${inputOpt.Language}', UseBeta: ${beta} },
   build: { bundle: true, cache: "file" },
@@ -117,9 +115,23 @@ export default defineConfig({
     'node_modules\ndist\ndist.mcaddon\n.mbler\ncache\n',
   )
   if (inputOpt.OtherModule.includes('init git')) {
-    try { await spawnCmd('git', ['init'], dir) } catch {}
+    try {
+      await spawnCmd('git', ['init'], dir)
+    } catch (err) {
+      console.log(
+        'Failed to initialize git, you can try to run it manually later. ERR: ',
+        err,
+      )
+    }
   }
   if (inputOpt.OtherModule.includes('init dep')) {
-    try { await spawnCmd(inputOpt.PackageManager, ['install'], dir) } catch {}
+    try {
+      await spawnCmd(inputOpt.PackageManager, ['install'], dir)
+    } catch (err) {
+      console.log(
+        'Failed to install dependencies, you can try to run it manually later. ERR: ',
+        err,
+      )
+    }
   }
 }

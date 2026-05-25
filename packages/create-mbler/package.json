@@ -12,10 +12,16 @@
     "url": "https://github.com/RuanhoR/mcx-core",
     "directory": "packages/create-mbler"
   },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "template"
+  ],
   "engines": {
     "node": ">= 20"
   },
-  "version": "0.0.1-beta.r1",
+  "version": "0.0.1",
   "dependencies": {
     "commander": "14.0.3",
     "inquirer": "13.4.3"

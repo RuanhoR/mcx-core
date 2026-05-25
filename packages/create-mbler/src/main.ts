@@ -10,7 +10,7 @@ function throwErr(text: string) {
 }
 const program = new Command('create-mbler')
 program
-  .name('mbler')
+  .name('create-mbler')
   .description('Create mbler project')
   .addArgument(new Argument('[dir]', 'Where to create mbler project'))
   .option('-l, --language <value>', 'Define Create mbler tool language', 'en')
@@ -83,3 +83,5 @@ export const cli = () => {
   program.parse()
 }
 export * from './i18n'
+export * from './types'
+export * from './utils'

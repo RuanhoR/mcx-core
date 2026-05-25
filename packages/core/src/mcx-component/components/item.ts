@@ -8,6 +8,7 @@ class ItemComponent {
     if (!this.#opt) throw new Error('[mcx component]: cannot read component')
     const result: t.ItemJSON = {
       format_version: '',
+      _t: 'item',
       'minecraft:item': {
         components: {},
         description: {
@@ -2685,7 +2686,9 @@ class ItemComponent {
         (newValue as { classId?: string }).classId == 'mcx_png_2340192' &&
         typeof (newValue as { filePath?: unknown }).filePath == 'string')
     ) {
-      this.#opt.components.icon = newValue as NonNullable<t.ItemComponentOpt['components']['icon']>
+      this.#opt.components.icon = newValue as NonNullable<
+        t.ItemComponentOpt['components']['icon']
+      >
     } else {
       throw new Error('[set error]: icon: type error')
     }

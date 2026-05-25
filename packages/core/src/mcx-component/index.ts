@@ -8,6 +8,7 @@ import { MCXstructureLocComponentType } from '../compile-mcx/types'
 import McxUtlis from '../utils'
 import { transformCtx } from '../types'
 import * as t from '@babel/types'
+import { BaseJSON, ItemJSON } from './types'
 export async function compileComponent(
   compiledCode: MCXCompileData,
   ctx: transformCtx,
@@ -98,31 +99,51 @@ export async function compileComponent(
         recursive: true,
       })
     }
-    const jsonData = pointData.toJSON() as any
-    const iconComp =
-      jsonData['minecraft:item']?.components?.['minecraft:icon']?.textures
-    if (
-      typeof iconComp == 'string' &&
-      /^(\/|\.\/|\.\.\/).+\.png$/i.test(iconComp)
-    ) {
-      const iconRaw = await readFile(iconComp)
-      const texKey = crypto.createHash('sha1').update(iconRaw).digest('hex')
-      const texFile = path.join(ctx.output.resources, 'textures', 'items', `${texKey}.png`)
-      const itemTextureFile = path.join(ctx.output.resources, 'textures', 'item_texture.json')
-      if (!(await McxUtlis.FileExsit(path.dirname(texFile)))) {
-        await mkdir(path.dirname(texFile), { recursive: true })
+    const json = pointData.toJSON() as BaseJSON
+    if (json._t == 'item') {
+      const jsonData = json as ItemJSON
+      const iconComp =
+        jsonData['minecraft:item']?.components?.['minecraft:icon']?.textures
+      if (
+        typeof iconComp == 'string' &&
+        /^(\/|\.\/|\.\.\/).+\.png$/i.test(iconComp)
+      ) {
+        const iconRaw = await readFile(iconComp)
+        const texKey = crypto.createHash('sha1').update(iconRaw).digest('hex')
+        const texFile = path.join(
+          ctx.output.resources,
+          'textures',
+          'items',
+          `${texKey}.png`,
+        )
+        const itemTextureFile = path.join(
+          ctx.output.resources,
+          'textures',
+          'item_texture.json',
+        )
+        if (!(await McxUtlis.FileExsit(path.dirname(texFile)))) {
+          await mkdir(path.dirname(texFile), { recursive: true })
+        }
+        await copyFile(iconComp, texFile)
+        const textureJson = (await McxUtlis.FileExsit(itemTextureFile))
+          ? JSON.parse(await readFile(itemTextureFile, 'utf-8'))
+          : {
+              resource_pack_name: 'vanilla',
+              texture_name: 'atlas.items',
+              texture_data: {},
+            }
+        textureJson.texture_data = textureJson.texture_data || {}
+        textureJson.texture_data[texKey] = {
+          textures: `textures/items/${texKey}`,
+        }
+        await writeFile(itemTextureFile, JSON.stringify(textureJson, null, 2))
+        jsonData['minecraft:item'].components['minecraft:icon'] = {
+          textures: texKey,
+        }
       }
-      await copyFile(iconComp, texFile)
-      const textureJson = (await McxUtlis.FileExsit(itemTextureFile))
-        ? JSON.parse(await readFile(itemTextureFile, 'utf-8'))
-        : { resource_pack_name: 'vanilla', texture_name: 'atlas.items', texture_data: {} }
-      textureJson.texture_data = textureJson.texture_data || {}
-      textureJson.texture_data[texKey] = { textures: `textures/items/${texKey}` }
-      await writeFile(itemTextureFile, JSON.stringify(textureJson, null, 2))
-      jsonData['minecraft:item'].components['minecraft:icon'] = { textures: texKey }
     }
     // write file
-    await writeFile(filePoint, JSON.stringify(jsonData, null, 2))
+    await writeFile(filePoint, JSON.stringify(json, null, 2))
   }
 }
 export * from './vm'

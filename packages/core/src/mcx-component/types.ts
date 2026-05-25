@@ -1041,8 +1041,11 @@ type ItemGroupEnum =
   | 'minecraft:itemGroup.name.banner_pattern'
   | 'minecraft:itemGroup.name.potterySherds'
   | 'minecraft:itemGroup.name.smithing_templates'
-interface ItemJSON {
-  format_version: string
+interface BaseJSON {
+  format_version: string;
+  _t: "item" | "entity"
+}
+interface ItemJSON extends BaseJSON {
   'minecraft:item': {
     description: {
       identifier: string
@@ -3344,5 +3347,5 @@ interface EntityJSON {
     component_groups?: Record<string, {}>
   }
 }
-export type { EntityComponentOpt, EntityJSON }
+export type { EntityComponentOpt, EntityJSON, BaseJSON }
 export { RepairItemSchema, SeedPropertiesSchema }

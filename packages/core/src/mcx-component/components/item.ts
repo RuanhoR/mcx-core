@@ -5087,5 +5087,78 @@ class ItemComponent {
       delete this.#opt.components['minecraft:use_modifiers']!.start_sound
     }
   }
+
+  public getIcon() {
+    return this.#opt.components.icon
+  }
+  public getAllowOffHand() {
+    return this.#opt.components.offHand
+  }
+  public getTags() {
+    return this.#opt.components.tags
+  }
+  public getDamageAbsorption() {
+    return this.#opt.components.damage_absorption
+  }
+  public getDurability() {
+    return this.#opt.components.durability
+  }
+  public getMaxStackSize() {
+    return this.#opt.components.max_stack_size
+  }
+  public getShouldDespawn() {
+    return (this.#opt.components as any).should_despawn
+  }
+  public getHandEquipped() {
+    return this.#opt.components.hand_equipped
+  }
+  public getRepairable() {
+    return (this.#opt.components as any).repairable
+  }
+  public getFuel() {
+    return this.#opt.components.fuel
+  }
+  public getStorageWeightModifier() {
+    return this.#opt.components['minecraft:storage_weight_modifier']
+  }
+  public getStorageWeightLimit() {
+    return this.#opt.components['minecraft:storage_weight_limit']
+  }
+  public getStorageItem() {
+    return this.#opt.components['minecraft:storage_item']
+  }
+  public getBundleInteraction() {
+    return this.#opt.components.bundle_interaction
+  }
+  public getCooldown() {
+    return this.#opt.components.cooldown
+  }
+  public getCompostable() {
+    return this.#opt.components.compostable
+  }
+  public getBlockPlacer() {
+    return this.#opt.components.block_placer
+  }
+  public getThrowable() {
+    return this.#opt.components['minecraft:throwable']
+  }
+  public getProjectile() {
+    return (this.#opt.components as any)['minecraft:projectile']
+  }
+  public getRecord() {
+    return (this.#opt.components as any)['minecraft:record']
+  }
+  public getGlint() {
+    return (this.#opt.components as any)['minecraft:glint']
+  }
+  public getUseAnimation() {
+    return this.#opt.components['minecraft:use_animation']
+  }
+  public getWearable() {
+    return this.#opt.components['minecraft:wearable']
+  }
+  public getUseModifiers() {
+    return this.#opt.components['minecraft:use_modifiers']
+  }
 }
 export { ItemComponent }

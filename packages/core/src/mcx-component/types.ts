@@ -10,7 +10,12 @@ interface ItemComponentOpt {
     offHand: boolean
     damage: number
     DestroyInCreate: boolean
-    icon: string
+    icon:
+      | string
+      | {
+          classId: 'mcx_png_2340192'
+          filePath: string
+        }
     block_placer?: {
       aligned_placement?: boolean
       block: string

@@ -58,6 +58,15 @@ class ItemComponent {
         ApplyComponents['minecraft:icon'] = {
           textures: components.icon.trim(),
         }
+      } else if (
+        typeof components.icon == 'object' &&
+        components.icon &&
+        'classId' in components.icon &&
+        components.icon.classId == 'mcx_png_2340192'
+      ) {
+        ApplyComponents['minecraft:icon'] = {
+          textures: components.icon.filePath,
+        }
       }
 
       if (components.block_placer) {
@@ -2664,8 +2673,16 @@ class ItemComponent {
       throw new Error('[set error]: name type error')
     }
   }
-  public setIcon(newValue: string): void {
-    if (typeof newValue == 'string') {
+  public setIcon(
+    newValue: string | { classId: 'mcx_png_2340192'; filePath: string },
+  ): void {
+    if (
+      typeof newValue == 'string' ||
+      (typeof newValue == 'object' &&
+        newValue &&
+        newValue.classId == 'mcx_png_2340192' &&
+        typeof newValue.filePath == 'string')
+    ) {
       this.#opt.components.icon = newValue
     } else {
       throw new Error('[set error]: icon: type error')

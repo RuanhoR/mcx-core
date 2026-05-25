@@ -39,10 +39,10 @@ interface ItemComponentOpt {
      * Enables an item to store data of the dynamic container associated with it.
      * A dynamic container is a container for storing items that is linked to an item instead of a block or an entity.
      *
-     * 注意：While this component can be defined on its own, to be able to interact with the item's storage container
+     * Tip：While this component can be defined on its own, to be able to interact with the item's storage container
      * the item must have a minecraft:bundle_interaction item component defined.
      *
-     * 注意：This item requires a format version of at least 1.21.40.
+     * Tip：This item requires a format version of at least 1.21.40.
      *
      * @example {
      *   "max_slots": 64,
@@ -2216,7 +2216,7 @@ interface EntityComponentOpt {
     }
     /**
      * Allows an entity to break doors, assuming that that flags set up for the component to use in navigation.
-     * 注意: Requires the entity's navigation component to have the parameter can_break_doors set to true.
+     * Tip: Requires the entity's navigation component to have the parameter can_break_doors set to true.
      */
     'minecraft:annotation.break_door'?: {
       /** The time in seconds required to break through doors. */

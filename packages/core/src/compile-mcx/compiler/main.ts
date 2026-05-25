@@ -9,7 +9,7 @@ import { readFile, rm } from 'node:fs/promises'
 import MagicString from 'magic-string'
 import path from 'node:path'
 import { transformCtx } from '../../types'
-import * as ts from 'typescript'
+import ts from 'typescript'
 import { readFileSync } from 'node:fs'
 function createMcxPlugin(
   opt: CompileOpt,

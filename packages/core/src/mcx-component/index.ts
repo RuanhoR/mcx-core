@@ -85,6 +85,7 @@ export async function compileComponent(
     const pointData = scriptRunResult[pointExport] as InstanceType<
       (typeof lib)[keyof typeof lib]
     >
+    // TODO: Add overload ItemJSON.prototype.setIcon() => set resources files(use hex value)
     if (!pointExport /* || !(pointData instanceof pointComponentClass) */) {
       throw new Error(
         '[component]: compile: check: not found Component class of file: ' +

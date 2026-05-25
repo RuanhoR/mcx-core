@@ -7,6 +7,7 @@ import { compileJSFn } from '../compile-mcx/compiler'
 import * as generator from '@babel/generator'
 import { ImportList } from '../compile-mcx/types'
 import { generateFileId } from '../transforms/file_id'
+// Enumerate the methods for converting ESM to CJS
 export enum execESMMethod {
   transformCjs = 0,
   runInVm = 1,
@@ -14,7 +15,7 @@ export enum execESMMethod {
 }
 
 /**
- * 将 ESM 模块转换为 CJS 格式
+ * ESM => CJS
  */
 function transformESMToCJS(
   code: string,
@@ -27,7 +28,7 @@ function transformESMToCJS(
   const compileData = compileJSFn(code)
   const body = compileData.node.body
   const defines: t.VariableDeclarator[] = []
-  // 添加 import 转换
+  // import transform
   const importDefines = transformImportIRtoRequire(
     compileData.BuildCache.import,
   )
@@ -40,7 +41,7 @@ function transformESMToCJS(
     }
     defines.push(importDefine)
   }
-  // 注入 plugin context
+  // add plugin context
   if (pluginContext) {
     defines.push(
       ...Object.entries(pluginContext).map(
@@ -112,34 +113,41 @@ function transformESMToCJS(
             ),
           )
           const exportExprs = i.specifiers
-            .map(specifier => {
-              if (t.isExportNamespaceSpecifier(specifier)) {
-                const exportedName = t.isIdentifier(specifier.exported)
-                  ? specifier.exported.name
-                  : (specifier.exported as any).value
-                return t.assignmentExpression(
-                  '=',
-                  t.memberExpression(
-                    t.identifier('exports'),
-                    t.identifier(exportedName),
-                  ),
-                  id,
-                )
-              } else if (t.isExportSpecifier(specifier)) {
-                const exportedName = t.isIdentifier(specifier.exported)
-                  ? specifier.exported.name
-                  : (specifier.exported as any).value
-                return t.assignmentExpression(
-                  '=',
-                  t.memberExpression(
-                    t.identifier('exports'),
-                    t.identifier(exportedName),
-                  ),
-                  t.memberExpression(id, t.identifier(specifier.local.name)),
-                )
-              }
-              return null
-            })
+            .map(
+              (
+                specifier:
+                  | t.ExportNamespaceSpecifier
+                  | t.ExportDefaultSpecifier
+                  | t.ExportSpecifier,
+              ) => {
+                if (t.isExportNamespaceSpecifier(specifier)) {
+                  const exportedName = t.isIdentifier(specifier.exported)
+                    ? specifier.exported.name
+                    : (specifier.exported as any).value
+                  return t.assignmentExpression(
+                    '=',
+                    t.memberExpression(
+                      t.identifier('exports'),
+                      t.identifier(exportedName),
+                    ),
+                    id,
+                  )
+                } else if (t.isExportSpecifier(specifier)) {
+                  const exportedName = t.isIdentifier(specifier.exported)
+                    ? specifier.exported.name
+                    : (specifier.exported as any).value
+                  return t.assignmentExpression(
+                    '=',
+                    t.memberExpression(
+                      t.identifier('exports'),
+                      t.identifier(exportedName),
+                    ),
+                    t.memberExpression(id, t.identifier(specifier.local.name)),
+                  )
+                }
+                return null
+              },
+            )
             .filter(Boolean) as t.AssignmentExpression[]
           return exportExprs.length === 1
             ? exportExprs[0]
@@ -226,7 +234,7 @@ function transformESMToCJS(
 }
 
 /**
- * 将 import IR 转换为 require 声明
+ * import IR => require
  */
 function transformImportIRtoRequire(
   importIR: ImportList[],

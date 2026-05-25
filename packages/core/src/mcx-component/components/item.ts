@@ -54,6 +54,20 @@ class ItemComponent {
           value: components.DestroyInCreate,
         }
       }
+      if (typeof components.icon == 'string' && components.icon.trim()) {
+        ApplyComponents['minecraft:icon'] = {
+          textures: components.icon.trim(),
+        }
+      } else if (
+        typeof components.icon == 'object' &&
+        components.icon &&
+        'classId' in components.icon &&
+        components.icon.classId == 'mcx_png_2340192'
+      ) {
+        ApplyComponents['minecraft:icon'] = {
+          textures: components.icon.filePath,
+        }
+      }
 
       if (components.block_placer) {
         // Validate format version for block_placer (requires 1.21.50+)
@@ -2659,9 +2673,19 @@ class ItemComponent {
       throw new Error('[set error]: name type error')
     }
   }
-  public setIcon(newValue: string): void {
-    if (typeof newValue == 'string') {
-      this.#opt.components.icon = newValue
+  public setIcon(newValue: string): void
+  public setIcon(newValue: t.ItemComponentOpt['components']['icon']): void
+  public setIcon(newValue: unknown): void {
+    if (
+      typeof newValue == 'string' ||
+      (typeof newValue == 'object' &&
+        newValue &&
+        'classId' in newValue &&
+        'filePath' in newValue &&
+        (newValue as { classId?: string }).classId == 'mcx_png_2340192' &&
+        typeof (newValue as { filePath?: unknown }).filePath == 'string')
+    ) {
+      this.#opt.components.icon = newValue as NonNullable<t.ItemComponentOpt['components']['icon']>
     } else {
       throw new Error('[set error]: icon: type error')
     }
@@ -5062,6 +5086,79 @@ class ItemComponent {
     } else if (config.start_sound === undefined) {
       delete this.#opt.components['minecraft:use_modifiers']!.start_sound
     }
+  }
+
+  public getIcon() {
+    return this.#opt.components.icon
+  }
+  public getAllowOffHand() {
+    return this.#opt.components.offHand
+  }
+  public getTags() {
+    return this.#opt.components.tags
+  }
+  public getDamageAbsorption() {
+    return this.#opt.components.damage_absorption
+  }
+  public getDurability() {
+    return this.#opt.components.durability
+  }
+  public getMaxStackSize() {
+    return this.#opt.components.max_stack_size
+  }
+  public getShouldDespawn() {
+    return (this.#opt.components as any).should_despawn
+  }
+  public getHandEquipped() {
+    return this.#opt.components.hand_equipped
+  }
+  public getRepairable() {
+    return (this.#opt.components as any).repairable
+  }
+  public getFuel() {
+    return this.#opt.components.fuel
+  }
+  public getStorageWeightModifier() {
+    return this.#opt.components['minecraft:storage_weight_modifier']
+  }
+  public getStorageWeightLimit() {
+    return this.#opt.components['minecraft:storage_weight_limit']
+  }
+  public getStorageItem() {
+    return this.#opt.components['minecraft:storage_item']
+  }
+  public getBundleInteraction() {
+    return this.#opt.components.bundle_interaction
+  }
+  public getCooldown() {
+    return this.#opt.components.cooldown
+  }
+  public getCompostable() {
+    return this.#opt.components.compostable
+  }
+  public getBlockPlacer() {
+    return this.#opt.components.block_placer
+  }
+  public getThrowable() {
+    return this.#opt.components['minecraft:throwable']
+  }
+  public getProjectile() {
+    return (this.#opt.components as any)['minecraft:projectile']
+  }
+  public getRecord() {
+    return (this.#opt.components as any)['minecraft:record']
+  }
+  public getGlint() {
+    return (this.#opt.components as any)['minecraft:glint']
+  }
+  public getUseAnimation() {
+    return this.#opt.components['minecraft:use_animation']
+  }
+  public getWearable() {
+    return this.#opt.components['minecraft:wearable']
+  }
+  public getUseModifiers() {
+    return this.#opt.components['minecraft:use_modifiers']
   }
 }
 export { ItemComponent }

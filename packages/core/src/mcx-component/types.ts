@@ -1,6 +1,7 @@
 import ParticleType from './types/ParticleType'
 import SoundEvent from './types/SoundEvent'
 import EnchantableSlot from './types/EnchantableSlot'
+import type { PNGImageComponent } from './lib'
 
 interface ItemComponentOpt {
   id: string
@@ -10,7 +11,7 @@ interface ItemComponentOpt {
     offHand: boolean
     damage: number
     DestroyInCreate: boolean
-    icon: string
+    icon: string | PNGImageComponent
     block_placer?: {
       aligned_placement?: boolean
       block: string
@@ -1065,7 +1066,9 @@ interface ItemJSON {
         type: 'use' | 'attack'
       }
       'minecraft:damage'?: JSONValue<number>
-      'minecraft:icon'?: JSONValue<string>
+      'minecraft:icon'?: {
+        textures: string
+      }
       'minecraft:block_placer'?: {
         aligned_placement?: boolean
         block: string

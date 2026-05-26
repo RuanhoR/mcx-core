@@ -1,14 +1,75 @@
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { MCXCompileData } from '../compile-mcx/compiler/compileData'
 import { execESMMethod, RunScript } from './vm'
 import path from 'node:path'
-import crypto from 'node:crypto'
 import lib from './lib'
 import { MCXstructureLocComponentType } from '../compile-mcx/types'
-import McxUtlis from '../utils'
 import { transformCtx } from '../types'
 import * as t from '@babel/types'
-import { BaseJSON, ItemJSON } from './types'
+import type { BaseJSON, EditFileBindSourceExpression, FilePoint } from './types'
+import { existsSync } from 'node:fs'
+const cachedOption = {} as Record<
+  EditFileBindSourceExpression['bind'],
+  string[] | string | [string, string][]
+>
+export function resolveFilePoint(point: FilePoint, ctx: transformCtx) {
+  if (point.base == 'root') {
+    return path.resolve(point.file)
+  } else if (point.base == 'behavior') {
+    return path.join(ctx.output.behavior, point.file)
+  } else if (point.base == 'resources') {
+    return path.join(ctx.output.resources, point.file)
+  }
+  throw new Error('[mcx component]: invaild FilePoint Base')
+}
+export async function execEdit(
+  option: BaseJSON['_meta']['file_edit'],
+  ctx: transformCtx,
+) {
+  if (!option) return
+  for (const editOption of option) {
+    if (editOption.type == 'batch') {
+      // batch -> call base
+      execEdit(editOption.options, ctx)
+    } else {
+      if (editOption.type == 'copy_assets') {
+        await cp(
+          resolveFilePoint(editOption.source, ctx),
+          resolveFilePoint(editOption.output, ctx),
+          {
+            recursive: true,
+            force: true,
+          },
+        )
+      } else if (editOption.type == 'edit') {
+        // first exec expression
+        const defineVars = {} as Record<string, string>
+        for (const varDefine of Object.entries(editOption.expression.define)) {
+          const value = varDefine[1]
+          if (value.from == 'var') {
+            defineVars[varDefine[0]] = value.data
+          } else {
+            const fileContent = await readFile(
+              resolveFilePoint(value.data, ctx),
+              'utf-8',
+            )
+            defineVars[varDefine[0]] = fileContent || value.default || ''
+          }
+        }
+        const execResult = await editOption.expression.run(defineVars)
+        // if editOption.source == FilePoint
+        if ('file' in editOption.source) {
+          const filePath = resolveFilePoint(editOption.source, ctx)
+          await writeFile(filePath, execResult.toString())
+        }
+        if ('bind' in editOption.source) {
+          if (editOption.source.type == 'append') {
+          }
+        }
+      }
+    }
+  }
+}
 export async function compileComponent(
   compiledCode: MCXCompileData,
   ctx: transformCtx,
@@ -87,61 +148,28 @@ export async function compileComponent(
     const pointData = scriptRunResult[pointExport] as InstanceType<
       (typeof lib)[keyof typeof lib]
     >
-    if (!pointExport /* || !(pointData instanceof pointComponentClass) */) {
+    if (
+      !pointExport /* || !(pointData instanceof pointComponentClass)  (note: vm class is not instance of ComponentClass)*/
+    ) {
       throw new Error(
         '[component]: compile: check: not found Component class of file: ' +
           compiledCode.File,
       )
     }
     // check dir exists
-    if (!(await McxUtlis.FileExsit(path.dirname(filePoint)))) {
+    if (!existsSync(path.dirname(filePoint))) {
       mkdir(path.dirname(filePoint), {
         recursive: true,
       })
     }
     const json = pointData.toJSON() as BaseJSON
-    if (json._t == 'item') {
-      const jsonData = json as ItemJSON
-      const iconComp =
-        jsonData['minecraft:item']?.components?.['minecraft:icon']?.textures
-      if (
-        typeof iconComp == 'string' &&
-        /^(\/|\.\/|\.\.\/).+\.png$/i.test(iconComp)
-      ) {
-        const iconRaw = await readFile(iconComp)
-        const texKey = crypto.createHash('sha1').update(iconRaw).digest('hex')
-        const texFile = path.join(
-          ctx.output.resources,
-          'textures',
-          'items',
-          `${texKey}.png`,
-        )
-        const itemTextureFile = path.join(
-          ctx.output.resources,
-          'textures',
-          'item_texture.json',
-        )
-        if (!(await McxUtlis.FileExsit(path.dirname(texFile)))) {
-          await mkdir(path.dirname(texFile), { recursive: true })
-        }
-        await copyFile(iconComp, texFile)
-        const textureJson = (await McxUtlis.FileExsit(itemTextureFile))
-          ? JSON.parse(await readFile(itemTextureFile, 'utf-8'))
-          : {
-              resource_pack_name: 'vanilla',
-              texture_name: 'atlas.items',
-              texture_data: {},
-            }
-        textureJson.texture_data = textureJson.texture_data || {}
-        textureJson.texture_data[texKey] = {
-          textures: `textures/items/${texKey}`,
-        }
-        await writeFile(itemTextureFile, JSON.stringify(textureJson, null, 2))
-        jsonData['minecraft:item'].components['minecraft:icon'] = {
-          textures: texKey,
-        }
-      }
-    }
+    if (
+      !json._meta ||
+      !json._meta.type ||
+      (json._meta.type !== 'item' && json._meta.type !== 'entity')
+    )
+      throw new Error('[mcx component]: not mcx json component: unkown type')
+    if (json._meta.file_edit) execEdit(json._meta.file_edit, ctx)
     // write file
     await writeFile(filePoint, JSON.stringify(json, null, 2))
   }

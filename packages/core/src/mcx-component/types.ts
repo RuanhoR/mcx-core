@@ -2,7 +2,75 @@ import ParticleType from './types/ParticleType'
 import SoundEvent from './types/SoundEvent'
 import EnchantableSlot from './types/EnchantableSlot'
 import type { PNGImageComponent } from './lib'
-
+export interface FilePoint {
+  /**
+   * Edit file path base
+   */
+  base: 'behavior' | 'resources' | 'root'
+  /**
+   * <BASE>/$file
+   */
+  file: string
+}
+export interface EditFileBindSourceExpression {
+  /**
+   * Bind some value
+   * Mcx can write to file
+   */
+  bind: 'item_texture'
+  /**
+   * Set bind value mode
+   * @example type = "append"; bind value => array (append expression return)
+   * @example type = "all_replcae" bind value => unkown (all replcae)
+   */
+  type: 'append' | 'all_replace'
+}
+export type EditFileOption =
+  | {
+      type: 'edit'
+      id?: string
+      source: FilePoint | EditFileBindSourceExpression
+      expression: {
+        define: Record<
+          string,
+          | {
+              from: 'var'
+              data: string
+            }
+          | {
+              from: 'read_file'
+              data: FilePoint
+              default?: string
+            }
+        >
+        /**
+         * Expression
+         */
+        run: (
+          define: Record<string, string>,
+        ) => Promise<string | string[] | [string, string][]>
+      }
+    }
+  | {
+      type: 'copy_assets'
+      id?: string
+      source: FilePoint
+      output: FilePoint
+    }
+interface BaseJSON {
+  format_version: string
+  _meta: {
+    type: 'item' | 'entity'
+    file_edit?: (
+      | EditFileOption
+      | {
+          type: 'batch'
+          options: EditFileOption[]
+          id?: string
+        }
+    )[]
+  }
+}
 interface ItemComponentOpt {
   id: string
   name: string
@@ -1041,10 +1109,7 @@ type ItemGroupEnum =
   | 'minecraft:itemGroup.name.banner_pattern'
   | 'minecraft:itemGroup.name.potterySherds'
   | 'minecraft:itemGroup.name.smithing_templates'
-interface BaseJSON {
-  format_version: string;
-  _t: "item" | "entity"
-}
+
 interface ItemJSON extends BaseJSON {
   'minecraft:item': {
     description: {
@@ -3331,12 +3396,10 @@ interface EntityComponentOpt {
       should_baby_face_parent?: boolean
       variants?: Record<string | number, number>
     }
-    // 后面可以根据需要添加更多实体组件
   }
 }
 
-interface EntityJSON {
-  format_version: string
+interface EntityJSON extends BaseJSON {
   'minecraft:entity': {
     description: {
       identifier: string

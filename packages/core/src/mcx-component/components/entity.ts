@@ -12,6 +12,10 @@ class EntityComponent {
 
     const result: t.EntityJSON = {
       format_version: '',
+      _meta: {
+        type: 'entity',
+        file_edit: [],
+      },
       'minecraft:entity': {
         description: {
           identifier: '',

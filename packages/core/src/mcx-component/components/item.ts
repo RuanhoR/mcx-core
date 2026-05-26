@@ -1,6 +1,9 @@
+import { randomUUID } from 'node:crypto'
+import { PNGImageComponent } from '../lib'
 import * as t from './../types'
 class ItemComponent {
   #opt: t.ItemComponentOpt
+  #edit: t.BaseJSON['_meta']['file_edit'] = []
   constructor(opt: t.ItemComponentOpt) {
     this.#opt = opt
   }
@@ -8,7 +11,10 @@ class ItemComponent {
     if (!this.#opt) throw new Error('[mcx component]: cannot read component')
     const result: t.ItemJSON = {
       format_version: '',
-      _t: 'item',
+      _meta: {
+        type: 'item',
+        file_edit: [],
+      },
       'minecraft:item': {
         components: {},
         description: {
@@ -2675,23 +2681,74 @@ class ItemComponent {
     }
   }
   public setIcon(newValue: string): void
-  public setIcon(newValue: t.ItemComponentOpt['components']['icon']): void
-  public setIcon(newValue: unknown): void {
-    if (
-      typeof newValue == 'string' ||
-      (typeof newValue == 'object' &&
-        newValue &&
-        'classId' in newValue &&
-        'filePath' in newValue &&
-        (newValue as { classId?: string }).classId == 'mcx_png_2340192' &&
-        typeof (newValue as { filePath?: unknown }).filePath == 'string')
-    ) {
-      this.#opt.components.icon = newValue as NonNullable<
-        t.ItemComponentOpt['components']['icon']
-      >
-    } else {
-      throw new Error('[set error]: icon: type error')
+  public setIcon(newValue: PNGImageComponent): void
+  public setIcon(newValue: PNGImageComponent | string): void {
+    if (typeof newValue == 'string') {
+      this.#opt.components.icon = newValue
+    } else if (newValue.classId == 'mcx_png_2340192') {
+      const filePath = newValue.filePath
+      const idKey = '__icon_id_point'
+      if (!this.#edit) this.#edit = []
+      let idx: number = -1
+      const allIconCp = this.#edit.find((v, i) => {
+        if (
+          v.type == 'batch' &&
+          v.options[0] &&
+          v.options[1] &&
+          v.options[0].id &&
+          v.options[0].id == idKey &&
+          v.options[1].id &&
+          v.options[1].id == `_w_${idKey}`
+        ) {
+          idx = i
+          return true
+        }
+      })
+      if (allIconCp && idx !== -1) {
+        this.#edit.splice(idx, 1)
+      }
+      const execId = randomUUID()
+      this.#edit.push({
+        type: 'batch',
+        id: execId,
+        options: [
+          {
+            type: 'copy_assets',
+            source: {
+              base: 'root',
+              file: filePath,
+            },
+            output: {
+              base: 'resources',
+              file: `items/${execId}.png`,
+            },
+          },
+          {
+            type: 'edit',
+            source: {
+              type: 'append',
+              bind: 'item_texture',
+            },
+            expression: {
+              define: {
+                old: {
+                  from: 'read_file',
+                  data: {
+                    base: 'resources',
+                    file: 'textures/item_texture.json',
+                  },
+                  default: '{}',
+                },
+              },
+              run: '',
+            },
+          },
+        ],
+      })
     }
+    throw new Error(
+      "[mcx component json]: unkown icon value: err: can't handler value",
+    )
   }
   /**
    * get name

@@ -1,16 +1,16 @@
 import * as t from './../types'
 
 class EntityComponent {
-  #opt: t.EntityComponentOpt
+  #opt: t.EntityComponentOptions
 
-  constructor(opt: t.EntityComponentOpt) {
+  constructor(opt: t.EntityComponentOptions) {
     this.#opt = opt
   }
 
-  public toJSON(): t.EntityJSON {
+  public toJSON(): t.EntityJson {
     if (!this.#opt) throw new Error('[mcx component]: cannot read component')
 
-    const result: t.EntityJSON = {
+    const result: t.EntityJson = {
       format_version: '',
       _meta: {
         type: 'entity',

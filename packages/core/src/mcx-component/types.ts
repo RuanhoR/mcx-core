@@ -12,7 +12,7 @@ export interface FilePoint {
    */
   file: string
 }
-export interface EditFileBindSourceExpression {
+export interface FileBindSource {
   /**
    * Bind some value
    * Mcx can write to file
@@ -21,35 +21,38 @@ export interface EditFileBindSourceExpression {
   /**
    * Set bind value mode
    * @example type = "append"; bind value => array (append expression return)
-   * @example type = "all_replcae" bind value => unkown (all replcae)
+   * @example type = "all_replace" bind value => unknown (all replace)
    */
   type: 'append' | 'all_replace'
 }
-export type EditFileOption =
+export type DefineEntry =
+  | {
+      from: 'var'
+      data: string
+    }
+  | {
+      from: 'read_file'
+      data: FilePoint
+      default?: string
+    }
+export type FileEditExpression<
+  T extends Record<string, DefineEntry> = Record<string, DefineEntry>,
+> = {
+  define: T
+
+  /**
+   * Expression
+   */
+  run: (define: {
+    [key in keyof T]: string
+  }) => Promise<string | string[] | [string, string][]>
+}
+export type FileEditOption =
   | {
       type: 'edit'
       id?: string
-      source: FilePoint | EditFileBindSourceExpression
-      expression: {
-        define: Record<
-          string,
-          | {
-              from: 'var'
-              data: string
-            }
-          | {
-              from: 'read_file'
-              data: FilePoint
-              default?: string
-            }
-        >
-        /**
-         * Expression
-         */
-        run: (
-          define: Record<string, string>,
-        ) => Promise<string | string[] | [string, string][]>
-      }
+      source: FilePoint | FileBindSource
+      expression: FileEditExpression
     }
   | {
       type: 'copy_assets'
@@ -57,28 +60,28 @@ export type EditFileOption =
       source: FilePoint
       output: FilePoint
     }
-interface BaseJSON {
+export interface BaseJson {
   format_version: string
   _meta: {
     type: 'item' | 'entity'
     file_edit?: (
-      | EditFileOption
+      | FileEditOption
       | {
           type: 'batch'
-          options: EditFileOption[]
+          options: FileEditOption[]
           id?: string
         }
     )[]
   }
 }
-interface ItemComponentOpt {
+interface ItemComponentOptions {
   id: string
   name: string
   format: string
   components: Partial<{
     offHand: boolean
     damage: number
-    DestroyInCreate: boolean
+    canDestroyInCreative: boolean
     icon: string | PNGImageComponent
     block_placer?: {
       aligned_placement?: boolean
@@ -1110,7 +1113,7 @@ type ItemGroupEnum =
   | 'minecraft:itemGroup.name.potterySherds'
   | 'minecraft:itemGroup.name.smithing_templates'
 
-interface ItemJSON extends BaseJSON {
+interface ItemJson extends BaseJson {
   'minecraft:item': {
     description: {
       identifier: string
@@ -2005,9 +2008,9 @@ interface ItemJSON extends BaseJSON {
   }
 }
 export type {
-  ItemComponentOpt,
+  ItemComponentOptions,
   ItemGroupEnum,
-  ItemJSON,
+  ItemJson,
   ParticleType,
   SoundEvent,
   EnchantableSlot,
@@ -2015,6 +2018,16 @@ export type {
   RepairAmountExpression,
   SeedProperties,
 }
+/** @deprecated Use ItemComponentOptions instead */
+export type { ItemComponentOptions as ItemComponentOpt }
+/** @deprecated Use ItemJson instead */
+export type { ItemJson as ItemJSON }
+/** @deprecated Use FileEditOption instead */
+export type { FileEditOption as EditFileOption }
+/** @deprecated Use FileEditExpression instead */
+export type { FileEditExpression as EditFileEditExpression }
+/** @deprecated Use FileBindSource instead */
+export type { FileBindSource as EditFileBindSourceExpression }
 // Rarity type constants
 type Rarity = 'common' | 'uncommon' | 'rare' | 'epic'
 
@@ -2110,7 +2123,7 @@ const SeedPropertiesSchema = {
 } as const
 
 // Entity Component Interfaces
-interface EntityComponentOpt {
+interface EntityComponentOptions {
   id: string
   format: string
   is_spawnable?: boolean
@@ -3399,16 +3412,19 @@ interface EntityComponentOpt {
   }
 }
 
-interface EntityJSON extends BaseJSON {
+interface EntityJson extends BaseJson {
   'minecraft:entity': {
     description: {
       identifier: string
       is_spawnable?: boolean
       is_summonable?: boolean
     }
-    components?: EntityComponentOpt['components']
+    components?: EntityComponentOptions['components']
     component_groups?: Record<string, {}>
   }
 }
-export type { EntityComponentOpt, EntityJSON, BaseJSON }
+export type { EntityComponentOptions, EntityJson }
+export type { EntityComponentOptions as EntityComponentOpt }
+export type { EntityJson as EntityJSON }
+export type { BaseJson as BaseJSON }
 export { RepairItemSchema, SeedPropertiesSchema }

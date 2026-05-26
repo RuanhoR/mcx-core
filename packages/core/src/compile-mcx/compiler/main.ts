@@ -11,6 +11,10 @@ import path from 'node:path'
 import { transformCtx } from '../../types'
 import ts from 'typescript'
 import { readFileSync } from 'node:fs'
+import {
+  generateItemTextureJson,
+  clearCachedOptions,
+} from '../../mcx-component'
 function createMcxPlugin(
   opt: CompileOpt,
   output: transformCtx['output'],
@@ -236,8 +240,10 @@ function createMcxPlugin(
       }
       return null
     },
-    buildEnd() {
+    async buildEnd() {
       cache.clear()
+      await generateItemTextureJson(output)
+      clearCachedOptions()
     },
     buildStart() {
       cache = new Map()

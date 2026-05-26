@@ -2,14 +2,14 @@ import { randomUUID } from 'node:crypto'
 import { PNGImageComponent } from '../lib'
 import * as t from './../types'
 class ItemComponent {
-  #opt: t.ItemComponentOpt
-  #edit: t.BaseJSON['_meta']['file_edit'] = []
-  constructor(opt: t.ItemComponentOpt) {
+  #opt: t.ItemComponentOptions
+  #edit: t.BaseJson['_meta']['file_edit'] = []
+  constructor(opt: t.ItemComponentOptions) {
     this.#opt = opt
   }
-  public toJSON(): t.ItemJSON {
+  public toJSON(): t.ItemJson {
     if (!this.#opt) throw new Error('[mcx component]: cannot read component')
-    const result: t.ItemJSON = {
+    const result: t.ItemJson = {
       format_version: '',
       _meta: {
         type: 'item',
@@ -56,9 +56,9 @@ class ItemComponent {
           value: components.offHand,
         }
       }
-      if (typeof components.DestroyInCreate == 'boolean') {
+      if (typeof components.canDestroyInCreative == 'boolean') {
         ApplyComponents['minecraft:can_destroy_in_creative'] = {
-          value: components.DestroyInCreate,
+          value: components.canDestroyInCreative,
         }
       }
       if (typeof components.icon == 'string' && components.icon.trim()) {
@@ -2685,12 +2685,17 @@ class ItemComponent {
   public setIcon(newValue: PNGImageComponent | string): void {
     if (typeof newValue == 'string') {
       this.#opt.components.icon = newValue
-    } else if (newValue.classId == 'mcx_png_2340192') {
+      return
+    }
+    if (newValue.classId == 'mcx_png_2340192') {
       const filePath = newValue.filePath
+      const textureKey: string = this.#opt.id.includes(':')
+        ? this.#opt.id.split(':')[1] as string
+        : this.#opt.id
       const idKey = '__icon_id_point'
       if (!this.#edit) this.#edit = []
       let idx: number = -1
-      const allIconCp = this.#edit.find((v, i) => {
+      const found = this.#edit.find((v: any, i: number) => {
         if (
           v.type == 'batch' &&
           v.options[0] &&
@@ -2704,7 +2709,7 @@ class ItemComponent {
           return true
         }
       })
-      if (allIconCp && idx !== -1) {
+      if (found && idx !== -1) {
         this.#edit.splice(idx, 1)
       }
       const execId = randomUUID()
@@ -2714,6 +2719,7 @@ class ItemComponent {
         options: [
           {
             type: 'copy_assets',
+            id: idKey,
             source: {
               base: 'root',
               file: filePath,
@@ -2725,29 +2731,36 @@ class ItemComponent {
           },
           {
             type: 'edit',
+            id: `_w_${idKey}`,
             source: {
               type: 'append',
               bind: 'item_texture',
             },
             expression: {
               define: {
-                old: {
-                  from: 'read_file',
-                  data: {
-                    base: 'resources',
-                    file: 'textures/item_texture.json',
-                  },
-                  default: '{}',
+                key: {
+                  from: 'var',
+                  data: textureKey,
+                },
+                texture: {
+                  from: 'var',
+                  data: `items/${execId}`,
                 },
               },
-              run: '',
+              run: async (define: Record<string, string>) => {
+                return [
+                  [define['key']!, `textures/${define['texture']!}`],
+                ] satisfies [string, string][]
+              },
             },
           },
         ],
       })
+      this.#opt.components.icon = textureKey
+      return
     }
     throw new Error(
-      "[mcx component json]: unkown icon value: err: can't handler value",
+      "[mcx component json]: unknown icon value: err: can't handle value",
     )
   }
   /**

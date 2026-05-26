@@ -6,12 +6,18 @@ import lib from './lib'
 import { MCXstructureLocComponentType } from '../compile-mcx/types'
 import { transformCtx } from '../types'
 import * as t from '@babel/types'
-import type { BaseJSON, EditFileBindSourceExpression, FilePoint } from './types'
-import { existsSync } from 'node:fs'
-const cachedOption = {} as Record<
-  EditFileBindSourceExpression['bind'],
-  string[] | string | [string, string][]
->
+import type { BaseJson, FilePoint } from './types'
+import { existsSync, readFileSync } from 'node:fs'
+
+const cachedOption: Record<string, string[] | [string, string][]> = {}
+
+/** Clear all cached bind options (called between builds) */
+export function clearCachedOptions() {
+  for (const key of Object.keys(cachedOption)) {
+    delete cachedOption[key]
+  }
+}
+
 export function resolveFilePoint(point: FilePoint, ctx: transformCtx) {
   if (point.base == 'root') {
     return path.resolve(point.file)
@@ -23,14 +29,13 @@ export function resolveFilePoint(point: FilePoint, ctx: transformCtx) {
   throw new Error('[mcx component]: invaild FilePoint Base')
 }
 export async function execEdit(
-  option: BaseJSON['_meta']['file_edit'],
+  option: BaseJson['_meta']['file_edit'],
   ctx: transformCtx,
 ) {
   if (!option) return
   for (const editOption of option) {
     if (editOption.type == 'batch') {
-      // batch -> call base
-      execEdit(editOption.options, ctx)
+      await execEdit(editOption.options, ctx)
     } else {
       if (editOption.type == 'copy_assets') {
         await cp(
@@ -42,41 +47,93 @@ export async function execEdit(
           },
         )
       } else if (editOption.type == 'edit') {
-        // first exec expression
         const defineVars = {} as Record<string, string>
-        for (const varDefine of Object.entries(editOption.expression.define)) {
-          const value = varDefine[1]
+        for (const [key, entry] of Object.entries(
+          editOption.expression.define,
+        )) {
+          const value = entry as
+            | { from: 'var'; data: string }
+            | { from: 'read_file'; data: FilePoint; default?: string }
           if (value.from == 'var') {
-            defineVars[varDefine[0]] = value.data
+            defineVars[key] = value.data
           } else {
             const fileContent = await readFile(
               resolveFilePoint(value.data, ctx),
               'utf-8',
             )
-            defineVars[varDefine[0]] = fileContent || value.default || ''
+            defineVars[key] = fileContent || value.default || ''
           }
         }
         const execResult = await editOption.expression.run(defineVars)
-        // if editOption.source == FilePoint
         if ('file' in editOption.source) {
           const filePath = resolveFilePoint(editOption.source, ctx)
           await writeFile(filePath, execResult.toString())
         }
         if ('bind' in editOption.source) {
-          if (editOption.source.type == 'append') {
+          if (
+            editOption.source.bind == 'item_texture' &&
+            editOption.source.type == 'append'
+          ) {
+            if (!cachedOption['item_texture']) cachedOption['item_texture'] = []
+            if (Array.isArray(execResult)) {
+              cachedOption['item_texture'] = [
+                ...(cachedOption['item_texture'] as [string, string][]),
+                ...(execResult as [string, string][]),
+              ]
+            }
           }
         }
       }
     }
   }
 }
+
+/**
+ * Generate the final textures/item_texture.json from accumulated bind data.
+ * Call this in the plugin's buildEnd / onEnd hook.
+ */
+export async function generateItemTextureJson(output: {
+  resources: string
+}): Promise<void> {
+  const entries = cachedOption['item_texture'] as [string, string][] | undefined
+  if (!entries || entries.length === 0) return
+
+  const dir = path.join(output.resources, 'textures')
+  const filePath = path.join(dir, 'item_texture.json')
+
+  let data: {
+    resource_pack_name: string
+    texture_name: string
+    texture_data: Record<string, { textures: string }>
+  } = {
+    resource_pack_name: 'mcx.pack.v.',
+    texture_name: 'atlas.items',
+    texture_data: {},
+  }
+
+  try {
+    const existing = JSON.parse(readFileSync(filePath, 'utf-8'))
+    if (existing.texture_data) {
+      data.texture_data = existing.texture_data
+    }
+  } catch {
+    // File doesn't exist yet, use default
+  }
+
+  for (const [key, textures] of entries) {
+    data.texture_data[key] = { textures }
+  }
+
+  await mkdir(dir, { recursive: true })
+  await writeFile(filePath, JSON.stringify(data, null, 2))
+}
+
 export async function compileComponent(
   compiledCode: MCXCompileData,
   ctx: transformCtx,
 ) {
   const component = compiledCode.strLoc.Component
   const src = compiledCode.strLoc.script
-  // run component in vm(no console and more)
   const scriptRunResult = (await new RunScript(compiledCode.File, 'esm').run(
     src,
     execESMMethod.transformCjs,
@@ -128,7 +185,6 @@ export async function compileComponent(
     string,
     InstanceType<(typeof lib)[MCXstructureLocComponentType]> | undefined
   >
-  // check have export
   if (!component)
     throw new Error(
       '[component internal error]: compile component: mcx is not component: filePath: ' +
@@ -140,37 +196,31 @@ export async function compileComponent(
     )
   for (const i of Object.entries(component)) {
     const filePoint = path.join(ctx.output.behavior, i[0])
-    // check the file point is child of behavior output
     if (!path.relative(filePoint, ctx.output.behavior).startsWith('..'))
       throw new Error('[component]: Path Traversal: path: ' + filePoint)
     const pointExport = i[1].useExpore
-    // export data
     const pointData = scriptRunResult[pointExport] as InstanceType<
       (typeof lib)[keyof typeof lib]
     >
-    if (
-      !pointExport /* || !(pointData instanceof pointComponentClass)  (note: vm class is not instance of ComponentClass)*/
-    ) {
+    if (!pointExport) {
       throw new Error(
         '[component]: compile: check: not found Component class of file: ' +
           compiledCode.File,
       )
     }
-    // check dir exists
     if (!existsSync(path.dirname(filePoint))) {
-      mkdir(path.dirname(filePoint), {
+      await mkdir(path.dirname(filePoint), {
         recursive: true,
       })
     }
-    const json = pointData.toJSON() as BaseJSON
+    const json = pointData.toJSON() as BaseJson
     if (
       !json._meta ||
       !json._meta.type ||
       (json._meta.type !== 'item' && json._meta.type !== 'entity')
     )
       throw new Error('[mcx component]: not mcx json component: unkown type')
-    if (json._meta.file_edit) execEdit(json._meta.file_edit, ctx)
-    // write file
+    if (json._meta.file_edit) await execEdit(json._meta.file_edit, ctx)
     await writeFile(filePoint, JSON.stringify(json, null, 2))
   }
 }

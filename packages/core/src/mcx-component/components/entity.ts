@@ -22,8 +22,6 @@ class EntityComponent {
         },
       },
     }
-
-    // 设置格式版本
     if (
       typeof this.#opt.format == 'string' &&
       /\d.\d.\d/.test(this.#opt.format)
@@ -32,8 +30,6 @@ class EntityComponent {
     } else {
       throw new Error('[compile component]: no format')
     }
-
-    // 设置实体标识符
     if (
       typeof this.#opt.id == 'string' &&
       /[a-zA-Z0-9_]:[a-zA-Z0-9_]/.test(this.#opt.id)
@@ -42,8 +38,6 @@ class EntityComponent {
     } else {
       throw new Error('[compile component]: no id')
     }
-
-    // 设置是否可生成和召唤
     if (typeof this.#opt.is_spawnable === 'boolean') {
       result['minecraft:entity'].description.is_spawnable =
         this.#opt.is_spawnable

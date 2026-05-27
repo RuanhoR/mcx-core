@@ -2690,7 +2690,7 @@ class ItemComponent {
     if (newValue.classId == 'mcx_png_2340192') {
       const filePath = newValue.filePath
       const textureKey: string = this.#opt.id.includes(':')
-        ? this.#opt.id.split(':')[1] as string
+        ? (this.#opt.id.split(':')[1] as string)
         : this.#opt.id
       const idKey = '__icon_id_point'
       if (!this.#edit) this.#edit = []
@@ -2736,7 +2736,7 @@ class ItemComponent {
               type: 'append',
               bind: 'item_texture',
             },
-            expression: {
+            expression: t.createFileEdit({
               define: {
                 key: {
                   from: 'var',
@@ -2744,15 +2744,15 @@ class ItemComponent {
                 },
                 texture: {
                   from: 'var',
-                  data: `items/${execId}`,
+                  data: `items/${execId}.png`,
                 },
               },
-              run: async (define: Record<string, string>) => {
+              run: async define => {
                 return [
-                  [define['key']!, `textures/${define['texture']!}`],
+                  [define['key'], `textures/${define['texture']}`],
                 ] satisfies [string, string][]
               },
-            },
+            }),
           },
         ],
       })

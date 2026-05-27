@@ -5,7 +5,6 @@ import type {
   ThisExpression,
   PrivateName,
   callExpression,
-  ArrayExpression,
 } from '@babel/types'
 import { Context } from './compiler'
 

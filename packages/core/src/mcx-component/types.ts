@@ -39,20 +39,26 @@ export type FileEditExpression<
   T extends Record<string, DefineEntry> = Record<string, DefineEntry>,
 > = {
   define: T
-
-  /**
-   * Expression
-   */
-  run: (define: {
-    [key in keyof T]: string
-  }) => Promise<string | string[] | [string, string][]>
+  run: (define: { [K in keyof T]: string }) => Promise<
+    string | string[] | [string, string][]
+  >
+}
+export function createFileEdit<
+  T extends Record<string, DefineEntry>,
+>(expression: {
+  define: T
+  run: (define: { [K in keyof T]: string }) => Promise<
+    string | string[] | [string, string][]
+  >
+}): FileEditExpression<T> {
+  return expression
 }
 export type FileEditOption =
   | {
       type: 'edit'
       id?: string
       source: FilePoint | FileBindSource
-      expression: FileEditExpression
+      expression: FileEditExpression<any>
     }
   | {
       type: 'copy_assets'

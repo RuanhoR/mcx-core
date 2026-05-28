@@ -1,4 +1,4 @@
-import type { ParserOptions } from '@babel/parser'
+import type { ParserOptions } from '@babel/parser';
 import type {
   ImportDeclaration,
   ExportAllDeclaration,
@@ -8,56 +8,56 @@ import type {
   SpreadElement,
   ArgumentPlaceholder,
   CallExpression,
-} from '@babel/types'
-import { CompileOpt } from '@mbler/mcx-types'
-import { ParsedTagNode } from '../types'
+} from '@babel/types';
+import { CompileOpt } from '@mbler/mcx-types';
+import { ParsedTagNode } from '../types';
 interface callList {
-  source: Expression
-  set: (callEXp: CallExpression) => boolean
-  arguments: Array<SpreadElement | Expression | ArgumentPlaceholder>
-  remove: () => void
+  source: Expression;
+  set: (callEXp: CallExpression) => boolean;
+  arguments: Array<SpreadElement | Expression | ArgumentPlaceholder>;
+  remove: () => void;
 }
 interface ImportListImport {
-  isAll: boolean
-  import?: string | undefined
-  as: string
+  isAll: boolean;
+  import?: string | undefined;
+  as: string;
 }
 interface ImportList {
-  source: string
-  imported: ImportListImport[]
-  raw?: ImportDeclaration
+  source: string;
+  imported: ImportListImport[];
+  raw?: ImportDeclaration;
 }
 interface BuildCache {
-  call: callList[]
-  import: ImportList[]
+  call: callList[];
+  import: ImportList[];
   export: Array<
     ExportNamedDeclaration | ExportAllDeclaration | ExportDefaultDeclaration
-  >
+  >;
 }
 export const _MCXstructureLocComponentTypes = {
   items: 'item',
   blocks: 'block',
   entities: 'entity',
-} as const
+} as const;
 type MCXstructureLocComponentType =
-  (typeof _MCXstructureLocComponentTypes)[keyof typeof _MCXstructureLocComponentTypes]
+  (typeof _MCXstructureLocComponentTypes)[keyof typeof _MCXstructureLocComponentTypes];
 interface MCXstructureLoc {
-  script: string
+  script: string;
   Event: {
-    on: 'after' | 'before'
-    subscribe: Record<string, string>
-    loc: { line: number; column: number }
-    isLoad: boolean
-  }
+    on: 'after' | 'before';
+    subscribe: Record<string, string>;
+    loc: { line: number; column: number };
+    isLoad: boolean;
+  };
   Component: Record<
     string,
     {
-      type: MCXstructureLocComponentType
-      useExpore: string
-      loc: { line: number; column: number }
+      type: MCXstructureLocComponentType;
+      useExpore: string;
+      loc: { line: number; column: number };
     }
-  >
-  UI: ParsedTagNode | null
+  >;
+  UI: ParsedTagNode | null;
 }
 export type {
   BuildCache,
@@ -67,4 +67,4 @@ export type {
   CompileOpt,
   MCXstructureLoc,
   MCXstructureLocComponentType,
-}
+};

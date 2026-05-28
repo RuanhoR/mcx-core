@@ -553,6 +553,6 @@ export const AttackCriticalHitChoicesEnum = [
   'water',
   'whine',
   'wind_charge.burst',
-]
-type AttackCriticalHitChoices = (typeof AttackCriticalHitChoicesEnum)[number]
-export default AttackCriticalHitChoices
+];
+type AttackCriticalHitChoices = (typeof AttackCriticalHitChoicesEnum)[number];
+export default AttackCriticalHitChoices;

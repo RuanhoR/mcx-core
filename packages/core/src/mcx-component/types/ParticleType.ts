@@ -97,7 +97,7 @@ const ParticleTypeEnum = [
   'windexplosion',
   'witchspell',
   'wolfarmorcrack',
-] as const
-type ParticleType = (typeof ParticleTypeEnum)[number]
-export default ParticleType
-export { ParticleTypeEnum }
+] as const;
+type ParticleType = (typeof ParticleTypeEnum)[number];
+export default ParticleType;
+export { ParticleTypeEnum };

@@ -1,6 +1,6 @@
-import { ParsedTagNode, transformParseCtx } from '../../types'
-import * as t from '@babel/types'
-import { generateEventConfig } from '../utils'
+import { ParsedTagNode, transformParseCtx } from '../../types';
+import * as t from '@babel/types';
+import { generateEventConfig } from '../utils';
 export async function Comp(ctx: transformParseCtx) {
   const appData = [
     t.objectProperty(
@@ -13,6 +13,6 @@ export async function Comp(ctx: transformParseCtx) {
         ctx.impBody,
       ),
     ),
-  ]
-  ctx.app(appData)
+  ];
+  ctx.app(appData);
 }

@@ -1,20 +1,20 @@
-import type { PropNode, PropValue } from '../types.js'
+import type { PropNode, PropValue } from '../types.js';
 
-const STATUS = [0, 1] // 0: 搜集 key，1: 搜集 value
+const STATUS = [0, 1]; // 0: 搜集 key，1: 搜集 value
 
 export class Lexer {
-  private code: string
+  private code: string;
 
   constructor(code: string) {
-    this.code = code
+    this.code = code;
   }
 
   // 对外暴露的 tokenize 方法（生成器函数）
   *tokenize(): IterableIterator<PropNode> {
-    let currStatus = STATUS[0] // 0: key，1: value
-    let key = ''
-    let value = ''
-    let hasEquals = false
+    let currStatus = STATUS[0]; // 0: key，1: value
+    let key = '';
+    let value = '';
+    let hasEquals = false;
 
     for (const char of this.code) {
       if (/\s/.test(char)) {
@@ -24,28 +24,28 @@ export class Lexer {
               key,
               value: this.HandlerValue(value),
               type: 'PropChar',
-            }
-            yield propNode
+            };
+            yield propNode;
           } else if (currStatus === STATUS[0] && key) {
           }
-          key = ''
-          value = ''
-          hasEquals = false
-          currStatus = STATUS[0]
+          key = '';
+          value = '';
+          hasEquals = false;
+          currStatus = STATUS[0];
         }
-        continue // 跳过所有空白字符
+        continue; // 跳过所有空白字符
       }
 
       if (char === '=') {
         if (currStatus === STATUS[0]) {
-          currStatus = STATUS[1] // 切换到 value 状态
-          hasEquals = true
+          currStatus = STATUS[1]; // 切换到 value 状态
+          hasEquals = true;
         }
       } else {
         if (currStatus === STATUS[0]) {
-          key += char // 搜集 key
+          key += char; // 搜集 key
         } else if (currStatus === STATUS[1]) {
-          value += char // 搜集 value
+          value += char; // 搜集 value
         }
       }
     }
@@ -54,25 +54,25 @@ export class Lexer {
         key,
         value: this.HandlerValue(value),
         type: 'PropChar',
-      }
-      yield propNode
+      };
+      yield propNode;
     }
   }
   HandlerValue(value: string): PropValue {
-    const num = Number(value)
-    if (!Number.isNaN(num)) return num
+    const num = Number(value);
+    if (!Number.isNaN(num)) return num;
     if (
       ['[', '{'].includes(value.slice(0, 1)) &&
       [']', '}'].includes(value.slice(-1))
     ) {
-      return JSON.parse(value)
+      return JSON.parse(value);
     }
-    return value
+    return value;
   }
 }
 
 // 默认导出解析函数
 export default function PropParser(code: string): PropNode[] {
-  const lexer = new Lexer(code)
-  return Array.from(lexer.tokenize())
+  const lexer = new Lexer(code);
+  return Array.from(lexer.tokenize());
 }

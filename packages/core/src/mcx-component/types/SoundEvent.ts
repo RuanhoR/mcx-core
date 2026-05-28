@@ -557,7 +557,7 @@ const SoundEventEnum = [
   'water',
   'whine',
   'wind_charge.burst',
-]
-type SoundEvent = (typeof SoundEventEnum)[number]
-export default SoundEvent
-export { SoundEventEnum }
+];
+type SoundEvent = (typeof SoundEventEnum)[number];
+export default SoundEvent;
+export { SoundEventEnum };

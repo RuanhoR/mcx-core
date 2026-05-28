@@ -29,10 +29,10 @@ export const EnchantableSlotArray = [
   'carrot_stick',
   'elytra',
   'cosmetic_head',
-] as const
+] as const;
 
-export type EnchantableSlot = (typeof EnchantableSlotArray)[number]
+export type EnchantableSlot = (typeof EnchantableSlotArray)[number];
 
-export const EnchantableSlotEnum = EnchantableSlotArray
+export const EnchantableSlotEnum = EnchantableSlotArray;
 
-export default EnchantableSlot
+export default EnchantableSlot;

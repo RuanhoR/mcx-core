@@ -1,6 +1,6 @@
 class BlockComponent {
   public toJSON() {
-    return {}
+    return {};
   }
 }
-export { BlockComponent }
+export { BlockComponent };

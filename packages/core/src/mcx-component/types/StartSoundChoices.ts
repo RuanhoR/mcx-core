@@ -553,6 +553,6 @@ export const StartSoundChoicesEnum = [
   'water',
   'whine',
   'wind_charge.burst',
-] as const
-type StartSoundChoices = (typeof StartSoundChoicesEnum)[number]
-export default StartSoundChoices
+] as const;
+type StartSoundChoices = (typeof StartSoundChoicesEnum)[number];
+export default StartSoundChoices;

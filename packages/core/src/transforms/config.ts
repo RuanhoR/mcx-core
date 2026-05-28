@@ -7,4 +7,4 @@ export default {
   eventExtendsName: 'McxExtendsBy',
   // paramName
   paramCtx: '__mcx__ctx',
-} as const
+} as const;

@@ -17,7 +17,7 @@ export default class Utils {
     try {
       return Parser.parse(file).program;
     } catch (err: any) {
-      throw new Error('[compile ast]: ' + err.stack);
+      throw new Error('[compiler]: babel error' + err.stack);
     }
   }
   public static async FileContent(fileDir: string): Promise<string> {

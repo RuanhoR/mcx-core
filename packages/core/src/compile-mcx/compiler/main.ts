@@ -253,10 +253,6 @@ function createMcxPlugin(
   };
 }
 
-function AbsoluteJoin(base: string, dir: string): string {
-  return isAbsolute(dir) ? dir : join(base, dir);
-}
-
 export function rollupPlugin(
   opt: CompileOpt,
   output: transformCtx['output'],

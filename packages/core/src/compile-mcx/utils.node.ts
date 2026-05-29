@@ -83,17 +83,17 @@ export default class NodeUtils {
   }
 
   /**
-   * 计算表达式的值
-   * @param expression Babel AST 表达式节点
-   * @param currentContext 当前上下文变量
-   * @param topContext 顶层上下文变量
-   * @returns 计算结果 (string | number | symbol | object)
+   * Calc babel expression value
+   * @param expression Babel AST node
+   * @param currentContext current context
+   * @param topContext top context
+   * @returns {string | number | symbol | object}
    */
   public static evaluateExpression(
     expression: Expression,
     currentContext: Context = {},
     topContext: Context = {},
-  ): string | number | symbol | object {
+  ): unknown {
     const context = { ...topContext, ...currentContext };
 
     const evaluate = (

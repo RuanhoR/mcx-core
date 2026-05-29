@@ -9,13 +9,11 @@ import * as t from '@babel/types';
 import type { BaseJson, FilePoint } from './types';
 import { existsSync, readFileSync } from 'node:fs';
 
-const cachedOption: Record<string, string[] | [string, string][]> = {};
+let cachedOption: Record<string, string[] | [string, string][]> = {};
 
 /** Clear all cached bind options (called between builds) */
 export function clearCachedOptions() {
-  for (const key of Object.keys(cachedOption)) {
-    delete cachedOption[key];
-  }
+  cachedOption = {};
 }
 
 export function resolveFilePoint(point: FilePoint, ctx: transformCtx) {

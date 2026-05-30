@@ -13,7 +13,7 @@ class ItemComponent {
       format_version: '',
       _meta: {
         type: 'item',
-        file_edit: [],
+        file_edit: this.#edit || [],
       },
       'minecraft:item': {
         components: {},
@@ -2702,9 +2702,9 @@ class ItemComponent {
       const textureKey: string = this.#opt.id.includes(':')
         ? (this.#opt.id.split(':')[1] as string)
         : this.#opt.id;
-      const idKey = '__icon_id_point';
       if (!this.#edit) this.#edit = [];
       let idx: number = -1;
+      const idKey = '__icon_key__';
       const found = this.#edit.find((v: any, i: number) => {
         if (
           v.type == 'batch' &&
@@ -2722,10 +2722,8 @@ class ItemComponent {
       if (found && idx !== -1) {
         this.#edit.splice(idx, 1);
       }
-      const execId = randomUUID();
       this.#edit.push({
         type: 'batch',
-        id: execId,
         options: [
           {
             type: 'copy_assets',
@@ -2736,7 +2734,7 @@ class ItemComponent {
             },
             output: {
               base: 'resources',
-              file: `items/${execId}.png`,
+              file: `textures/items/${textureKey}.png`,
             },
           },
           {
@@ -2754,7 +2752,7 @@ class ItemComponent {
                 },
                 texture: {
                   from: 'var',
-                  data: `items/${execId}.png`,
+                  data: `items/${textureKey}.png`,
                 },
               } as const,
               run: async define => {

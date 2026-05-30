@@ -16,6 +16,43 @@ interface EventOpt {
   extends?: MCXFile<'event'>[];
   tick?: number;
 }
+interface MCXUIOpt {
+  layout: {
+    type:
+      | 'input'
+      | 'dropdown'
+      | 'submit'
+      | 'toggle'
+      | 'slider'
+      | 'button-m'
+      | 'button'
+      | 'divider'
+      | 'title'
+      | 'body';
+    params: {
+      [key in
+        | 'click'
+        | 'default'
+        | 'option'
+        | 'min'
+        | 'max'
+        | 'placeholderText'
+        | 'tip'
+        | 'img']: string;
+    };
+    content:
+      | string
+      | {
+          useProp: string;
+        };
+  }[];
+  use: typeof ModalFormData | typeof MessageFormData | typeof ActionFormData;
+  UI: typeof _minecraft_server_ui;
+}
+declare class ui {
+  constructor(UIConfig: MCXUIOpt, mcxSrcFn: (ctx: MCXCtx) => any);
+  show(player: Player, prop: Record<string, string>): Promise<void>;
+}
 declare class Event {
   constructor(opt: EventOpt);
   subscribe(...events: string[]): boolean;
@@ -48,6 +85,10 @@ interface MCXFile<T extends MCXFileType> extends MCXFileBase {
     ? AppMCXContent
     : T extends 'event'
       ? MCXEventData
-      : void;
+      : T extends 'ui'
+        ? {
+            ui: ui;
+          }
+        : never;
 }
 export type { CompileOpt, MCXFile, EventOpt, MCXCtx, MCXFileBase };

@@ -19,12 +19,4 @@ const main = {
     "@minecraft/server-ui"
   ],
 };
-const Dts = {
-  input: "src/index.ts",
-  output: {
-    file: "dist/index.d.ts",
-    format: "es",
-  },
-  plugins: [dts()],
-};
-export default [main, Dts];
+export default [main];

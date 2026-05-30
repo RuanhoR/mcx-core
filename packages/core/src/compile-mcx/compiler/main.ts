@@ -15,10 +15,7 @@ import {
   generateItemTextureJson,
   clearCachedOptions,
 } from '../../mcx-component';
-function createMcxPlugin(
-  opt: CompileOpt,
-  output: transformCtx['output'],
-): Plugin {
+function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
   let cache: Map<string, MCXCompileData> = new Map();
   let tsconfig: ts.ParsedCommandLine;
   try {
@@ -209,7 +206,11 @@ function createMcxPlugin(
               line: error.loc.line,
             });
           }
-          this.error(String(err));
+          this.error(
+            err instanceof Error
+              ? `${err.message} : ${err.stack}`
+              : String(err),
+          );
           return;
         }
         compileData.setFilePath(id);
@@ -250,7 +251,7 @@ function createMcxPlugin(
     buildStart() {
       cache = new Map();
     },
-  };
+  } satisfies Plugin;
 }
 
 export function rollupPlugin(

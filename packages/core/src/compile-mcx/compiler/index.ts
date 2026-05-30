@@ -237,7 +237,9 @@ export class CompileJS {
           expr.arguments.length > 0 &&
           t.isStringLiteral(expr.arguments[0])
         ) {
-          this.indexTemp[`__require_${(expr.arguments[0] as t.StringLiteral).value}`] = {
+          this.indexTemp[
+            `__require_${(expr.arguments[0] as t.StringLiteral).value}`
+          ] = {
             source: (expr.arguments[0] as t.StringLiteral).value,
             import: 'default',
             isAll: false,
@@ -248,7 +250,9 @@ export class CompileJS {
           expr.arguments.length > 0 &&
           t.isStringLiteral(expr.arguments[0])
         ) {
-          this.indexTemp[`__import_${(expr.arguments[0] as t.StringLiteral).value}`] = {
+          this.indexTemp[
+            `__import_${(expr.arguments[0] as t.StringLiteral).value}`
+          ] = {
             source: (expr.arguments[0] as t.StringLiteral).value,
             import: 'default',
             isAll: false,
@@ -533,5 +537,7 @@ export const compileMCXFn = ((mcxCode: string): CompileData.MCXCompileData => {
 }) as ((mcxCode: string) => CompileData.MCXCompileData) & {
   cache: Record<string, CompileData.MCXCompileData>;
 };
+compileJSFn.cache = {};
+compileMCXFn.cache = {};
 export * from './compileData';
 export { Utils as MCXNodeUtils };

@@ -7,7 +7,7 @@ export async function Comp(ctx: transformParseCtx) {
 
   ctx.impBody.push(
     t.importDeclaration(
-      [t.importSpecifier(t.identifier('__mcx_ui'), t.identifier('ui'))],
+      [t.importSpecifier(t.identifier('__mcx__ui'), t.identifier('ui'))],
       t.stringLiteral('@mbler/mcx'),
     ),
     t.importDeclaration(

@@ -2756,7 +2756,7 @@ class ItemComponent {
                   from: 'var',
                   data: `items/${execId}.png`,
                 },
-              },
+              } as const,
               run: async define => {
                 return [
                   [define['key'], `textures/${define['texture']}`],

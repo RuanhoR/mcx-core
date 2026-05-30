@@ -183,7 +183,10 @@ async function generateEventConfig(
             path.join(path.dirname(ctx.currentId), extFile),
           ))
         )
-          throw new Error("[transform event]: can't resolve");
+          throw new Error(
+            "[transform event]: [ERR: NOT_FOUND]: can't resolve extend file: " +
+              extFile,
+          );
         const id = generateFileId();
         impBody.push(
           t.importDeclaration(

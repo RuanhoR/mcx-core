@@ -47,19 +47,12 @@ function extractLoc(node: any): { line: number; column: number } {
 function makeError(msg: string, node?: any) {
   return new CompileError(msg, extractLoc(node));
 }
-interface ImportTemp extends ImportListImport {
+interface ImportTemp {
   source: string;
-  as: never;
+  import?: string | undefined;
+  isAll: boolean;
 }
 export type Context = Record<string, t.Expression | { status: 'wait' }>;
-type MemberItem =
-  | t.NewExpression
-  | t.CallExpression
-  | t.Super
-  | t.ThisExpression
-  | t.Import
-  | t.Literal
-  | t.Identifier;
 export class CompileJS {
   constructor(public node: t.Program) {
     if (!t.isProgram(node))
@@ -79,338 +72,34 @@ export class CompileJS {
         source: source.source,
         import: node.import,
         isAll: node.isAll,
-      } as any;
+      };
     }
-  }
-  private takeInnerMost(node: t.MemberExpression): MemberItem {
-    if (!t.isMemberExpression(node))
-      throw makeError('[take item}: must MemberExpression', node);
-    let current: t.Node | t.Expression | t.V8IntrinsicIdentifier = node;
-    while (true) {
-      if (t.isMemberExpression(current)) {
-        current = current.object;
-        continue;
-      }
-
-      if (t.isCallExpression(current)) {
-        const callee = current.callee as t.Node;
-        if (t.isMemberExpression(callee)) {
-          current = callee.object;
-          continue;
-        }
-        current = callee;
-        continue;
-      }
-
-      if (
-        t.isIdentifier(current) ||
-        t.isThisExpression(current) ||
-        t.isSuper(current) ||
-        t.isImport(current) ||
-        t.isNewExpression(current) ||
-        (typeof t.isLiteral === 'function' && (t.isLiteral as any)(current))
-      ) {
-        return current as MemberItem;
-      }
-
-      if (t.isLiteral(current)) {
-        return current as MemberItem;
-      }
-
-      return t.stringLiteral('');
-    }
-  }
-  private writeImportKeys: string[] = [];
-  private extractIdentifierNames(
-    node: t.Expression | t.V8IntrinsicIdentifier | t.PrivateName,
-  ): string[] {
-    const identifiers: string[] = [];
-
-    if (t.isIdentifier(node)) {
-      identifiers.push(node.name);
-    } else if (t.isMemberExpression(node)) {
-      identifiers.push(...this.extractIdentifierNames(node.object));
-      if (node.property.type !== 'PrivateName') {
-        identifiers.push(...this.extractIdentifierNames(node.property));
-      }
-    } else if (t.isCallExpression(node)) {
-      identifiers.push(...this.extractIdentifierNames(node.callee));
-      for (const arg of node.arguments) {
-        if (t.isExpression(arg)) {
-          identifiers.push(...this.extractIdentifierNames(arg));
-        }
-      }
-    } else if (t.isNewExpression(node)) {
-      // Handle new expressions specifically
-      identifiers.push(...this.extractIdentifierNames(node.callee));
-      for (const arg of node.arguments) {
-        if (t.isExpression(arg)) {
-          identifiers.push(...this.extractIdentifierNames(arg));
-        }
-      }
-    } else if (t.isBinaryExpression(node) || t.isLogicalExpression(node)) {
-      identifiers.push(...this.extractIdentifierNames(node.left));
-      identifiers.push(...this.extractIdentifierNames(node.right));
-    } else if (t.isUnaryExpression(node)) {
-      identifiers.push(...this.extractIdentifierNames(node.argument));
-    } else if (t.isConditionalExpression(node)) {
-      identifiers.push(...this.extractIdentifierNames(node.test));
-      identifiers.push(...this.extractIdentifierNames(node.consequent));
-      identifiers.push(...this.extractIdentifierNames(node.alternate));
-    } else if (t.isImport(node)) {
-      identifiers.push('import');
-    }
-    return identifiers;
   }
   private writeBuildCache() {
-    const currenySource: string[] = [];
     const build: ImportList[] = [];
     for (const [as, data] of Object.entries(this.indexTemp)) {
-      if (!this.writeImportKeys.includes(as)) continue;
-      if (currenySource.includes(data.source)) {
-        let isFound: boolean = false;
-        for (const index in build) {
-          const i = build[index];
-          if (!i) continue;
-          if (i.source == data.source) {
-            i.imported.push({
-              as: as,
-              isAll: data.isAll,
-              import: data.import,
-            });
-            isFound = true;
-          }
+      let found = false;
+      for (const i of build) {
+        if (i.source === data.source) {
+          i.imported.push({ as, isAll: data.isAll, import: data.import });
+          found = true;
+          break;
         }
-        if (!isFound)
-          throw makeError('[mcx compoiler]: internal error: unexpected source');
-      } else {
+      }
+      if (!found) {
         build.push({
           source: data.source,
-          imported: [
-            {
-              as,
-              import: data.import,
-              isAll: data.isAll,
-            },
-          ],
+          imported: [{ as, import: data.import, isAll: data.isAll }],
         });
-        currenySource.push(data.source);
       }
     }
-    // write filtered imports into CompileData.BuildCache
     this.CompileData.BuildCache.import = build;
   }
   private CompileData: CompileData.JsCompileData;
   public getCompileData(): CompileData.JsCompileData {
     return this.CompileData;
   }
-  private conditionalInTempImport(
-    node: t.Expression,
-    thisContext: Context,
-    remove: () => void,
-    set: (exp: t.Expression) => boolean,
-  ): void {
-    // If identifier, mark it
-    if (t.isIdentifier(node)) {
-      if (
-        node.name in this.indexTemp &&
-        !this.writeImportKeys.includes(node.name)
-      ) {
-        this.writeImportKeys.push(node.name);
-      }
-      return;
-    }
 
-    if (node.type == 'FunctionExpression') {
-      this.tre(t.blockStatement([node.body]));
-      return;
-    }
-
-    if (node.type == 'ArrowFunctionExpression') {
-      if (t.isExpression(node.body)) {
-        this.conditionalInTempImport(node.body, thisContext, remove, set);
-      } else {
-        this.tre(node.body);
-      }
-      return;
-    }
-
-    if (t.isLiteral(node)) return;
-
-    // If member expression, collect identifiers inside it
-    if (t.isMemberExpression(node)) {
-      const names = this.extractIdentifierNames(node);
-      for (const n of names) {
-        if (n in this.indexTemp && !this.writeImportKeys.includes(n))
-          this.writeImportKeys.push(n);
-      }
-      // recurse into object and property when applicable
-      this.conditionalInTempImport(
-        node.object as t.Expression,
-        thisContext,
-        remove,
-        set,
-      );
-      if (t.isExpression(node.property))
-        this.conditionalInTempImport(node.property, thisContext, remove, set);
-      return;
-    }
-
-    // Call expression: record call for buildcache and mark identifiers used in callee and args
-    if (
-      t.isCallExpression(node) &&
-      node.callee?.type !== 'V8IntrinsicIdentifier'
-    ) {
-      this.CompileData.BuildCache.call.push({
-        source: node.callee,
-        set(callExp: t.CallExpression): boolean {
-          if (callExp.callee.type == 'V8IntrinsicIdentifier') return false;
-          this.source = callExp.callee;
-          this.arguments = callExp.arguments;
-          set(callExp);
-          return true;
-        },
-        arguments: node.arguments,
-        remove,
-      });
-
-      this.conditionalInTempImport(
-        node.callee as t.Expression,
-        thisContext,
-        remove,
-        set,
-      );
-      for (const arg of node.arguments) {
-        if (t.isExpression(arg)) {
-          this.conditionalInTempImport(
-            arg,
-            thisContext,
-            () => {},
-            () => true,
-          );
-        } else if (arg.type == 'SpreadElement') {
-          this.conditionalInTempImport(
-            arg.argument,
-            thisContext,
-            () => {},
-            () => true,
-          );
-        }
-      }
-      return;
-    }
-
-    // New expression: mark identifiers used in constructor
-    if (t.isNewExpression(node)) {
-      this.conditionalInTempImport(
-        node.callee as t.Expression,
-        thisContext,
-        remove,
-        set,
-      );
-      for (const arg of node.arguments) {
-        if (t.isExpression(arg)) {
-          this.conditionalInTempImport(
-            arg,
-            thisContext,
-            () => {},
-            () => true,
-          );
-        } else if (arg.type == 'SpreadElement') {
-          this.conditionalInTempImport(
-            arg.argument,
-            thisContext,
-            () => {},
-            () => true,
-          );
-        }
-      }
-      return;
-    }
-    if (t.isObjectExpression(node)) {
-      for (const prop of node.properties) {
-        if (t.isSpreadElement(prop)) {
-          this.conditionalInTempImport(
-            prop.argument,
-            thisContext,
-            () => {},
-            () => true,
-          );
-        } else if (t.isObjectMethod(prop)) {
-          this.tre(prop.body, thisContext);
-        } else if (t.isObjectProperty(prop)) {
-          if (!t.isPrivateName(prop.key))
-            this.conditionalInTempImport(
-              prop.key,
-              thisContext,
-              () => {},
-              () => true,
-            );
-          if (t.isExpression(prop.value))
-            this.conditionalInTempImport(
-              prop.value,
-              thisContext,
-              () => {},
-              () => true,
-            );
-        }
-      }
-      return;
-    }
-    if (t.isAwaitExpression(node)) {
-      this.conditionalInTempImport(node.argument, thisContext, remove, set);
-      return;
-    }
-    if (t.isArrayExpression(node)) {
-      for (const expressionIndex in node.elements) {
-        const expression = node.elements[expressionIndex];
-        const removeFn = () => {
-          node.elements.splice(expressionIndex as unknown as number, 1);
-        };
-        const setFn = (newData: t.Expression) => {
-          node.elements[expressionIndex] = newData;
-          return true;
-        };
-        if (t.isExpression(expression))
-          this.conditionalInTempImport(
-            node.elements[expressionIndex] as t.Expression,
-            thisContext,
-            removeFn,
-            setFn,
-          );
-        if (t.isSpreadElement(expression))
-          this.conditionalInTempImport(
-            expression.argument,
-            thisContext,
-            removeFn,
-            setFn,
-          );
-      }
-      return;
-    }
-    if (t.isAssignmentExpression(node)) {
-      this.conditionalInTempImport(
-        node.right,
-        thisContext,
-        () => {
-          node.right = t.nullLiteral();
-        },
-        exp => {
-          node.right = exp;
-          return true;
-        },
-      );
-      return;
-    }
-    // Generic expressions: try to extract identifier names and mark them
-    try {
-      const names = this.extractIdentifierNames(node);
-      for (const n of names) {
-        if (n in this.indexTemp && !this.writeImportKeys.includes(n))
-          this.writeImportKeys.push(n);
-      }
-    } catch {}
-  }
   private tre(node: t.Block, ExtendContext: Context = {}): void {
     if (!t.isBlock(node))
       throw makeError("[compile error]: can't for in not block node", node);
@@ -422,7 +111,6 @@ export class CompileJS {
         node.body.splice(index, 1);
         index--;
       };
-      const set = (t: any) => (node.body[index] = t);
       if (!item) continue;
       if (item.type == 'ImportDeclaration') {
         if (!isTop)
@@ -445,37 +133,14 @@ export class CompileJS {
       } else if (item.type == 'TryStatement') {
         this.tre(item.block, currenyContext);
       } else if (item.type == 'IfStatement') {
-        const If = item.test;
-        this.conditionalInTempImport(
-          If,
-          currenyContext,
-          remove,
-          (t: t.Expression) => {
-            item.test = t;
-            return true;
-          },
-        );
         const nodes: t.Statement[] = [item.consequent];
         if (item.alternate) nodes.push(item.alternate);
-        // if ... else ... make one by one
         this.tre(t.blockStatement(nodes), currenyContext);
       } else if (item.type == 'WhileStatement') {
         this.tre(t.blockStatement([item.body]), currenyContext);
       } else if (item.type == 'ClassDeclaration') {
         if (item.superClass) {
           const superClass = item.superClass;
-          let superId: string | null = null;
-          if (superClass.type == 'Identifier') {
-            superId = superClass.name;
-          }
-          if (superClass.type == 'MemberExpression') {
-            // take the innermost item
-            const tempNode = this.takeInnerMost(superClass);
-            if (tempNode.type == 'Identifier') {
-              superId = tempNode.name;
-            }
-          }
-          // Prevent values that are not allowed to be extends
           if (
             superClass.type == 'ArrayExpression' ||
             superClass.type == 'BooleanLiteral' ||
@@ -500,23 +165,9 @@ export class CompileJS {
               "[compilr error]: class can't extends a not constructor or null",
               superClass,
             );
-          if (superId) {
-            if (this.indexTemp[superId]) {
-              this.writeImportKeys.push(superId);
-            }
-          }
         }
       } else if (item.type == 'DoWhileStatement') {
         this.tre(t.blockStatement([item.body]));
-        this.conditionalInTempImport(
-          item.test,
-          currenyContext,
-          remove,
-          (t: t.Expression) => {
-            item.test = t;
-            return true;
-          },
-        );
       } else if (item.type == 'VariableDeclaration') {
         const declaration = item.declarations;
         for (const varDef of declaration) {
@@ -533,25 +184,36 @@ export class CompileJS {
                 varDef,
               );
             currenyContext[id.name] = init;
-
-            // Process the initialization expression to mark used imports
-            if (init) {
-              this.conditionalInTempImport(
-                init,
-                currenyContext,
-                remove,
-                (t: t.Expression) => {
-                  varDef.init = t;
-                  return true;
-                },
-              );
+            if (
+              init &&
+              t.isCallExpression(init) &&
+              t.isIdentifier(init.callee) &&
+              init.callee.name === 'require' &&
+              init.arguments.length > 0 &&
+              t.isStringLiteral(init.arguments[0])
+            ) {
+              this.indexTemp[id.name] = {
+                source: (init.arguments[0] as t.StringLiteral).value,
+                import: 'default',
+                isAll: false,
+              };
+            } else if (
+              init &&
+              t.isCallExpression(init) &&
+              t.isImport(init.callee) &&
+              init.arguments.length > 0 &&
+              t.isStringLiteral(init.arguments[0])
+            ) {
+              this.indexTemp[id.name] = {
+                source: (init.arguments[0] as t.StringLiteral).value,
+                import: 'default',
+                isAll: false,
+              };
             }
           }
         }
       } else if (item.type == 'ReturnStatement') {
-        const body = item.argument;
-        if (!body) continue;
-        this.conditionalInTempImport(body, currenyContext, remove, set);
+        continue;
       } else if (
         item.type == 'ExportAllDeclaration' ||
         item.type == 'ExportDefaultDeclaration' ||
@@ -560,79 +222,38 @@ export class CompileJS {
         if (!isTop) {
           throw makeError("[compiler]: export node can't in not top", item);
         }
-        if (item.type == 'ExportDefaultDeclaration') {
-          if (t.isExpression(item.declaration)) {
-            this.conditionalInTempImport(
-              item.declaration,
-              currenyContext,
-              remove,
-              set,
-            );
-          }
-        } else if (item.type == 'ExportNamedDeclaration') {
-          if (item.specifiers.length >= 1) {
-            for (const specifierIndex in item.specifiers) {
-              const specifier = item.specifiers[specifierIndex];
-              if (!specifier) continue;
-              if (specifier.type == 'ExportDefaultSpecifier') {
-                this.conditionalInTempImport(
-                  specifier.exported,
-                  currenyContext,
-                  () => {
-                    item.specifiers.splice(
-                      specifierIndex as unknown as number,
-                      1,
-                    );
-                  },
-                  newData => {
-                    (
-                      item.specifiers[
-                        specifierIndex
-                      ] as t.ExportDefaultSpecifier
-                    ).exported = newData as t.Identifier;
-                    return true;
-                  },
-                );
-              } else if (specifier.type == 'ExportSpecifier') {
-                this.conditionalInTempImport(
-                  specifier.local,
-                  currenyContext,
-                  () => {},
-                  () => true,
-                );
-              }
-            }
-          }
-        }
         this.CompileData.BuildCache.export.push(item);
         remove();
       } else if (item.type == 'SwitchStatement') {
-        const vaule = item.discriminant;
-        this.conditionalInTempImport(vaule, currenyContext, remove, set);
         for (const caseItem of item.cases) {
-          if (caseItem.test) {
-            this.conditionalInTempImport(
-              caseItem.test,
-              currenyContext,
-              remove,
-              (t: t.Expression) => {
-                caseItem.test = t;
-                return true;
-              },
-            );
-          }
           this.tre(t.blockStatement(caseItem.consequent), currenyContext);
         }
       } else if (item.type == 'ExpressionStatement') {
-        this.conditionalInTempImport(
-          item.expression,
-          currenyContext,
-          remove,
-          (t: t.Expression) => {
-            item.expression = t;
-            return true;
-          },
-        );
+        const expr = item.expression;
+        if (
+          t.isCallExpression(expr) &&
+          t.isIdentifier(expr.callee) &&
+          expr.callee.name === 'require' &&
+          expr.arguments.length > 0 &&
+          t.isStringLiteral(expr.arguments[0])
+        ) {
+          this.indexTemp[`__require_${(expr.arguments[0] as t.StringLiteral).value}`] = {
+            source: (expr.arguments[0] as t.StringLiteral).value,
+            import: 'default',
+            isAll: false,
+          };
+        } else if (
+          t.isCallExpression(expr) &&
+          t.isImport(expr.callee) &&
+          expr.arguments.length > 0 &&
+          t.isStringLiteral(expr.arguments[0])
+        ) {
+          this.indexTemp[`__import_${(expr.arguments[0] as t.StringLiteral).value}`] = {
+            source: (expr.arguments[0] as t.StringLiteral).value,
+            import: 'default',
+            isAll: false,
+          };
+        }
       } else if (item.type == 'FunctionDeclaration') {
         const funcBody = item.body;
         this.tre(funcBody, currenyContext);

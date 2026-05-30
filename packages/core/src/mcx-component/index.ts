@@ -102,7 +102,7 @@ export async function generateItemTextureJson(output: {
   const dir = path.join(output.resources, 'textures');
   const filePath = path.join(dir, 'item_texture.json');
 
-  let data: {
+  const data: {
     resource_pack_name: string;
     texture_name: string;
     texture_data: Record<string, { textures: string }>;

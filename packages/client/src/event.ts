@@ -6,6 +6,7 @@ import {
 } from '@minecraft/server'
 import { EventOpt, MCXFile } from '@mbler/mcx-types'
 import { generateAntiShake } from './lib/Utils'
+import * as TypePkg from '@mbler/mcx-types'
 let _world = world
 interface BindResponse {
   code: number
@@ -19,7 +20,7 @@ class EventStatus {
   on: WorldAfterEvents | WorldBeforeEvents | null = null
 }
 
-class Event {
+class Event implements TypePkg.Event {
   status = new EventStatus()
   constructor(opt: EventOpt, loadExtend: (mcx: MCXFile<'event'>) => Event) {
     this.status.all = Object.fromEntries(

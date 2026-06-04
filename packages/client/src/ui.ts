@@ -1,6 +1,7 @@
 import type { MCXCtx } from '@mbler/mcx-types'
 import type { MCXUIOpt } from './types'
 import type { Player } from '@minecraft/server'
+import * as typesPkg from '@mbler/mcx-types'
 import type {
   ActionFormResponse,
   MessageFormData,
@@ -26,7 +27,7 @@ interface ParsedUIOption extends Omit<MCXUIOpt, 'layout'> {
     type: MCXUIOpt['layout'][number]['type']
   }[]
 }
-export class ui {
+export class ui implements typesPkg.ui {
   private _mcUI: typeof import('@minecraft/server-ui')
   private _srcResult: Record<string, any> = {}
   private _UI: MCXUIOpt['use']

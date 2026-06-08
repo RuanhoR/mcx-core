@@ -1,105 +1,105 @@
-import type { MCXCtx } from '@mbler/mcx-types'
-import type { MCXUIOpt } from './types'
-import type { Player } from '@minecraft/server'
-import * as typesPkg from '@mbler/mcx-types'
+import type { MCXCtx } from '@mbler/mcx-types';
+import type { MCXUIOpt } from './types';
+import type { Player } from '@minecraft/server';
+import * as typesPkg from '@mbler/mcx-types';
 import type {
   ActionFormResponse,
   MessageFormData,
   MessageFormResponse,
   ModalFormResponse,
-} from '@minecraft/server-ui'
+} from '@minecraft/server-ui';
 interface ParsedParams extends Omit<
   MCXUIOpt['layout'][number]['params'],
   'click'
 > {
   click: (
     value: ModalFormResponse | MessageFormData | ActionFormResponse,
-  ) => void
+  ) => void;
 }
 interface ParsedUIOption extends Omit<MCXUIOpt, 'layout'> {
   layout: {
-    params: ParsedParams
+    params: ParsedParams;
     content:
       | string
       | {
-          useProp: string
-        }
-    type: MCXUIOpt['layout'][number]['type']
-  }[]
+          useProp: string;
+        };
+    type: MCXUIOpt['layout'][number]['type'];
+  }[];
 }
 export class ui implements typesPkg.ui {
-  private _mcUI: typeof import('@minecraft/server-ui')
-  private _srcResult: Record<string, any> = {}
-  private _UI: MCXUIOpt['use']
-  private _prop: string[]
-  private _layout: ParsedUIOption['layout']
-  private _usePropLayoutIndexList: number[] = []
-  private _uiType: 'modal' | 'action' | 'message'
+  private _mcUI: typeof import('@minecraft/server-ui');
+  private _srcResult: Record<string, any> = {};
+  private _UI: MCXUIOpt['use'];
+  private _prop: string[];
+  private _layout: ParsedUIOption['layout'];
+  private _usePropLayoutIndexList: number[] = [];
+  private _uiType: 'modal' | 'action' | 'message';
   constructor(UIConfig: MCXUIOpt, mcxSrcFn: (ctx: MCXCtx) => any) {
-    this._srcResult = mcxSrcFn({})
-    this._UI = UIConfig.use
+    this._srcResult = mcxSrcFn({});
+    this._UI = UIConfig.use;
     if (typeof this._srcResult !== 'object')
-      throw new Error('[mcx runtime]: can;t load mcx setup')
-    this._prop = this._srcResult.prop || []
+      throw new Error('[mcx runtime]: can;t load mcx setup');
+    this._prop = this._srcResult.prop || [];
     if (!Array.isArray(this._prop))
-      throw new Error("[mcx runtime]: can't load prop: invalid prop")
+      throw new Error("[mcx runtime]: can't load prop: invalid prop");
 
     // 验证并缓存 UI 模块和类型
     if (!UIConfig.UI) {
-      throw new Error('[mcx runtime]: UI module is required')
+      throw new Error('[mcx runtime]: UI module is required');
     }
-    this._mcUI = UIConfig.UI
+    this._mcUI = UIConfig.UI;
 
     // 验证 UI 类型并缓存
-    const tempUI = new this._UI()
+    const tempUI = new this._UI();
     if (tempUI instanceof this._mcUI.ModalFormData) {
-      this._uiType = 'modal'
+      this._uiType = 'modal';
     } else if (tempUI instanceof this._mcUI.ActionFormData) {
-      this._uiType = 'action'
+      this._uiType = 'action';
     } else if (tempUI instanceof this._mcUI.MessageFormData) {
-      this._uiType = 'message'
+      this._uiType = 'message';
     } else {
       throw new Error(
         '[mcx runtime]: Invalid UI type, must be ModalFormData, ActionFormData or MessageFormData',
-      )
+      );
     }
 
     this._layout = UIConfig.layout.map(
       (i): ParsedUIOption['layout'][number] => {
         if (i.type == 'button' && i.params.click)
-          i.params.click = this._srcResult[i.params.click]
-        return i as unknown as ParsedUIOption['layout'][number]
+          i.params.click = this._srcResult[i.params.click];
+        return i as unknown as ParsedUIOption['layout'][number];
       },
-    )
-    this._init()
+    );
+    this._init();
   }
   private _init() {
     for (const layoutIndex in this._layout) {
-      const layout = this._layout[layoutIndex]
-      if (!layout) continue
+      const layout = this._layout[layoutIndex];
+      if (!layout) continue;
       if (typeof layout.content !== 'string') {
         if (typeof layout.content?.useProp == 'string') {
-          this._usePropLayoutIndexList.push(parseInt(layoutIndex))
+          this._usePropLayoutIndexList.push(parseInt(layoutIndex));
         } else {
           throw new Error(
             "[mcx runtime]: can't load ui: useProp is not a string",
-          )
+          );
         }
       }
     }
   }
   private _generateUI(layout: ParsedUIOption['layout']) {
-    const ui = new this._UI()
-    let MsgFormUse = 0
-    const clickEvent: Map<number, ParsedParams['click']> = new Map()
+    const ui = new this._UI();
+    let MsgFormUse = 0;
+    const clickEvent: Map<number, ParsedParams['click']> = new Map();
 
     for (const iIndex in layout) {
-      const i = layout[iIndex]
-      if (!i) continue
+      const i = layout[iIndex];
+      if (!i) continue;
 
       // ModalFormData
       if (this._uiType === 'modal') {
-        const actionUi = ui as InstanceType<typeof this._mcUI.ModalFormData>
+        const actionUi = ui as InstanceType<typeof this._mcUI.ModalFormData>;
         if (i.type == 'input') {
           actionUi.textField(
             String(i.content),
@@ -108,7 +108,7 @@ export class ui implements typesPkg.ui {
               defaultValue: i.params.default,
               tooltip: i.params.tip,
             },
-          )
+          );
         } else if (i.type == 'slider') {
           actionUi.slider(
             String(i.content),
@@ -119,89 +119,89 @@ export class ui implements typesPkg.ui {
                 text: i.params.tip || '',
               },
             },
-          )
+          );
         } else if (i.type == 'toggle') {
           actionUi.toggle(String(i.content), {
             defaultValue: Boolean(i.params.default),
-          })
+          });
         } else if (i.type == 'dropdown') {
-          actionUi.dropdown(String(i.content), i.params.option.split(','))
+          actionUi.dropdown(String(i.content), i.params.option.split(','));
         } else if (i.type == 'submit') {
-          actionUi.submitButton(String(i.content))
-          if (i.params.click) clickEvent.set(0, i.params.click)
+          actionUi.submitButton(String(i.content));
+          if (i.params.click) clickEvent.set(0, i.params.click);
         } else if (i.type == 'body') {
-          actionUi.label(String(i.content))
+          actionUi.label(String(i.content));
         } else if (i.type == 'divider') {
-          actionUi.divider()
+          actionUi.divider();
         }
       }
       // ActionFormData
       else if (this._uiType === 'action') {
-        const actionUi = ui as InstanceType<typeof this._mcUI.ActionFormData>
+        const actionUi = ui as InstanceType<typeof this._mcUI.ActionFormData>;
         if (i.type == 'button') {
-          actionUi.button(String(i.content), i.params.img || void 0)
-          clickEvent.set(parseInt(iIndex), i.params.click)
+          actionUi.button(String(i.content), i.params.img || void 0);
+          clickEvent.set(parseInt(iIndex), i.params.click);
         } else if (i.type == 'body') {
-          actionUi.label(String(i.content))
+          actionUi.label(String(i.content));
         } else if (i.type == 'divider') {
-          actionUi.divider()
+          actionUi.divider();
         }
       }
       // MessageFormData
       else if (this._uiType === 'message') {
-        const messageUi = ui as InstanceType<typeof this._mcUI.MessageFormData>
+        const messageUi = ui as InstanceType<typeof this._mcUI.MessageFormData>;
         if (i.type == 'button-m') {
           if (MsgFormUse == 0) {
-            messageUi.button1(String(i.content))
+            messageUi.button1(String(i.content));
           } else if (MsgFormUse == 1) {
-            messageUi.button2(String(i.content))
+            messageUi.button2(String(i.content));
           } else {
-            throw new Error('[mcx runtime]: MessageFormData only can call two')
+            throw new Error('[mcx runtime]: MessageFormData only can call two');
           }
-          if (i.params.click) clickEvent.set(MsgFormUse, i.params.click)
-          MsgFormUse++
+          if (i.params.click) clickEvent.set(MsgFormUse, i.params.click);
+          MsgFormUse++;
         }
       } else if (i.type == 'title') {
-        ui.title(String(i.content))
+        ui.title(String(i.content));
       }
     }
-    return [ui, clickEvent] as const
+    return [ui, clickEvent] as const;
   }
   async show(player: Player, prop: Record<string, string>) {
     const cLayout: typeof this._layout = JSON.parse(
       JSON.stringify(this._layout),
-    )
+    );
     for (const propIndex of this._usePropLayoutIndexList) {
-      const layout = cLayout[propIndex]
+      const layout = cLayout[propIndex];
       if (
         !layout ||
         typeof layout.content !== 'object' ||
         !layout.content.useProp
       )
-        continue
-      layout.content = prop[layout.content.useProp] || ''
+        continue;
+      layout.content = prop[layout.content.useProp] || '';
     }
-    const _temp = this._generateUI(cLayout)
-    const ui = _temp[0]
-    const promise = ui.show(player)
-    const formResponse = await promise
-    if (formResponse.canceled) return
+    const _temp = this._generateUI(cLayout);
+    const ui = _temp[0];
+    const promise = ui.show(player);
+    const formResponse = await promise;
+    if (formResponse.canceled) return;
 
     if (this._uiType === 'action') {
-      const clickIndex = (formResponse as ActionFormResponse).selection
+      const clickIndex = (formResponse as ActionFormResponse).selection;
       if (clickIndex !== undefined) {
-        const handler = _temp[1].get(clickIndex)
-        if (handler) handler(formResponse)
+        const handler = _temp[1].get(clickIndex);
+        if (handler) handler(formResponse);
       }
     } else if (this._uiType === 'message') {
-      const selection = (formResponse as MessageFormResponse).selection
+      const selection = (formResponse as MessageFormResponse).selection;
       if (selection !== undefined) {
-        const handler = _temp[1].get(selection)
-        if (handler) handler(formResponse)
+        const handler = _temp[1].get(selection);
+        if (handler) handler(formResponse);
       }
     } else if (this._uiType === 'modal') {
-      const handler = _temp[1].get(0)
-      if (handler) handler(formResponse)
+      const handler = _temp[1].get(0);
+      if (handler) handler(formResponse);
     }
   }
 }

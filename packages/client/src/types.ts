@@ -2,7 +2,7 @@ import {
   ActionFormData,
   MessageFormData,
   ModalFormData,
-} from '@minecraft/server-ui'
+} from '@minecraft/server-ui';
 export interface MCXUIOpt {
   layout: {
     type:
@@ -15,7 +15,7 @@ export interface MCXUIOpt {
       | 'button'
       | 'divider'
       | 'title'
-      | 'body'
+      | 'body';
     params: {
       [key in
         | 'click'
@@ -25,14 +25,14 @@ export interface MCXUIOpt {
         | 'max'
         | 'placeholderText'
         | 'tip'
-        | 'img']: string
-    }
+        | 'img']: string;
+    };
     content:
       | string
       | {
-          useProp: string
-        }
-  }[]
-  use: typeof ModalFormData | typeof MessageFormData | typeof ActionFormData
-  UI: typeof import('@minecraft/server-ui')
+          useProp: string;
+        };
+  }[];
+  use: typeof ModalFormData | typeof MessageFormData | typeof ActionFormData;
+  UI: typeof import('@minecraft/server-ui');
 }

@@ -2,8 +2,8 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { ReadFileOpt, ParseReadFileOpt, TypeVerifyBody } from './types.js';
 
-export default class Utlis {
-  public static async FileExsit(path: string): Promise<boolean> {
+export default class Utils {
+  public static async FileExist(path: string): Promise<boolean> {
     try {
       await fs.access(path);
       return true;
@@ -41,7 +41,7 @@ export default class Utlis {
         return text;
       } catch {
         if (attempt < opts.maxRetries - 1) {
-          await Utlis.sleep(opts.delay);
+          await Utils.sleep(opts.delay);
         }
       }
     }

@@ -24,7 +24,7 @@ export function resolveFilePoint(point: FilePoint, ctx: transformCtx) {
   } else if (point.base == 'resources') {
     return path.join(ctx.output.resources, point.file);
   }
-  throw new Error('[mcx component]: invaild FilePoint Base');
+  throw new Error('[mcx component]: invalid FilePoint Base');
 }
 export async function execEdit(
   option: BaseJson['_meta']['file_edit'],
@@ -87,7 +87,7 @@ export async function execEdit(
           }
         } else {
           throw new Error(
-            '[mcx component]: json._meta.file_edit: unkown output place.',
+            '[mcx component]: json._meta.file_edit: unknown output place.',
           );
         }
       }
@@ -228,7 +228,7 @@ export async function compileComponent(
       !json._meta.type ||
       !['item', 'entity'].includes(json._meta.type)
     )
-      throw new Error('[mcx component]: not mcx json component: unkown type');
+      throw new Error('[mcx component]: not mcx json component: unknown type');
     if (json._meta.file_edit) await execEdit(json._meta.file_edit, ctx);
     delete (json as unknown as Record<string, string>)['_meta'];
     await writeFile(filePoint, JSON.stringify(json, null, 2));

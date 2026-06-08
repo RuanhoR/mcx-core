@@ -3,7 +3,7 @@ import { JsCompileData } from '../compile-mcx/compiler/compileData';
 import Utils from '../compile-mcx/compiler/utils';
 import { ParsedTagNode, transformCtx } from '../types';
 import config from './config';
-import McxUtlis from '../utils';
+import McxUtils from '../utils';
 import path from 'node:path';
 import { generateFileId } from './file_id';
 
@@ -120,7 +120,7 @@ function generateMain(
         expBody.push(
           ...exp.specifiers.map(item => {
             if (!t.isExportSpecifier(item))
-              throw new Error(`[build import]: invaild specifiers`);
+              throw new Error(`[build import]: invalid specifiers`);
             return t.objectProperty(item.exported, item.local);
           }),
         );
@@ -179,7 +179,7 @@ async function generateEventConfig(
       const extendsFile = handlerName.split(',');
       for (const extFile of extendsFile) {
         if (
-          !(await McxUtlis.FileExsit(
+          !(await McxUtils.FileExist(
             path.join(path.dirname(ctx.currentId), extFile),
           ))
         )

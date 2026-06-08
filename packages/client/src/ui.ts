@@ -42,7 +42,7 @@ export class ui implements typesPkg.ui {
       throw new Error('[mcx runtime]: can;t load mcx setup')
     this._prop = this._srcResult.prop || []
     if (!Array.isArray(this._prop))
-      throw new Error("[mcx runtime]: can't load prop: invaild prop")
+      throw new Error("[mcx runtime]: can't load prop: invalid prop")
 
     // 验证并缓存 UI 模块和类型
     if (!UIConfig.UI) {

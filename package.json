@@ -28,12 +28,13 @@
   "workspaces": [
     "packages/client",
     "packages/types",
-    "packages/core"
+    "packages/core",
+    "packages/create-mbler"
   ],
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@types/node": "^25.6.0",
-    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
     "@typescript-eslint/parser": "^8.59.1",
     "eslint": "^9.17.0",
     "picocolors": "^1.1.1",

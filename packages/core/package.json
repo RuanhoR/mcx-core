@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-core",
-  "version": "0.1.1-beta.r4",
+  "version": "0.1.1",
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {
@@ -40,7 +40,6 @@
     "rolldown": "1.0.0-rc.18",
     "typescript": "5.9.3"
   },
-  "module": "commjs",
   "files": [
     "dist",
     "README.md",

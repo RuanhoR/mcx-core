@@ -1,6 +1,6 @@
 import type { PropNode, PropValue } from '../types.js';
 
-const STATUS = [0, 1]; // 0: 搜集 key，1: 搜集 value
+const STATUS = [0, 1]; // 0: key，1: value
 
 export class Lexer {
   private code: string;
@@ -8,8 +8,6 @@ export class Lexer {
   constructor(code: string) {
     this.code = code;
   }
-
-  // 对外暴露的 tokenize 方法（生成器函数）
   *tokenize(): IterableIterator<PropNode> {
     let currStatus = STATUS[0]; // 0: key，1: value
     let key = '';
@@ -38,14 +36,14 @@ export class Lexer {
 
       if (char === '=') {
         if (currStatus === STATUS[0]) {
-          currStatus = STATUS[1]; // 切换到 value 状态
+          currStatus = STATUS[1]; // set to value
           hasEquals = true;
         }
       } else {
         if (currStatus === STATUS[0]) {
-          key += char; // 搜集 key
+          key += char; // key
         } else if (currStatus === STATUS[1]) {
-          value += char; // 搜集 value
+          value += char; // value
         }
       }
     }
@@ -70,8 +68,6 @@ export class Lexer {
     return value;
   }
 }
-
-// 默认导出解析函数
 export default function PropParser(code: string): PropNode[] {
   const lexer = new Lexer(code);
   return Array.from(lexer.tokenize());

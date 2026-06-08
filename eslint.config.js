@@ -21,7 +21,7 @@ export default [
 
   // Simple TypeScript configuration for production code
   {
-    files: ['packages/**/src/**/*.ts'],
+    files: ['packages/**/src/**/*.ts', 'packages/**/tests/**/*.ts'],
     languageOptions: {
       parser: tsparser,
       ecmaVersion: 'latest',
@@ -55,7 +55,8 @@ export default [
       '**/dist/**',
       '**/node_modules/**',
       '**/*.d.ts',
-      'packages/types/**'
+      'packages/types/**',
+      'packages/create-mbler/template/**'
     ]
   }
 ];

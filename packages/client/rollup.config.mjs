@@ -2,7 +2,6 @@ import resolve from "@rollup/plugin-node-resolve";
 import json from "@rollup/plugin-json";
 import ts from "@rollup/plugin-typescript";
 import commonjs from "@rollup/plugin-commonjs";
-import dts from "rollup-plugin-dts";
 // 基础配置
 const main = {
   input: "src/index.ts", // 入口文件

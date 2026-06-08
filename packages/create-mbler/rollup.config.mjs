@@ -4,7 +4,6 @@ import resolve from "@rollup/plugin-node-resolve"
 import commjs from "@rollup/plugin-commonjs"
 import json from "@rollup/plugin-json"
 import dts from "rollup-plugin-dts"
-import terser from "@rollup/plugin-terser"
 export default [
   {
     input: path.resolve("src/main.ts"),

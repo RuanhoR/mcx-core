@@ -7,7 +7,7 @@ import McxUtils from '../utils';
 import path from 'node:path';
 import { generateFileId } from './file_id';
 
-function extrectVarDefIdList(express: t.LVal | t.VoidPattern): string[] {
+function extractVarDefIdList(express: t.LVal | t.VoidPattern): string[] {
   const result: string[] = [];
   if (t.isIdentifier(express)) result.push(express.name);
   if (t.isObjectPattern(express))
@@ -15,7 +15,7 @@ function extrectVarDefIdList(express: t.LVal | t.VoidPattern): string[] {
       // const {xxx:xxx,xxx=Litter} = xxx
       if (t.isObjectProperty(prop))
         return result.push(
-          ...extrectVarDefIdList(
+          ...extractVarDefIdList(
             prop.value as t.Identifier | t.AssignmentPattern,
           ),
         );
@@ -26,11 +26,11 @@ function extrectVarDefIdList(express: t.LVal | t.VoidPattern): string[] {
   if (t.isArrayPattern(express)) {
     for (const element of express.elements) {
       if (!element) continue;
-      result.push(...extrectVarDefIdList(element));
+      result.push(...extractVarDefIdList(element));
     }
   }
   if (t.isAssignmentPattern(express)) {
-    result.push(...extrectVarDefIdList(express.left));
+    result.push(...extractVarDefIdList(express.left));
   }
   return result;
 }
@@ -41,7 +41,7 @@ function extractIdList(expression: t.Declaration): string[] {
   if (t.isVariableDeclaration(expression)) {
     const result: string[] = [];
     for (const varDef of expression.declarations) {
-      result.push(...extrectVarDefIdList(varDef.id));
+      result.push(...extractVarDefIdList(varDef.id));
     }
     return result;
   }
@@ -243,7 +243,7 @@ function _enableWithData<T>(): ((data: T) => void) & {
 // export
 export {
   extractIdList,
-  extrectVarDefIdList,
+  extractVarDefIdList,
   generateEventConfig,
   _enable,
   generateMain,

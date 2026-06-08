@@ -6,7 +6,8 @@
   "scripts": {
     "lint": "eslint src --ext .js,.ts",
     "lint:fix": "eslint src --ext .js,.ts --fix",
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "test": "vitest run"
   },
   "keywords": [
     "minecraft"

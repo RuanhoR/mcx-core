@@ -9,6 +9,9 @@
     "build": "rollup -c",
     "test": "vitest run"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "keywords": [
     "minecraft"
   ],

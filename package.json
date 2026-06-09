@@ -8,6 +8,9 @@
     "email": "a@ruanhor.dpdns.org",
     "url": "https://github.com/RuanhoR/"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "readme": "./README.md",
   "repository": {
     "type": "git",

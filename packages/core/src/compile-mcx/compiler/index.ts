@@ -279,7 +279,7 @@ class CompileMCX {
       );
     this.mcxCode = mcxCode;
     this.structureCheck();
-    const JSIR = this.genenrateJSIR();
+    const JSIR = this.generateJSIR();
     this.CompileData = new CompileData.MCXCompileData(
       mcxCode,
       JSIR,
@@ -489,7 +489,7 @@ class CompileMCX {
     }
   }
   private CompileData: CompileData.MCXCompileData;
-  private genenrateJSIR(): CompileData.JsCompileData {
+  private generateJSIR(): CompileData.JsCompileData {
     if (!this.tempLoc.script.trim())
       throw makeError('[compile error]: mcx must has a script');
     const comiler = compileJSFn(this.tempLoc.script);

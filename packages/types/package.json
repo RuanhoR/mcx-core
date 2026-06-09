@@ -18,12 +18,15 @@
   "scripts": {
     "lint": "tsc --noEmit --skipLibCheck index.d.ts"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@minecraft/server": "2.0.0",
     "@minecraft/server-ui": "2.0.0",
     "@volar/language-core": "^2.4.28"
   },
-  "module": "module",
+  "type": "module",
   "files": [
     "index.d.ts",
     "README.md",

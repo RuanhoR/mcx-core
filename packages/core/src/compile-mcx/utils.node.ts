@@ -177,7 +177,7 @@ export default class NodeUtils {
         case 'PrivateName':
           return evaluate(context[expr.id.name]);
         case 'BinaryExpression':
-          const leftValue: any = expr.left.type == evaluate(expr.left);
+          const leftValue: any = evaluate(expr.left);
           const rightValue: any = evaluate(expr.right);
           const isNum =
             typeof leftValue == 'number' && typeof rightValue == 'number';

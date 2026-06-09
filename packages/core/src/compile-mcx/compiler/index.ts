@@ -314,7 +314,6 @@ class CompileMCX {
   private commonTagNodeContent(
     node: ParsedTagNode | ParsedTagContentNode,
   ): string {
-    const content: string = '';
     if (MCXUtils.isTagContentNode(node)) {
       return node.data;
     }

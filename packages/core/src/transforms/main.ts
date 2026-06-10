@@ -3,7 +3,7 @@ import * as t from '@babel/types';
 import { generate } from '@babel/generator';
 import config from './config';
 import { _enable, _enableWithData, generateMain } from './utils';
-import { EventComp, UIComp, AppComp } from './x-comp';
+import { EventComp, UIComp, AppComp } from './transform';
 import { compileComponent } from '../mcx-component';
 export async function _transform(ctx: transformCtx): Promise<string> {
   const _temp_main = generateMain(ctx.compiledCode.JSIR);

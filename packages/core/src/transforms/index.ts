@@ -1,10 +1,10 @@
-import { TransformPluginContext } from 'rollup';
+import type { TransformPluginContext } from 'rollup';
 import { MCXCompileData } from '../compile-mcx/compiler/compileData';
 import { CompileOpt } from '@mbler/mcx-types';
 import { transformCtx } from '../types';
 import { _transform } from './main';
 import { program } from '@babel/types';
-import { RollupError } from 'rolldown';
+import type { RollupError } from 'rolldown';
 function createErrorProxy(err: unknown, id: string): RollupError {
   if (err instanceof Error) {
     return {

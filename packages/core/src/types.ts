@@ -1,4 +1,4 @@
-import { TransformPluginContext } from 'rollup';
+import type { TransformPluginContext } from 'rollup';
 import type { MCXCompileData } from './compile-mcx/compiler/compileData';
 import { CompileOpt } from '@mbler/mcx-types';
 import * as t from '@babel/types';

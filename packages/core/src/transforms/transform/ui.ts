@@ -19,7 +19,7 @@ export async function Comp(ctx: transformParseCtx) {
   const uiTagNode = ctx.ctx.compiledCode.strLoc.UI;
   if (!uiTagNode || uiTagNode?.name !== 'Ui')
     throw new Error("[UI Component]: why didn't parent compeled verify?");
-  let MCXUIType: 'ActionFromData' | 'MessageFormData' | 'ModalFormData' | null =
+  let MCXUIType: 'ActionFormData' | 'MessageFormData' | 'ModalFormData' | null =
     null;
   const UITree: {
     arr: Record<string, string | boolean>;
@@ -129,7 +129,7 @@ export async function Comp(ctx: transformParseCtx) {
     else if (['body', 'divider', 'title', 'label'].includes(name)) {
       pushToTree(name, tp.arr, tp.content);
     } else if (name == 'button') {
-      if (MCXUIType !== 'ActionFromData' && MCXUIType)
+      if (MCXUIType !== 'ActionFormData' && MCXUIType)
         internalCtx.rollupContext.error(
           "[UI]: don't support use button for messageFormData",
           tp.loc
@@ -140,7 +140,7 @@ export async function Comp(ctx: transformParseCtx) {
             : void 0,
         );
       pushToTree(name, tp.arr, tp.content);
-      MCXUIType = 'ActionFromData';
+      MCXUIType = 'ActionFormData';
     } else {
       internalCtx.rollupContext.error(
         "[UI]: don't support tag: " + name,
@@ -153,7 +153,7 @@ export async function Comp(ctx: transformParseCtx) {
       );
     }
   }
-  if (!MCXUIType) MCXUIType = 'ActionFromData';
+  if (!MCXUIType) MCXUIType = 'ActionFormData';
   const finallyData = t.objectExpression([
     t.objectProperty(t.identifier('layout'), t.arrayExpression(parsedObj)),
     t.objectProperty(
@@ -163,7 +163,7 @@ export async function Comp(ctx: transformParseCtx) {
         t.identifier(MCXUIType),
       ),
     ),
-    t.objectProperty(t.identifier('_UI'), t.identifier('__minecraft__ui')),
+    t.objectProperty(t.identifier('UI'), t.identifier('__minecraft__ui')),
   ]);
   ctx.app([
     t.objectProperty(

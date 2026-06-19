@@ -39,7 +39,7 @@ interface MCXUIOpt {
         | 'max'
         | 'placeholderText'
         | 'tip'
-        | 'img']: string;
+        | 'img']: string | { useProp: string };
     };
     content:
       | string
@@ -54,8 +54,8 @@ interface MCXUIOpt {
   UI: typeof serverUI;
 }
 declare class ui {
-  constructor(UIConfig: MCXUIOpt, mcxSrcFn: (ctx: MCXCtx) => any);
-  show(player: Player, prop: Record<string, string>): Promise<void>;
+  constructor(UIConfig: MCXUIOpt, mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, any> }) => any);
+  show(player: Player, prop: Record<string, any>): Promise<void>;
 }
 declare class Event {
   constructor(opt: EventOpt);

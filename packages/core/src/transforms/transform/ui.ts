@@ -65,12 +65,21 @@ export async function Comp(ctx: transformParseCtx) {
         t.objectProperty(
           t.identifier('params'),
           t.objectExpression(
-            Object.entries(params).map(i => {
+            Object.entries(params).map(([key, value]) => {
+              const isDynamic = key.startsWith(':');
+              const paramName = isDynamic ? key.slice(1) : key;
               return t.objectProperty(
-                t.identifier(i[0]),
-                typeof i[1] == 'boolean'
-                  ? t.booleanLiteral(i[1])
-                  : t.stringLiteral(i[1]),
+                t.identifier(paramName),
+                isDynamic
+                  ? t.objectExpression([
+                      t.objectProperty(
+                        t.identifier('useProp'),
+                        t.stringLiteral(String(value)),
+                      ),
+                    ])
+                  : typeof value == 'boolean'
+                    ? t.booleanLiteral(value)
+                    : t.stringLiteral(value),
               );
             }),
           ),

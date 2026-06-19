@@ -143,6 +143,89 @@ describe('transform', () => {
   });
 });
 
+describe('UI transform', () => {
+  const createCtx = (overrides = {}): any => ({
+    error: (msg: any) => {
+      throw new Error(String(msg));
+    },
+    warn: () => {},
+    ...overrides,
+  });
+
+  const outdirs = { dist: '', behavior: '', resources: '' };
+
+  it('should compile basic Ui structure', () => {
+    const cd = MCX.compiler.compileMCXFn(
+      '<script>export const prop = ["name"]; export function handler() {}</script><Ui><input placeholderText="input name">{{ name }}</input><title>Form</title></Ui>',
+    );
+    expect(cd.strLoc.UI).toBeDefined();
+    expect(cd.strLoc.UI.name).toBe('Ui');
+  });
+
+  it('should generate {{ }} content as { useProp } in output', async () => {
+    const cd = MCX.compiler.compileMCXFn(
+      '<script>export const prop = ["name"]; export function handler() {}</script><Ui><input placeholderText="input name">{{ name }}</input></Ui>',
+    );
+    const code = await MCX.transform(
+      cd,
+      new Map(),
+      '/root/test.mcx',
+      createCtx(),
+      { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
+      outdirs,
+    );
+    expect(code).toContain('useProp');
+    expect(code).toContain('"name"');
+  });
+
+  it('should compile :param syntax into { useProp } in output', async () => {
+    const cd = MCX.compiler.compileMCXFn(
+      '<script>export const prop = ["name"]; export function handler() {}</script><Ui><input :default="name" placeholderText="Name">{{ name }}</input></Ui>',
+    );
+    const code = await MCX.transform(
+      cd,
+      new Map(),
+      '/root/test.mcx',
+      createCtx(),
+      { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
+      outdirs,
+    );
+    expect(code).toContain('useProp');
+    expect(code).toContain('"name"');
+    expect(code).toMatch(/default[:\s]*\{[^}]*useProp/);
+  });
+
+  it('should pass $prop via ctx at runtime', async () => {
+    const cd = MCX.compiler.compileMCXFn(
+      '<script>export const prop = ["name"]</script><Ui><input placeholderText="Name">{{ name }}</input></Ui>',
+    );
+    const code = await MCX.transform(
+      cd,
+      new Map(),
+      '/root/test.mcx',
+      createCtx(),
+      { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
+      outdirs,
+    );
+    expect(code).toContain('__mcx__ctx');
+  });
+
+  it('should handle Ui without :param or {{ }}', async () => {
+    const cd = MCX.compiler.compileMCXFn(
+      '<script>export function handler() {}</script><Ui><button click="handler">Click</button></Ui>',
+    );
+    const code = await MCX.transform(
+      cd,
+      new Map(),
+      '/root/test.mcx',
+      createCtx(),
+      { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
+      outdirs,
+    );
+    expect(code).toContain('Click');
+  });
+});
+
 describe('AST - comment handling', () => {
   it('should ignore comments by default', () => {
     const ast = new MCX.AST.tag('<div>Hello<!--comment-->World</div>');

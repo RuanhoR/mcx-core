@@ -25,7 +25,7 @@ export interface MCXUIOpt {
         | 'max'
         | 'placeholderText'
         | 'tip'
-        | 'img']: string;
+        | 'img']: string | { useProp: string };
     };
     content:
       | string

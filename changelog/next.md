@@ -32,3 +32,24 @@ This changelog tracks changes committed after the v0.0.1 release tag.
 
 - **fix**: Fixed binary expression evaluation bug; set `engines.node>=20`; renamed `PUBTYPE`→`PubType`, `genenrateJSIR`→`generateJSIR`; changed types package `module`→`type` (`272c9fe`)
 - **fix**: Removed unused `content` variable; moved chalk compat to shared utils; removed `console.log`; added `await` to `tryMkdir` (`09a8ca6`)
+- **chore**: Added ISSUE_TEMPLATE and `changelog/` directory with version history (`a36a300`)
+- **chore**: Added CODE_OF_CONDUCT.md (Contributor Covenant v2.1) (`25d41a9`)
+- **chore**: Cleaned up todo comments (`9189761`)
+
+### 2026-06-10
+
+- **chore**: Fixed git hook configuration and hook name (`4c2c64b`)
+
+### 2026-06-13
+
+- **test**: Added Vitest tests for create-mbler package (`279b282`)
+
+### 2026-06-14
+
+- **fix**: Fixed test code (`f905aab`)
+- **chore**: Updated `package.json` and `pnpm-lock.yaml` for Rolldown & TypeScript; added `rolldown.config.mjs`, removed `rollup.config.mjs` (`d1f4ec4`)
+
+### 2026-06-19
+
+- **feat(ui)**: Added `:param` dynamic binding syntax with runtime support; fixed silent fallback (`d120d4f`)
+- **fix(ui)**: Aligned generated UI config with runtime (`1e8dfc7`)

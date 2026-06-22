@@ -89,7 +89,11 @@ describe('Event', () => {
         }),
     );
     new Event(
-      { on: 'after', data: { PlayerJoin: () => {} }, extends: [{} as any] },
+      {
+        on: 'after',
+        data: { PlayerJoin: () => {} },
+        extends: [{} as unknown as MCXFile<'event'>],
+      },
       extendLoader,
     );
     expect(extendLoader).toHaveBeenCalledTimes(1);

@@ -1,14 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fileExists } from '../src/init'
+import { describe, it, expect } from 'vitest';
+import { fileExists } from '../src/init';
+import { homedir } from 'node:os';
 
 describe('fileExists', () => {
   it('should return true for existing file', async () => {
-    const result = await fileExists(import.meta.dirname + '/init.spec.ts')
-    expect(result).toBe(true)
-  })
+    const result = await fileExists(homedir());
+    expect(result).toBe(true);
+  });
 
   it('should return false for non-existing file', async () => {
-    const result = await fileExists('/nonexistent/path/foo.txt')
-    expect(result).toBe(false)
-  })
-})
+    const result = await fileExists('/nonexistent/path/foo.txt');
+    expect(result).toBe(false);
+  });
+});

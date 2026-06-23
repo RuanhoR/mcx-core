@@ -9,6 +9,7 @@ import * as t from '@babel/types';
 import type { BaseJson, FilePoint } from './types';
 import { existsSync, readFileSync } from 'node:fs';
 import { parse } from '@babel/parser';
+import { styleText } from 'node:util';
 
 /** Accumulated bind data (e.g. item_texture entries) across all components in a build. */
 let cachedOption: Record<string, string[] | [string, string][]> = {};
@@ -111,7 +112,8 @@ function collectExportSources(code: string): ExportSourceMap {
     // Pattern 1: ES module import declarations.
     // e.g. import { ItemComponent, EntityComponent as Entity } from '@mbler/mcx-core'
     if (t.isImportDeclaration(node)) {
-      const pkg = typeof node.source.value === 'string' ? node.source.value : '';
+      const pkg =
+        typeof node.source.value === 'string' ? node.source.value : '';
       for (const spec of node.specifiers) {
         if (t.isImportSpecifier(spec)) {
           // Named import — local.name is the locally bound name,
@@ -195,17 +197,19 @@ function collectExportSources(code: string): ExportSourceMap {
  * triggers a console warning (once per package per file).
  * Relative imports ('./...', '../...') are silently allowed.
  */
-function checkComponentImports(
-  sources: ExportSourceMap,
-  filePath: string,
-) {
+function checkComponentImports(sources: ExportSourceMap, filePath: string) {
   const allowedPackage = '@mbler/mcx-core';
   const warned = new Set<string>();
   for (const [, pkg] of Object.entries(sources)) {
-    if (pkg && !pkg.startsWith(allowedPackage) && !pkg.startsWith('.') && !warned.has(pkg)) {
+    if (
+      pkg &&
+      !pkg.startsWith(allowedPackage) &&
+      !pkg.startsWith('.') &&
+      !warned.has(pkg)
+    ) {
       warned.add(pkg);
       console.warn(
-        `[mcx component warning]: "${pkg}" in ${filePath} is not from "${allowedPackage}". Only imports/requires from "${allowedPackage}" are recommended.`,
+        `[${styleText('red', 'mcx component warning')}]: "${pkg}" in ${filePath} is not from "${allowedPackage}". Only imports/requires from "${allowedPackage}" are recommended.`,
       );
     }
   }
@@ -518,8 +522,9 @@ export async function compileComponent(
       // Determine if THIS specific export comes from @mbler/mcx-core.
       // If yes, the component is trusted and bypasses file I/O limits
       // and root base restrictions. If not, restrictions apply.
-      const isMcxCoreSource =
-        (exportSources[pointExport] ?? '').startsWith('@mbler/mcx-core');
+      const isMcxCoreSource = (exportSources[pointExport] ?? '').startsWith(
+        '@mbler/mcx-core',
+      );
       await execEdit(json._meta.file_edit, ctx, isMcxCoreSource);
     }
 

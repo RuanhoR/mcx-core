@@ -29,4 +29,25 @@ export type {
   JumpMovementConfig,
   NavigationConfig,
   NavigationFloatConfig,
+  BaseJson,
+  EntityJson,
+  ItemJson,
+  JSONValue,
 } from '@mbler/mcx-types';
+
+type DefineEntry =
+  | { from: 'var'; data: string }
+  | { from: 'read_file'; data: { base: string; file: string }; default?: string };
+
+export type FileEditExpression<T extends Record<string, DefineEntry>> = {
+  define: T;
+  run: (define: { [K in keyof T]: string }) => Promise<
+    string | string[] | [string, string][]
+  >;
+};
+
+export function createFileEdit<T extends Record<string, DefineEntry>>(
+  expression: FileEditExpression<T>,
+): FileEditExpression<T> {
+  return expression;
+}

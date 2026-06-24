@@ -100,6 +100,48 @@ interface MCXFile<T extends MCXFileType> extends MCXFileBase {
   app: MCXFileTypeMap[T] | never;
 }
 
+// --- JSON Types ---
+
+interface BaseJson {
+  format_version: string;
+  _meta: {
+    type: 'item' | 'entity';
+    file_edit?: Array<Record<string, any>>;
+  };
+}
+
+interface EntityJson extends BaseJson {
+  _meta: {
+    type: 'entity';
+    file_edit?: BaseJson['_meta']['file_edit'];
+  };
+  'minecraft:entity': {
+    description: {
+      identifier: string;
+      is_spawnable?: boolean;
+      is_summonable?: boolean;
+    };
+    component_groups?: Record<string, any>;
+    components?: Record<string, any>;
+    events?: Record<string, any>;
+  };
+}
+
+interface ItemJson extends BaseJson {
+  _meta: {
+    type: 'item';
+    file_edit?: BaseJson['_meta']['file_edit'];
+  };
+  'minecraft:item': {
+    description: {
+      identifier: string;
+    };
+    components: Record<string, any>;
+  };
+}
+
+type JSONValue<T> = { value: T };
+
 // --- Component Types ---
 
 type ParticleType =
@@ -508,7 +550,7 @@ interface ItemComponentOptions {
 
 interface AddRiderConfig {
   entity_type?: string;
-  riders?: string[];
+  riders?: Array<string | { entity_type: string; spawn_event?: string }>;
   spawn_event?: string;
 }
 
@@ -517,8 +559,8 @@ interface MobEffectConfig {
   ambient?: boolean;
   cooldown_time?: number;
   effect_range?: number;
-  effect_time?: number;
-  entity_filter?: { all?: Record<string, unknown>[]; any?: Record<string, unknown>[] };
+  effect_time?: number | 'infinite';
+  entity_filter?: Record<string, any>;
 }
 
 interface JumpMovementConfig {
@@ -531,9 +573,10 @@ interface NavigationConfig {
   avoid_portals?: boolean;
   avoid_sun?: boolean;
   avoid_water?: boolean;
-  blocks_to_avoid?: string[];
+  blocks_to_avoid?: Array<string | { name?: string; tags?: string }>;
   can_breach?: boolean;
   can_break_doors?: boolean;
+  can_float?: boolean;
   can_jump?: boolean;
   can_open_doors?: boolean;
   can_open_iron_doors?: boolean;
@@ -545,11 +588,11 @@ interface NavigationConfig {
   can_swim?: boolean;
   can_walk?: boolean;
   can_walk_in_lava?: boolean;
+  is_amphibious?: boolean;
+  using_door_annotation?: boolean;
 }
 
 interface NavigationFloatConfig extends NavigationConfig {
-  is_amphibious?: boolean;
-  using_door_annotation?: boolean;
 }
 
 interface BlockComponentOptions {
@@ -774,7 +817,7 @@ interface EntityComponentOptions {
     'minecraft:mark_variant'?: { value?: number };
     'minecraft:mob_effect'?: MobEffectConfig;
     'minecraft:mob_effect_immunity'?: { mob_effects?: string[] };
-    'minecraft:movement'?: { max?: number; value?: number };
+    'minecraft:movement'?: { max?: number; value?: number | { range_min: number; range_max: number } };
     'minecraft:movement.amphibious'?: { max_turn?: number };
     'minecraft:movement.basic'?: { max_turn?: number };
     'minecraft:movement.dolphin'?: Record<string, unknown>;
@@ -799,8 +842,13 @@ interface EntityComponentOptions {
     'minecraft:navigation.hover'?: NavigationConfig;
     'minecraft:navigation.swim'?: NavigationConfig;
     'minecraft:navigation.walk'?: NavigationConfig;
-    'minecraft:offspring'?: Record<string, unknown>;
-    'minecraft:preferred_path'?: Record<string, unknown>;
+    'minecraft:offspring'?: Record<string, any>;
+    'minecraft:out_of_control'?: Record<string, unknown>;
+    'minecraft:peek'?: Record<string, unknown>;
+    'minecraft:persistent'?: Record<string, unknown>;
+    'minecraft:physics'?: Record<string, unknown>;
+    'minecraft:player.exhaustion'?: { max?: number; value?: number };
+    'minecraft:preferred_path'?: Record<string, any>;
   }>;
 }
 
@@ -829,4 +877,8 @@ export type {
   NavigationConfig,
   NavigationFloatConfig,
   EntityComponentOptions,
+  BaseJson,
+  EntityJson,
+  ItemJson,
+  JSONValue,
 };

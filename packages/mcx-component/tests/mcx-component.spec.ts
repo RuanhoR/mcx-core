@@ -17,7 +17,7 @@ describe('ItemComponent', () => {
 
   it('should throw on missing id', () => {
     const item = new ItemComponent({ id: '', name: 'Test', format: '1.21.0', components: {} });
-    expect(() => item.toJSON()).toThrow('cno id');
+    expect(() => item.toJSON()).toThrow('no id');
   });
 
   it('should create valid item JSON', () => {

@@ -452,9 +452,9 @@ export const StartSoundChoicesEnum = [
   'record.blocks',
   'record.cat',
   'record.chirp',
+  'record.far',
   'record.creator',
   'record.creator_music_box',
-  'record.far',
   'record.lava_chicken',
   'record.mall',
   'record.mellohi',
@@ -553,6 +553,6 @@ export const StartSoundChoicesEnum = [
   'water',
   'whine',
   'wind_charge.burst',
-] as const;
+];
 type StartSoundChoices = (typeof StartSoundChoicesEnum)[number];
 export default StartSoundChoices;

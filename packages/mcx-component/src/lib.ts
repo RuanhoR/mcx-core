@@ -1,17 +1,15 @@
 import { statSync } from 'node:fs';
-import { MCXstructureLocComponentType } from '../compile-mcx/types';
+import { extname } from 'node:path';
 import { BlockComponent } from './components/block';
 import { EntityComponent } from './components/entity';
 import { ItemComponent } from './components/item';
-import { extname } from 'node:path';
 
-export default {
+const lib = {
   item: ItemComponent,
   entity: EntityComponent,
   block: BlockComponent,
-} satisfies {
-  [key in MCXstructureLocComponentType]: unknown;
 };
+
 class ImageComponent {
   public classId = 'mcx_image_0918392' as string;
   constructor(
@@ -57,6 +55,7 @@ class GIFImageComponent extends ImageComponent {
   }
 }
 
+export default lib;
 export {
   ItemComponent,
   BlockComponent,

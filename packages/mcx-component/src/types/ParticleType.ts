@@ -1,8 +1,3 @@
-/**
- * @description Particle Type List
- * @description Update time UTC 2026/4/8
- */
-
 const ParticleTypeEnum = [
   'balloongas',
   'bleach',

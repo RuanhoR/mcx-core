@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-core",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {
@@ -34,6 +34,7 @@
     "@babel/generator": "7.28.5",
     "@babel/parser": "7.28.5",
     "@babel/types": "7.28.6",
+    "@mbler/mcx-component": "workspace:*",
     "@mbler/mcx-types": "workspace:*",
     "@volar/language-core": "^2.4.28",
     "magic-string": "0.30.21",

@@ -1,7 +1,3 @@
-/**
- * @description Sound Event Choose List
- * @description Update time UTC 2026/4/8
- */
 const SoundEventEnum = [
   'activate',
   'add.chest',
@@ -456,9 +452,9 @@ const SoundEventEnum = [
   'record.blocks',
   'record.cat',
   'record.chirp',
+  'record.far',
   'record.creator',
   'record.creator_music_box',
-  'record.far',
   'record.lava_chicken',
   'record.mall',
   'record.mellohi',

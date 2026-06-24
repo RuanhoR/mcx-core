@@ -8,7 +8,6 @@ const parts = (v: string | null | undefined): number[] => {
     .map((n: string): number => parseInt(n, 10) || 0);
 };
 
-// Compare version numbers, returns 1 if a > b, -1 if a < b, and 0 if equal.
 const compareVar = (a: string, b: string): number => {
   const A = parts(a);
   const B = parts(b);

@@ -1,8 +1,3 @@
-/**
- * Enchantable slot types for minecraft:enchantable component
- * Specifies which types of enchantments can be applied to items
- * @description Update time UTC 2026/4/8
- */
 export const EnchantableSlotArray = [
   'none',
   'all',

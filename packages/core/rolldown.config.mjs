@@ -4,6 +4,7 @@ const external = [
   '@babel/generator',
   '@babel/parser',
   '@babel/types',
+  '@mbler/mcx-component',
   '@mbler/mcx-types',
   '@volar/language-core',
   'magic-string',

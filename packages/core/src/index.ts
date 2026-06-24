@@ -23,5 +23,5 @@ export {
   JPGImageComponent,
   SVGImageComponent,
   GIFImageComponent,
-} from './mcx-component/lib';
+} from '@mbler/mcx-component';
 export * as ComponentType from './mcx-component/types';

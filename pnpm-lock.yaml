@@ -83,6 +83,9 @@ importers:
       '@babel/types':
         specifier: 7.28.6
         version: 7.28.6
+      '@mbler/mcx-component':
+        specifier: workspace:*
+        version: link:../mcx-component
       '@mbler/mcx-types':
         specifier: workspace:*
         version: link:../types
@@ -121,6 +124,22 @@ importers:
       rolldown-plugin-dts:
         specifier: 0.25.2
         version: 0.25.2(rolldown@1.0.0-rc.18)(typescript@5.9.3)
+
+  packages/mcx-component:
+    dependencies:
+      '@mbler/mcx-types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      rolldown:
+        specifier: 1.0.0-rc.18
+        version: 1.0.0-rc.18
+      rolldown-plugin-dts:
+        specifier: 0.25.2
+        version: 0.25.2(rolldown@1.0.0-rc.18)(typescript@5.9.3)
+      vitest:
+        specifier: ^4.1.8
+        version: 4.1.8(@types/node@25.9.2)(vite@8.0.16(@types/node@25.9.2))
 
   packages/types:
     dependencies:

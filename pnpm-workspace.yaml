@@ -1,5 +1,6 @@
 packages:
   - packages/core
+  - packages/mcx-component
   - packages/types
   - packages/client
   - packages/create-mbler

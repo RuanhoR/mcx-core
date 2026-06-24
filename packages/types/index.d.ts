@@ -552,6 +552,121 @@ interface NavigationFloatConfig extends NavigationConfig {
   using_door_annotation?: boolean;
 }
 
+interface BlockComponentOptions {
+  id: string;
+  format: string;
+  components?: Partial<{
+    display_name?: string;
+    light_emission?: number;
+    light_dampening?: number;
+    friction?: number;
+    loot?: string;
+    destructible_by_explosion?: boolean | { explosion_resistance?: number };
+    destructible_by_mining?: boolean | {
+      seconds_to_destroy?: number;
+      item_specific_speeds?: Array<{
+        item: string | { tags?: string };
+        destroy_speed: number;
+      }>;
+    };
+    flammable?: boolean | {
+      catch_chance_modifier?: number;
+      destroy_chance_modifier?: number;
+      lava_flammable?: boolean;
+    };
+    collision_box?: boolean | {
+      origin?: [number, number, number];
+      size?: [number, number, number];
+    };
+    selection_box?: boolean | {
+      origin?: [number, number, number];
+      size?: [number, number, number];
+    };
+    geometry?: string | {
+      identifier: string;
+      bone_visibility?: Record<string, boolean>;
+      culling?: string;
+      culling_layer?: string;
+      culling_shape?: string;
+      n_way_visual_rotation?: string;
+      uv_lock?: boolean | string[];
+    };
+    material_instances?: Record<string, string | {
+      texture: string;
+      render_method?: 'opaque' | 'double_sided' | 'blend' | 'alpha_test' | 'alpha_test_single_sided' | 'blend_to_opaque' | 'alpha_test_to_opaque' | 'alpha_test_single_sided_to_opaque';
+      ambient_occlusion?: number;
+      face_dimming?: boolean | string;
+      isotropic?: boolean;
+      tint_method?: string | boolean;
+    }>;
+    map_color?: string | { color: string; tint_method?: string };
+    crafting_table?: { crafting_tags?: string[]; table_name?: string };
+    transformation?: {
+      rotation?: [number, number, number] | { x?: number; y?: number; z?: number };
+      rotation_pivot?: [number, number, number];
+      scale?: [number, number, number] | { x?: number; y?: number; z?: number };
+      scale_pivot?: [number, number, number];
+      translation?: [number, number, number] | { x?: number; y?: number; z?: number };
+    };
+    tick?: { interval_range: [number, number]; looping?: boolean };
+    random_offset?: {
+      x?: { range?: { min?: number; max?: number }; steps?: number };
+      y?: { range?: { min?: number; max?: number }; steps?: number };
+      z?: { range?: { min?: number; max?: number }; steps?: number };
+    };
+    movable?: {
+      movement_type?: 'push_pull' | 'push' | 'popped' | 'immovable';
+      sticky?: 'none' | 'same';
+    };
+    placement_filter?: {
+      conditions: Array<{
+        allowed_faces?: string[];
+        block_filter?: Array<string | {
+          name?: string;
+          states?: Record<string, number | string | boolean>;
+          tags?: string;
+        }>;
+      }>;
+    };
+    redstone_conductivity?: { allows_wire_to_step_down?: boolean; redstone_conductor?: boolean };
+    redstone_consumer?: { min_power?: number; propagates_power?: boolean };
+    redstone_producer?: {
+      power?: number;
+      connected_faces?: string[];
+      strongly_powered_face?: string;
+      transform_relative?: boolean;
+    };
+    support?: { shape: 'fence' | 'stair' };
+    connection_rule?: {
+      accepts_connections_from?: 'all' | 'none' | 'only_fences';
+      enabled_directions?: string[];
+    };
+    liquid_detection?: {
+      can_contain_liquid?: boolean;
+      liquid_type?: string;
+      on_liquid_touches?: 'blocking' | 'broken' | 'popped' | 'no_reaction';
+      stops_liquid_flowing_from_direction?: string[];
+      use_liquid_clipping?: boolean;
+      detection_rules?: Array<{
+        can_contain_liquid?: boolean;
+        liquid_type?: string;
+        on_liquid_touches?: 'blocking' | 'broken' | 'popped' | 'no_reaction';
+        stops_liquid_flowing_from_direction?: string[];
+        use_liquid_clipping?: boolean;
+      }>;
+    };
+    precipitation_interactions?: {
+      precipitation_behavior?: 'none' | 'obstruct_rain' | 'obstruct_rain_accumulate_snow' | 'snowlogging';
+    };
+    entity_fall_on?: { min_fall_distance?: number; minimum_fall_distance?: number };
+    replaceable?: Record<string, never>;
+    flower_pottable?: Record<string, never>;
+    chest_obstruction?: Record<string, never>;
+    destructible_by_explosion?: boolean | { explosion_resistance?: number };
+    icon?: string | { filePath: string; classId: string };
+  }>;
+}
+
 interface EntityComponentOptions {
   id: string;
   format: string;
@@ -707,6 +822,7 @@ export type {
   Rarity,
   FoodEffect,
   ItemComponentOptions,
+  BlockComponentOptions,
   AddRiderConfig,
   MobEffectConfig,
   JumpMovementConfig,

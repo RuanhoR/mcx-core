@@ -48,7 +48,17 @@ export async function initProject(inputOpt: InputResult) {
   await mkdir(dir, { recursive: true });
   const templatePath = await findTemplate(inputOpt.Language);
   await cp(templatePath, dir, { recursive: true, force: true });
-  const packageJson: Record<string, any> = {
+  const packageJson: {
+    name: string;
+    description: string;
+    version: string;
+    packageManager: string;
+    engines: Record<string, string>;
+    scripts: Record<string, string>;
+    type: string;
+    dependencies: Record<string, string>;
+    devDependencies: Record<string, string>;
+  } = {
     name: inputOpt.Name,
     description: inputOpt.Description,
     version: '0.0.1',

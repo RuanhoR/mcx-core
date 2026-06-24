@@ -19,7 +19,7 @@ export function verifyType<
 >(obj: T, typeMapping: U): obj is T & { [P in keyof U]: JSTypeMap[U[P]] } {
   for (const key in typeMapping) {
     const expected = typeMapping[key];
-    const val = (obj as any)[key];
+    const val = obj[key as keyof T];
     if (typeof val !== expected) return false;
   }
   return true;

@@ -49,7 +49,7 @@ class ItemComponent {
   getUseAnimation(): string | { value?: string } | undefined { return this.#opt.components?.use_animation; }
   setUseAnimation(value: string | { value?: string }) { if (!this.#opt.components) this.#opt.components = {}; this.#opt.components.use_animation = value; }
   getWearable(): { slot: string; protection?: number; hides_player_location?: boolean; dispensable?: boolean } | undefined { return this.#opt.components?.wearable; }
-  setWearable(value: { slot: string; protection?: number; hides_player_location?: boolean; dispensable?: boolean }) { if (!this.#opt.components) this.#opt.components = {}; this.#opt.components.wearable = value; }
+  setWearable(value: { slot: 'slot.armor.head' | 'slot.armor.chest' | 'slot.armor.legs' | 'slot.armor.feet' | 'slot.armor.body' | 'slot.weapon.mainhand' | 'slot.weapon.offhand'; protection?: number; hides_player_location?: boolean; dispensable?: boolean }) { if (!this.#opt.components) this.#opt.components = {}; this.#opt.components.wearable = value; }
   getUseModifiers(): { use_duration: number; movement_modifier?: number; emit_vibrations?: boolean; start_sound?: string } | undefined { return this.#opt.components?.use_modifiers; }
   setUseModifiers(value: { use_duration: number; movement_modifier?: number; emit_vibrations?: boolean; start_sound?: string }) { if (!this.#opt.components) this.#opt.components = {}; this.#opt.components.use_modifiers = value; }
   getSwingSounds(): { attack_critical_hit?: string; attack_hit?: string; attack_miss?: string } | undefined { return this.#opt.components?.swing_sounds; }
@@ -87,7 +87,155 @@ class ItemComponent {
 
   public toJSON() {
     if (!this.#opt) throw new Error('[mcx component]: cannot read component');
-    const result: Record<string, any> = {
+    const result: {
+      format_version: string;
+      'minecraft:item': {
+        description: { identifier: string };
+        components: Partial<{
+          'minecraft:display_name': { value: string };
+          'minecraft:damage': { value: number };
+          'minecraft:allow_off_hand': { value: boolean };
+          'minecraft:can_destroy_in_creative': { value: boolean };
+          'minecraft:icon': { textures: string };
+          'minecraft:glint': { value: boolean };
+          'minecraft:hand_equipped': { value: boolean };
+          'minecraft:block_placer': {
+            aligned_placement?: boolean;
+            block: string;
+            replace_block_item?: boolean;
+            use_on?: Array<
+              | string
+              | {
+                  name: string;
+                  states?: Record<string, number | string | boolean>;
+                  tags?: string;
+                }
+            >;
+          };
+          'minecraft:cooldown': { category: string; duration: number; type?: 'use' | 'attack' };
+          'minecraft:compostable': { composting_chance: number };
+          'minecraft:bundle_interaction': { num_viewable_slots?: number };
+          'minecraft:storage_item': {
+            allow_nested_storage_items?: boolean;
+            allowed_items?: string[];
+            banned_items?: string[];
+            max_slots?: number;
+            max_weight_limit?: number;
+            weight_in_storage_item?: number;
+          };
+          'minecraft:storage_weight_modifier': { weight_in_storage_item: number };
+          'minecraft:storage_weight_limit': { max_weight_limit: number };
+          'minecraft:throwable': {
+            do_swing_animation?: boolean;
+            launch_power_scale?: number;
+            max_draw_duration?: number;
+            max_launch_power?: number;
+            min_draw_duration?: number;
+            scale_power_by_draw_duration?: boolean;
+          };
+          'minecraft:tags': { tags?: string[] };
+          'minecraft:swing_duration': { value?: number };
+          'minecraft:use_animation': string | { value?: string };
+          'minecraft:wearable': {
+            slot: 'slot.armor.head' | 'slot.armor.chest' | 'slot.armor.legs' | 'slot.armor.feet' | 'slot.armor.body' | 'slot.weapon.mainhand' | 'slot.weapon.offhand';
+            protection?: number;
+            hides_player_location?: boolean;
+            dispensable?: boolean;
+          };
+          'minecraft:use_modifiers': {
+            use_duration: number;
+            movement_modifier?: number;
+            emit_vibrations?: boolean;
+            start_sound?: string;
+          };
+          'minecraft:swing_sounds': {
+            attack_critical_hit?: string;
+            attack_hit?: string;
+            attack_miss?: string;
+          };
+          'minecraft:digger': {
+            use_efficiency?: boolean;
+            destroy_speeds?: Array<{
+              block:
+                | string
+                | {
+                    name?: string;
+                    states?: Record<string, number | string | boolean>;
+                    tags?: string;
+                  };
+              speed: number;
+            }>;
+          };
+          'minecraft:damage_absorption': { absorbable_causes: string[] };
+          'minecraft:durability': {
+            max_durability: number;
+            damage_chance?: { min: number; max: number };
+          };
+          'minecraft:durability_sensor': {
+            durability?: number;
+            durability_thresholds?: Array<{
+              durability: number;
+              particle_type?: t.ParticleType;
+              sound_event?: t.SoundEvent;
+            }>;
+            particle_type?: t.ParticleType;
+            sound_event?: t.SoundEvent;
+          };
+          'minecraft:dyeable': { default_color?: string | [number, number, number] };
+          'minecraft:enchantable': { slot?: t.EnchantableSlot; value?: number };
+          'minecraft:fire_resistant': { value?: boolean };
+          'minecraft:entity_placer': {
+            dispense_on?: Array<
+              | string
+              | {
+                  name: string;
+                  states?: Record<string, number | string | boolean>;
+                  tags?: string;
+                }
+            >;
+            entity: string;
+            use_on?: Array<
+              | string
+              | {
+                  name: string;
+                  states?: Record<string, number | string | boolean>;
+                  tags?: string;
+                }
+            >;
+          };
+          'minecraft:fuel': { duration: number };
+          'minecraft:kinetic_weapon': {
+            creative_reach?: { max?: number; min?: number };
+            damage_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
+            damage_modifier?: number;
+            damage_multiplier?: number;
+            delay?: number;
+            dismount_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
+            hitbox_margin?: number;
+            knockback_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
+            kinetic_effect_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
+            reach?: { max?: number; min?: number };
+          };
+          'minecraft:interact_button': boolean | string;
+          'minecraft:hover_text_color': { value?: string };
+          'minecraft:liquid_clipped': boolean | { value?: boolean };
+          'minecraft:max_stack_size': number | { value?: number };
+          'minecraft:food': {
+            can_always_eat?: boolean;
+            cooldown_time?: number;
+            cooldown_type?: string;
+            effects?: t.FoodEffect[];
+            is_meat?: boolean;
+            nutrition?: number;
+            on_use_action?: string;
+            on_use_range?: [number, number, number];
+            saturation_modifier?: number | 'poor' | 'low' | 'normal' | 'good' | 'supernatural';
+            using_converts_to?: string;
+            remove_effects?: string[];
+          };
+        }>;
+      };
+    } = {
       format_version: '',
       'minecraft:item': {
         components: {},

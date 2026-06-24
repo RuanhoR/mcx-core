@@ -31,7 +31,7 @@ interface ParsedUIOption extends Omit<MCXUIOpt, 'layout'> {
   }[];
 }
 interface ResolvedParams {
-  [key: string]: any;
+  [key: string]: unknown;
   click?: ((value: ModalFormResponse | MessageFormData | ActionFormResponse) => void);
 }
 interface ResolvedLayoutItem {
@@ -41,21 +41,21 @@ interface ResolvedLayoutItem {
 }
 export class ui implements typesPkg.ui {
   private _mcUI: typeof import('@minecraft/server-ui');
-  private _mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, any> }) => any;
-  private _srcResult: Record<string, any> = {};
+  private _mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, unknown> }) => Record<string, unknown>;
+  private _srcResult: Record<string, unknown> = {};
   private _UI: MCXUIOpt['use'];
   private _prop: string[];
   private _layout: ParsedUIOption['layout'];
   private _usePropLayoutIndexList: number[] = [];
   private _usePropParamsMap: Map<number, string[]> = new Map();
   private _uiType: 'modal' | 'action' | 'message';
-  constructor(UIConfig: MCXUIOpt, mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, any> }) => any) {
+  constructor(UIConfig: MCXUIOpt, mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, unknown> }) => Record<string, unknown>) {
     this._mcxSrcFn = mcxSrcFn;
     this._srcResult = mcxSrcFn({ $prop: {} });
     this._UI = UIConfig.use;
     if (typeof this._srcResult !== 'object')
       throw new Error('[mcx runtime]: can;t load mcx setup');
-    this._prop = this._srcResult.prop || [];
+    this._prop = (this._srcResult.prop as string[] | undefined) || [];
     if (!Array.isArray(this._prop))
       throw new Error("[mcx runtime]: can't load prop: invalid prop");
 
@@ -80,7 +80,7 @@ export class ui implements typesPkg.ui {
     this._layout = UIConfig.layout.map(
       (i): ParsedUIOption['layout'][number] => {
         if (i.type == 'button' && i.params.click && typeof i.params.click === 'string') {
-          i.params.click = this._srcResult[i.params.click];
+          i.params.click = this._srcResult[i.params.click] as string | { useProp: string };
         }
         return i as unknown as ParsedUIOption['layout'][number];
       },
@@ -126,20 +126,20 @@ export class ui implements typesPkg.ui {
         if (i.type == 'input') {
           actionUi.textField(
             String(i.content),
-            i.params.placeholderText || '',
+            (i.params.placeholderText as string | undefined) || '',
             {
-              defaultValue: i.params.default,
-              tooltip: i.params.tip,
+              defaultValue: i.params.default as string,
+              tooltip: i.params.tip as string,
             },
           );
         } else if (i.type == 'slider') {
           actionUi.slider(
             String(i.content),
-            parseFloat(i.params.min) || 0,
-            parseFloat(i.params.max) || 10,
+            parseFloat(i.params.min as string) || 0,
+            parseFloat(i.params.max as string) || 10,
             {
               tooltip: {
-                text: i.params.tip || '',
+                text: (i.params.tip as string | undefined) || '',
               },
             },
           );
@@ -148,7 +148,7 @@ export class ui implements typesPkg.ui {
             defaultValue: Boolean(i.params.default),
           });
         } else if (i.type == 'dropdown') {
-          actionUi.dropdown(String(i.content), i.params.option.split(','));
+          actionUi.dropdown(String(i.content), (i.params.option as string).split(','));
         } else if (i.type == 'submit') {
           actionUi.submitButton(String(i.content));
           if (i.params.click) clickEvent.set(0, i.params.click);
@@ -161,7 +161,7 @@ export class ui implements typesPkg.ui {
       else if (this._uiType === 'action') {
         const actionUi = ui as InstanceType<typeof this._mcUI.ActionFormData>;
         if (i.type == 'button') {
-          actionUi.button(String(i.content), i.params.img || void 0);
+          actionUi.button(String(i.content), (i.params.img as string | undefined) || void 0);
           if (i.params.click) clickEvent.set(parseInt(iIndex), i.params.click);
         } else if (i.type == 'body') {
           actionUi.label(String(i.content));
@@ -188,7 +188,7 @@ export class ui implements typesPkg.ui {
     }
     return [ui, clickEvent] as const;
   }
-  async show(player: Player, prop: Record<string, any>) {
+  async show(player: Player, prop: Record<string, unknown>) {
     const srcResult = this._mcxSrcFn({ $prop: prop });
 
     const clickHandlers: Map<number, Function> = new Map();
@@ -205,12 +205,12 @@ export class ui implements typesPkg.ui {
 
     for (const [index, handler] of clickHandlers) {
       if (cLayout[index]) {
-        (cLayout[index].params as any).click = handler;
+        (cLayout[index].params as unknown as { click: Function }).click = handler;
       }
     }
 
     for (const propIndex of this._usePropLayoutIndexList) {
-      const layout = cLayout[propIndex] as any;
+      const layout = cLayout[propIndex] as UnresolvedLayout;
       if (!layout || typeof layout.content !== 'object' || !layout.content.useProp)
         continue;
       const resolved = prop[layout.content.useProp];
@@ -219,11 +219,11 @@ export class ui implements typesPkg.ui {
           `[mcx runtime]: prop "${layout.content.useProp}" not found in props`,
         );
       }
-      layout.content = resolved;
+      layout.content = resolved as string | { useProp: string };
     }
 
     for (const [layoutIndex, paramKeys] of this._usePropParamsMap.entries()) {
-      const layout = cLayout[layoutIndex] as any;
+      const layout = cLayout[layoutIndex] as UnresolvedLayout & { params: Record<string, string | { useProp: string } | ((value: ModalFormResponse | MessageFormData | ActionFormResponse) => void)> };
       if (!layout) continue;
       for (const paramKey of paramKeys) {
         const paramValue = layout.params[paramKey];
@@ -237,11 +237,11 @@ export class ui implements typesPkg.ui {
           );
         }
         if (paramKey === 'click') {
-          layout.params[paramKey] = typeof resolved === 'string'
+          layout.params[paramKey] = (typeof resolved === 'string'
             ? srcResult[resolved]
-            : resolved;
+            : resolved) as string | { useProp: string };
         } else {
-          layout.params[paramKey] = resolved;
+          layout.params[paramKey] = resolved as string | { useProp: string };
         }
       }
     }

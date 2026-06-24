@@ -97,93 +97,98 @@ export default class NodeUtils {
     const context = { ...topContext, ...currentContext };
 
     const evaluate = (
-      expr: Expression | undefined | PrivateName | any,
-    ): any => {
+      expr: unknown,
+    ): unknown => {
       if (!expr) return undefined;
-      switch (expr.type) {
+      const e = expr as Expression | PrivateName;
+      switch (e.type) {
         case 'Identifier':
-          if (!expr.name) return undefined;
-          if (expr.name in context) {
-            return evaluate(context[expr.name]);
+          if (!e.name) return undefined;
+          if (e.name in context) {
+            return evaluate(context[e.name]);
           }
-          if (expr.name === 'this') {
+          if (e.name === 'this') {
             return currentContext;
           }
-          if (expr.name === 'global') {
+          if (e.name === 'global') {
             return topContext;
           }
-          throw new Error(`Undefined variable: ${expr.name}`);
+          throw new Error(`Undefined variable: ${e.name}`);
         case 'StringLiteral':
-          return expr.value;
+          return e.value;
         case 'NumericLiteral':
-          return expr.value;
+          return e.value;
         case 'BooleanLiteral':
-          return expr.value;
+          return e.value;
         case 'NullLiteral':
           return null;
         case 'MemberExpression':
-          const objectValue = evaluate(expr.object);
-          const property = expr.computed
-            ? evaluate(expr.property)
-            : (expr.property as Identifier).name;
+          const objectValue = evaluate(e.object);
+          const property = e.computed
+            ? evaluate(e.property)
+            : (e.property as Identifier).name;
           if (
             objectValue &&
             typeof objectValue === 'object' &&
-            property in objectValue
+            (property as string | number | symbol) in objectValue
           ) {
-            return objectValue[property];
+            return (objectValue as Record<string, unknown>)[property as string];
           }
           throw new Error(
             `Cannot access property '${property}' of ${objectValue}`,
           );
 
         case 'ObjectExpression':
-          const obj: Record<string, any> = {};
-          for (const prop of expr.properties) {
+          const obj: Record<string, unknown> = {};
+          for (const prop of e.properties) {
             if (prop.type === 'ObjectProperty') {
               const key = prop.computed
                 ? evaluate(prop.key as Expression)
                 : (prop.key as Identifier).name;
-              obj[key] = evaluate(prop.value);
+              obj[key as string] = evaluate(prop.value);
             }
           }
           return obj;
 
         case 'ArrayExpression':
-          return expr.elements.map((element: any) =>
-            element && element.type !== 'SpreadElement'
-              ? evaluate(element)
-              : undefined,
-          );
+          return e.elements.map((element: unknown) => {
+            const el = element as { type: string } | null;
+            return el && el.type !== 'SpreadElement'
+              ? evaluate(el)
+              : undefined;
+          });
 
         case 'UnaryExpression':
-          const argumentValue = evaluate(expr.argument);
-          switch (expr.operator) {
+          const argumentValue = evaluate(e.argument);
+          switch (e.operator) {
             case '+':
-              return +argumentValue;
+              return Number(argumentValue);
             case '-':
-              return -argumentValue;
+              return -Number(argumentValue);
             case '!':
               return !argumentValue;
             case '~':
-              return ~argumentValue;
+              return ~Number(argumentValue);
             case 'typeof':
               return typeof argumentValue;
             case 'void':
               return void argumentValue;
             default:
-              throw new Error(`Unsupported unary operator: ${expr.operator}`);
+              throw new Error(`Unsupported unary operator: ${e.operator}`);
           }
         case 'PrivateName':
-          return evaluate(context[expr.id.name]);
+          return evaluate(context[e.id.name]);
         case 'BinaryExpression':
-          const leftValue: any = evaluate(expr.left);
-          const rightValue: any = evaluate(expr.right);
+          const leftValue: unknown = evaluate(e.left);
+          const rightValue: unknown = evaluate(e.right);
           const isNum =
             typeof leftValue == 'number' && typeof rightValue == 'number';
-          switch (expr.operator) {
+          switch (e.operator) {
             case '+':
-              return leftValue + rightValue;
+              if (typeof leftValue === 'number' && typeof rightValue === 'number') {
+                return leftValue + rightValue;
+              }
+              return String(leftValue) + String(rightValue);
             case '-':
               if (isNum) {
                 return leftValue - rightValue;
@@ -209,52 +214,52 @@ export default class NodeUtils {
             case '!==':
               return leftValue !== rightValue;
             case '<':
-              return leftValue < rightValue;
+              return Number(leftValue) < Number(rightValue);
             case '<=':
-              return leftValue <= rightValue;
+              return Number(leftValue) <= Number(rightValue);
             case '>':
-              return leftValue > rightValue;
+              return Number(leftValue) > Number(rightValue);
             case '>=':
-              return leftValue >= rightValue;
+              return Number(leftValue) >= Number(rightValue);
             case '|':
-              return leftValue | rightValue;
+              return Number(leftValue) | Number(rightValue);
             case '&':
-              return leftValue & rightValue;
+              return Number(leftValue) & Number(rightValue);
             case '^':
-              return leftValue ^ rightValue;
+              return Number(leftValue) ^ Number(rightValue);
             case '<<':
-              return leftValue << rightValue;
+              return Number(leftValue) << Number(rightValue);
             case '>>':
-              return leftValue >> rightValue;
+              return Number(leftValue) >> Number(rightValue);
             case '>>>':
-              return leftValue >>> rightValue;
+              return Number(leftValue) >>> Number(rightValue);
             default:
-              throw new Error(`Unsupported binary operator: ${expr.operator}`);
+              throw new Error(`Unsupported binary operator: ${e.operator}`);
           }
         case 'LogicalExpression':
-          const left = evaluate(expr.left);
-          switch (expr.operator) {
+          const left = evaluate(e.left);
+          switch (e.operator) {
             case '&&':
-              return left && evaluate(expr.right);
+              return left && evaluate(e.right);
             case '||':
-              return left || evaluate(expr.right);
+              return left || evaluate(e.right);
             case '??':
-              return left ?? evaluate(expr.right);
+              return left ?? evaluate(e.right);
             default:
-              throw new Error(`Unsupported logical operator: ${expr.operator}`);
+              throw new Error('Unsupported logical operator');
           }
 
         case 'ConditionalExpression':
-          return evaluate(expr.test)
-            ? evaluate(expr.consequent)
-            : evaluate(expr.alternate);
+          return evaluate(e.test)
+            ? evaluate(e.consequent)
+            : evaluate(e.alternate);
 
         case 'CallExpression':
-          const callee = evaluate(expr.callee);
+          const callee = evaluate(e.callee);
           if (typeof callee !== 'function') {
             throw new Error(`Cannot call non-function: ${callee}`);
           }
-          const args = expr.arguments.map(
+          const args = e.arguments.map(
             (arg: typeof callExpression.arguments) =>
               arg.type === 'SpreadElement'
                 ? evaluate(arg.argument)
@@ -262,14 +267,14 @@ export default class NodeUtils {
           );
           return callee.apply(null, args);
         default:
-          throw new Error(`Unsupported expression type: ${expr.type}`);
+          throw new Error(`Unsupported expression type: ${e.type}`);
       }
     };
 
     try {
       return evaluate(expression);
-    } catch (error: any) {
-      throw new Error(`Expression evaluation failed: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Expression evaluation failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

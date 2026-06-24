@@ -22,29 +22,31 @@ export class CompileError extends Error {
   }
 }
 
-function extractLoc(node: any): { line: number; column: number } {
-  if (!node) return { line: -1, column: -1 };
+function extractLoc(node: unknown): { line: number; column: number } {
+  if (!node || typeof node !== 'object') return { line: -1, column: -1 };
+  const n = node as Record<string, unknown>;
+  const loc = n.loc as Record<string, unknown> | undefined;
   // Node with loc.start (Babel or MCX): prefer column
-  if (node.loc && node.loc.start) {
-    const line =
-      typeof node.loc.start.line === 'number' ? node.loc.start.line : -1;
-    const column =
-      typeof node.loc.start.column === 'number' ? node.loc.start.column : -1;
+  if (loc?.start) {
+    const start = loc.start as Record<string, unknown>;
+    const line = typeof start.line === 'number' ? start.line : -1;
+    const column = typeof start.column === 'number' ? start.column : -1;
     return { line, column };
-  } else if (node.loc && node.loc.column !== undefined) {
+  } else if (loc && loc.column !== undefined) {
     return {
-      line: node.loc.line ?? -1,
-      column: node.loc.column,
+      line: typeof loc.line === 'number' ? loc.line : -1,
+      column: loc.column as number,
     };
   }
   // MCX Token with unified position: start: { line, column }
-  if (node.start && typeof node.start.line === 'number') {
-    return { line: node.start.line, column: node.start.column ?? -1 };
+  const start = n.start as Record<string, unknown> | undefined;
+  if (start && typeof start.line === 'number') {
+    return { line: start.line, column: typeof start.column === 'number' ? (start.column as number) : -1 };
   }
   return { line: -1, column: -1 };
 }
 
-function makeError(msg: string, node?: any) {
+function makeError(msg: string, node?: unknown) {
   return new CompileError(msg, extractLoc(node));
 }
 interface ImportTemp {
@@ -304,7 +306,7 @@ class CompileMCX {
   private checkComponentName(
     name: string,
   ): name is MCXstructureLocComponentType {
-    return Object.values(_MCXstructureLocComponentTypes).includes(name as any);
+    return (Object.values(_MCXstructureLocComponentTypes) as string[]).includes(name);
   }
   private checkComponentParentName(
     name: string,

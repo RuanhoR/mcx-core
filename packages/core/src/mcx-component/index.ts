@@ -120,7 +120,7 @@ function collectExportSources(code: string): ExportSourceMap {
           // imported.name is the original export name.
           const importedName = t.isIdentifier(spec.imported)
             ? spec.imported.name
-            : (spec.imported as any).value;
+            : (spec.imported as t.StringLiteral).value;
           const localName = spec.local.name;
           sources[localName] = pkg;
         } else if (t.isImportDefaultSpecifier(spec)) {

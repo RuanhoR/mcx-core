@@ -1,5 +1,7 @@
 import * as t from '../types';
 
+type EntityComponents = NonNullable<t.EntityComponentOptions['components']>;
+
 class EntityComponent {
   #opt: t.EntityComponentOptions;
   constructor(opt: t.EntityComponentOptions) {
@@ -21,13 +23,12 @@ class EntityComponent {
   getAddrider(): t.AddRiderConfig | undefined { return this.#opt.components?.addrider; }
   setAddrider(value: t.AddRiderConfig) { if (!this.#opt.components) this.#opt.components = {}; this.#opt.components.addrider = value; }
 
-  // Record<string, unknown> generic get/set for all minecraft:* components
-  getComponent(key: string): Record<string, unknown> | undefined {
-    return (this.#opt.components as Record<string, unknown>)[key] as Record<string, unknown> | undefined;
+  getComponent<K extends keyof EntityComponents>(key: K): EntityComponents[K] {
+    return this.#opt.components?.[key] as EntityComponents[K];
   }
-  setComponent(key: string, value: Record<string, unknown>) {
+  setComponent<K extends keyof EntityComponents>(key: K, value: NonNullable<EntityComponents[K]>) {
     if (!this.#opt.components) this.#opt.components = {};
-    (this.#opt.components as Record<string, unknown>)[key] = value;
+    this.#opt.components[key] = value;
   }
 
   // Typed getters/setters for specific components
@@ -78,7 +79,13 @@ class EntityComponent {
 
   public toJSON() {
     if (!this.#opt) throw new Error('[mcx component]: cannot read component');
-    const result: Record<string, any> = {
+    const result: {
+      format_version: string;
+      'minecraft:entity': {
+        components: Partial<EntityComponents>;
+        description: { identifier: string; is_spawnable?: boolean; is_summonable?: boolean };
+      };
+    } = {
       format_version: '',
       'minecraft:entity': {
         description: { identifier: '' },
@@ -102,14 +109,11 @@ class EntityComponent {
       result['minecraft:entity'].description.is_summonable = this.#opt.is_summonable;
     }
     if (this.#opt.components) {
-      const c = this.#opt.components as Record<string, unknown>;
-      for (const key of Object.keys(c)) {
-        const val = c[key];
-        if (val === undefined) continue;
-        if (key.startsWith('minecraft:') || key === 'addrider' || key === 'physics') {
-          result['minecraft:entity'].components[key] = val;
-        }
-      }
+      result['minecraft:entity'].components = Object.fromEntries(
+        Object.entries(this.#opt.components).filter(([key, val]) =>
+          val !== undefined && (key.startsWith('minecraft:') || key === 'addrider' || key === 'physics')
+        )
+      ) as Partial<EntityComponents>;
     }
     return result;
   }

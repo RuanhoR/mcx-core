@@ -46,7 +46,7 @@ export type FileEditOption =
       type: 'edit';
       id?: string;
       source: FilePoint | FileBindSource;
-      expression: FileEditExpression<any>;
+      expression: FileEditExpression<Record<string, DefineEntry>>;
     }
   | {
       type: 'copy_assets';

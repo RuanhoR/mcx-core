@@ -14,7 +14,7 @@ interface BindResponse {
 }
 class EventStatus {
   run: string[] = [];
-  all: Record<string, (event: any) => void> = {};
+  all: Record<string, (event: unknown) => void> = {};
   runCout: number = 0;
   extendList: Event[] = [];
   on: WorldAfterEvents | WorldBeforeEvents | null = null;
@@ -35,7 +35,7 @@ class Event implements TypePkg.Event {
     this.status.on =
       opt.on == 'after' ? _world.afterEvents : _world.beforeEvents;
   }
-  private _execInExtends(method: keyof Event, ...args: any[]) {
+  private _execInExtends(method: keyof Event, ...args: unknown[]) {
     for (const i of this.status.extendList) {
       const fn = i[method];
       if (typeof fn !== 'function') return;
@@ -44,7 +44,7 @@ class Event implements TypePkg.Event {
   }
   private _bindEvent(
     eventName: string,
-    handler: (event: any) => void,
+    handler: (event: unknown) => void,
   ): BindResponse {
     if (!this.status.on)
       return {
@@ -77,7 +77,7 @@ class Event implements TypePkg.Event {
   }
   private _remove_bind_event(
     eventName: string,
-    handler: (event: any) => void,
+    handler: (event: unknown) => void,
   ): BindResponse {
     if (!this.status.on)
       return {

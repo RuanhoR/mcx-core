@@ -96,29 +96,31 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
   async function resolvePackageExports(
     pkgDir: string,
     subPath: string,
-    pkgJson: any,
+    pkgJson: Record<string, unknown>,
   ): Promise<string | null> {
     const exports = pkgJson.exports;
     if (exports) {
       const subImport = subPath.startsWith('./') ? subPath : `./${subPath}`;
       if (typeof exports === 'object' && exports !== null) {
-        if (exports[subImport]) {
-          const target = exports[subImport];
+        const exp = exports as Record<string, unknown>;
+        if (exp[subImport]) {
+          const target = exp[subImport];
           if (typeof target === 'string') {
             return path.join(pkgDir, target);
           } else if (typeof target === 'object' && target !== null) {
-            if (target.import) {
-              return path.join(pkgDir, target.import);
+            const targetObj = target as Record<string, unknown>;
+            if (targetObj.import) {
+              return path.join(pkgDir, targetObj.import as string);
             }
             return path.join(
               pkgDir,
-              target.default || (Object.values(target)[0] as string),
+              (targetObj.default as string) || (Object.values(targetObj)[0] as string),
             );
           }
         }
         if (subImport.endsWith('/') || subImport.endsWith('/*')) {
           const dirMapping = subImport.slice(0, -1);
-          for (const [key, value] of Object.entries(exports)) {
+          for (const [key, value] of Object.entries(exp)) {
             if (key.startsWith(dirMapping) && key !== dirMapping) {
               const target = value as string;
               return path.join(pkgDir, target);
@@ -153,7 +155,7 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
           ? parts.slice(2).join('/')
           : parts.slice(1).join('/');
         const d = path.join(opt.moduleDir, pkgName);
-        let pkgJson: any;
+        let pkgJson: Record<string, unknown>;
         try {
           pkgJson = JSON.parse(
             await readFile(path.join(d, 'package.json'), 'utf-8'),
@@ -181,7 +183,7 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
           if (fromRoot) return fromRoot;
           return null;
         }
-        return path.join(d, pkgJson.main);
+        return path.join(d, pkgJson.main as string);
       }
     },
     transform: async function (

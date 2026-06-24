@@ -32,7 +32,7 @@ export default [
     },
     rules: {
       // Basic TypeScript rules - all disabled to avoid noise
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unnecessary-type-constraint': 'off',
 
       // Code quality rules

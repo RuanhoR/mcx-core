@@ -51,7 +51,7 @@ export default class Utils {
     return new Promise(resolve => setTimeout(resolve, time));
   }
   public static TypeVerify<
-    T extends Record<string, any>,
+    T extends Record<string, unknown>,
     U extends TypeVerifyBody,
   >(
     obj: T,

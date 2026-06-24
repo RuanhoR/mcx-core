@@ -510,7 +510,7 @@ export async function compileComponent(
       });
     }
 
-    const json = pointData.toJSON() as BaseJson;
+    const json = pointData.toJSON() as unknown as BaseJson;
     if (
       !json._meta ||
       !json._meta.type ||

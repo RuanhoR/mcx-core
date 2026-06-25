@@ -1,31 +1,146 @@
+<div align="center">
+
 # mcx-core
 
-The core for mcx dsl.   
-Packages:
- - client
- - types
- - core
+The core monorepo for **MCX** — a domain-specific language (DSL) for building Minecraft Bedrock Edition (MCBE) addons.
 
-<p align="center">
+<p>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/pnpm-11-F69220?style=for-the-badge&logo=pnpm&logoColor=white" alt="pnpm">
+  <img src="https://img.shields.io/badge/MCBE-Addon-7C3AED?style=for-the-badge" alt="MCBE Addon">
 </p>
 
-## Other README Version
-- zh: [./docs/README.zh.md]
-- ko: [./docs/README.ko.md]
-- ja: [./docs/README.ja.md]
+</div>
 
-## Get started
-Go to [Docs](https://mbler-docs.ruanhor.dpdns.org) for starting
+> **Disclaimer:** MCX is not affiliated with or endorsed by Mojang/Microsoft. It is an independent, community-driven project.
+
+---
+
+## Other README Versions
+
+| Language | Link |
+|----------|------|
+| 中文 | [./docs/README.zh.md](./docs/README.zh.md) |
+| 한국어 | [./docs/README.ko.md](./docs/README.ko.md) |
+| 日本語 | [./docs/README.ja.md](./docs/README.ja.md) |
 
 ## Introduction
-MCX is a MCBE addon DSL. It is not affiliated with the official mcbe. It can let you build mcbe addon in a simple way.
+
+MCX is a DSL that compiles `.mcx` source files into MCBE-compatible JSON components, UI forms, and event systems. It lets you build Minecraft Bedrock addons in a simple, declarative, and type-safe way — without hand-writing hundreds of JSON files.
+
+The pipeline: **`.mcx` file → parser → AST → transform (Babel) → compiled JS → MCBE JSON**.
+
 ## Features
-- Component MCX can generate mcbe component json fast
-- UI MCX can build ui simple
-- App MCX can let you use these feature
-- MCX Client can let you run your app
-- MCX Compiler core and [mbler](https://github.com/RuanhoR/mbler) can let build your app
-- It support I18n
+
+- **Component MCX** — Generate MCBE component JSON (items, blocks, entities) fast and declaratively
+- **UI MCX** — Build in-game UI forms with a simple syntax
+- **Event MCX** — Subscribe to and handle game events cleanly
+- **App MCX** — Tie components, UI, and events together into a runnable app
+- **MCX Client** — Runtime framework (`createApp`, `Event`, `ui`, `Utils`) that runs your app in-game
+- **MCX Compiler** — Core compiler with Rollup/Rolldown plugin support, paired with [mbler](https://github.com/RuanhoR/mbler) for project scaffolding and builds
+- **Type-safe** — Full TypeScript type definitions for all Minecraft component options, sound events, particle types, and more
+- **I18n** — Built-in internationalization support (en / zh / ja / ko)
+- **Image assets** — PNG, JPG, SVG, and GIF image components for texture generation
+
+## Packages
+
+This is a pnpm workspace monorepo containing the following packages:
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| [`@mbler/mcx-core`](./packages/core) | [![npm](https://img.shields.io/npm/v/@mbler/mcx-core.svg)](https://www.npmjs.com/package/@mbler/mcx-core) | The DSL compiler — parser, AST, transform pipeline, and Rollup/Rolldown plugins |
+| [`@mbler/mcx`](./packages/client) | [![npm](https://img.shields.io/npm/v/@mbler/mcx.svg)](https://www.npmjs.com/package/@mbler/mcx) | Runtime framework — `createApp`, `Event`, `ui`, `Utils` |
+| [`@mbler/mcx-types`](./packages/types) | [![npm](https://img.shields.io/npm/v/@mbler/mcx-types.svg)](https://www.npmjs.com/package/@mbler/mcx-types) | Shared TypeScript type declarations for MCBE JSON formats |
+| [`@mbler/mcx-component`](./packages/mcx-component) | [![npm](https://img.shields.io/npm/v/@mbler/mcx-component.svg)](https://www.npmjs.com/package/@mbler/mcx-component) | Component runtime classes (Item, Block, Entity, Image) used at compile time |
+| [`create-mbler`](./packages/create-mbler) | [![npm](https://img.shields.io/npm/v/create-mbler.svg)](https://www.npmjs.com/package/create-mbler) | CLI scaffolding tool for new mbler projects |
+
+### Monorepo Structure
+
+```
+mcx-core/
+├── packages/
+│   ├── core/              # @mbler/mcx-core — DSL compiler (parser → AST → transform → codegen)
+│   ├── client/            # @mbler/mcx — runtime framework (createApp, Event, UI)
+│   ├── types/             # @mbler/mcx-types — shared TypeScript type declarations
+│   ├── mcx-component/     # @mbler/mcx-component — component runtime classes (Item, Block, Entity, Image)
+│   └── create-mbler/      # create-mbler — CLI scaffolding tool for new mbler projects
+├── docs/                  # README translations (zh, ja, ko) + TODO.md
+├── scripts/               # verify-commit.js (commit-msg hook)
+└── .github/workflows/     # CI (pnpm install → lint:packages → test)
+```
+
+## Quick Start
+
+### Create a new project
+
+```bash
+# Using the create-mbler CLI
+pnpm create mbler my-addon
+# or
+npx create-mbler my-addon
+```
+
+### Manual setup
+
+```bash
+# Install the compiler and runtime
+pnpm add -D @mbler/mcx-core
+pnpm add @mbler/mcx
+```
+
+Then configure your bundler (Rollup/Rolldown) with the MCX plugin and start writing `.mcx` files.
+
+For full documentation and tutorials, visit the **[Docs](https://mbler-docs.ruanhor.dpdns.org)**.
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Language | TypeScript (strict mode) |
+| Package manager | pnpm 11 |
+| Build | Rolldown |
+| Bundler plugins | Rollup / Rolldown plugin for `.mcx` files |
+| AST | Babel (`@babel/parser`, `@babel/generator`, `@babel/types`) |
+| Type system | `@volar/language-core` for language service |
+| Testing | Vitest |
+| Linting | ESLint + Prettier |
+| CI | GitHub Actions |
+
+## Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Build all packages
+pnpm build
+
+# Run tests
+pnpm test
+
+# Lint all packages
+pnpm lint:packages
+
+# Full check (lint + test + typecheck)
+pnpm check
+
+# Format code
+pnpm format
+```
+
 ## Contributing
-Read [Contributing](./CONTRIBUTING.md)
+
+Contributions are welcome! Please read the [Contributing Guide](./CONTRIBUTING.md) before submitting a pull request.
+
+Before committing, make sure to run:
+
+```bash
+pnpm check
+```
+
+Commit messages must follow the [conventional commits](https://www.conventionalcommits.org/) standard (enforced via git hooks).
+
+## License
+
+[MIT](./LICENSE) © [ruanhor](https://github.com/RuanhoR)

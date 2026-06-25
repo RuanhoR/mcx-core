@@ -8,6 +8,7 @@ import type { MCXCompileData } from './compileData';
 import { readFile, rm } from 'node:fs/promises';
 import MagicString from 'magic-string';
 import * as path from 'node:path';
+import { createRequire } from 'node:module';
 import { transformCtx } from '../../types';
 import * as ts from 'typescript';
 import { readFileSync } from 'node:fs';
@@ -146,6 +147,16 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
         }
         return null;
       } else {
+        // First try Node.js native resolution for reliable symlink/pkg resolution
+        if (imp) {
+          try {
+            const localRequire = createRequire(imp);
+            const resolved = localRequire.resolve(id);
+            if (resolved) return resolved;
+          } catch {
+            // fall through to manual resolution
+          }
+        }
         const isScopedPackage = id.startsWith('@');
         const parts = id.split('/');
         const pkgName = isScopedPackage

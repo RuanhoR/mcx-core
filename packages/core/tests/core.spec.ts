@@ -104,7 +104,7 @@ describe('transform', () => {
     warn: () => {},
     debug: () => {},
     info: () => {},
-    getCombinedSourcemap: () => ({ mappings: '' } as any),
+    getCombinedSourcemap: () => ({ mappings: '' } as ReturnType<TransformPluginContext['getCombinedSourcemap']>),
     ...overrides,
   } as TransformPluginContext);
 
@@ -157,7 +157,7 @@ describe('UI transform', () => {
     warn: () => {},
     debug: () => {},
     info: () => {},
-    getCombinedSourcemap: () => ({ mappings: '' } as any),
+    getCombinedSourcemap: () => ({ mappings: '' } as ReturnType<TransformPluginContext['getCombinedSourcemap']>),
     ...overrides,
   } as TransformPluginContext);
 

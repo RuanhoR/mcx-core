@@ -1,4 +1,4 @@
-import { MCXFile } from '@mbler/mcx-types';
+import { MCXFile, MCXUIOpt } from '@mbler/mcx-types';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 class ModalFormDataMock {
@@ -143,7 +143,7 @@ describe('createApp', () => {
     const app = createApp({
       type: 'app',
       setup: () => ({}),
-    } as any);
+    } as unknown as Parameters<typeof createApp>[0]);
     expect(app).toBeDefined();
     expect(app.app.type).toBe('app');
   });
@@ -178,7 +178,7 @@ describe('ui', () => {
         use: serverUI.ModalFormData,
         UI: serverUI,
         layout: [{ type: 'title', content: 'Test Form', params: {} }],
-      } as any,
+      } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
     );
     expect(instance).toBeDefined();
@@ -192,7 +192,7 @@ describe('ui', () => {
             use: serverUI.ModalFormData,
             UI: serverUI,
             layout: [],
-          } as any,
+          } as unknown as MCXUIOpt,
           () => ({ prop: 'not-an-array' }),
         ),
     ).toThrow('invalid prop');

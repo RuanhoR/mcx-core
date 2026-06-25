@@ -23,7 +23,7 @@ describe('compileJSFn', () => {
       'export const foo = 42; export function bar() {}',
     );
     const exports = result.BuildCache.export.filter(
-      (e: any) => e.type === 'ExportNamedDeclaration',
+      (e: Record<string, unknown>) => e.type === 'ExportNamedDeclaration',
     );
     expect(exports.length).toBeGreaterThanOrEqual(2);
   });
@@ -31,7 +31,7 @@ describe('compileJSFn', () => {
   it('should handle default export', () => {
     const result = MCX.compiler.compileJSFn('export default 42');
     const defaultExport = result.BuildCache.export.find(
-      (e: any) => e.type === 'ExportDefaultDeclaration',
+      (e: Record<string, unknown>) => e.type === 'ExportDefaultDeclaration',
     );
     expect(defaultExport).toBeDefined();
   });
@@ -39,7 +39,7 @@ describe('compileJSFn', () => {
   it('should handle re-exports', () => {
     const result = MCX.compiler.compileJSFn('export { foo, bar } from "./mod"');
     const reExports = result.BuildCache.export.filter(
-      (e: any) => e.type === 'ExportNamedDeclaration' && e.source,
+      (e: Record<string, unknown>) => e.type === 'ExportNamedDeclaration' && e.source !== undefined,
     );
     expect(reExports.length).toBeGreaterThanOrEqual(1);
   });
@@ -94,8 +94,8 @@ describe('compileMCXFn', () => {
 });
 
 describe('transform', () => {
-  const createCtx = (overrides = {}): any => ({
-    error: (msg: any) => {
+  const createCtx = (overrides = {}): Record<string, unknown> => ({
+    error: (msg: unknown) => {
       throw new Error(String(msg));
     },
     warn: () => {},
@@ -144,8 +144,8 @@ describe('transform', () => {
 });
 
 describe('UI transform', () => {
-  const createCtx = (overrides = {}): any => ({
-    error: (msg: any) => {
+  const createCtx = (overrides = {}): Record<string, unknown> => ({
+    error: (msg: unknown) => {
       throw new Error(String(msg));
     },
     warn: () => {},
@@ -234,7 +234,7 @@ describe('AST - comment handling', () => {
     const div = result[0];
     if (div.content) {
       const hasComment = div.content.some(
-        (item: any) => item?.type === 'Comment',
+        (item: Record<string, unknown> | undefined) => item?.type === 'Comment',
       );
       expect(hasComment).toBe(false);
     }
@@ -247,7 +247,7 @@ describe('AST - comment handling', () => {
     const div = result[0];
     if (div.content) {
       const comments = div.content.filter(
-        (item: any) => item?.type === 'Comment',
+        (item: Record<string, unknown> | undefined) => item?.type === 'Comment',
       );
       expect(comments.length).toBeGreaterThanOrEqual(1);
     }
@@ -268,7 +268,7 @@ describe('AST - comment handling', () => {
     const root = result[0];
     if (root.content) {
       const comments = root.content.filter(
-        (item: any) => item?.type === 'Comment',
+        (item: Record<string, unknown> | undefined) => item?.type === 'Comment',
       );
       expect(comments.length).toBeGreaterThanOrEqual(2);
     }

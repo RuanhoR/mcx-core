@@ -91,7 +91,7 @@ class ItemComponent {
           );
         }
 
-        const blockPlacerConfig: any = {};
+        const blockPlacerConfig: Record<string, unknown> = {};
 
         if (typeof components.block_placer.aligned_placement === 'boolean') {
           blockPlacerConfig.aligned_placement =
@@ -115,7 +115,7 @@ class ItemComponent {
       }
 
       if (components.cooldown) {
-        const cooldownConfig: any = {};
+        const cooldownConfig: Record<string, unknown> = {};
 
         if (typeof components.cooldown.category === 'string') {
           cooldownConfig.category = components.cooldown.category;
@@ -159,7 +159,7 @@ class ItemComponent {
           );
         }
 
-        const compostableConfig: any = {};
+        const compostableConfig: Record<string, unknown> = {};
 
         if (typeof components.compostable.composting_chance === 'number') {
           if (
@@ -203,7 +203,7 @@ class ItemComponent {
           );
         }
 
-        const bundleInteractionConfig: any = {};
+        const bundleInteractionConfig: Record<string, unknown> = {};
 
         if (
           typeof components.bundle_interaction.num_viewable_slots === 'number'
@@ -239,7 +239,7 @@ class ItemComponent {
           );
         }
 
-        const storageItemConfig: any = {};
+        const storageItemConfig: Record<string, unknown> = {};
 
         if (typeof components.storage_item.max_slots === 'number') {
           if (components.storage_item.max_slots > 64) {
@@ -298,7 +298,7 @@ class ItemComponent {
       }
 
       if (components.digger) {
-        const diggerConfig: any = {};
+        const diggerConfig: Record<string, unknown> = {};
 
         if (typeof components.digger.use_efficiency === 'boolean') {
           diggerConfig.use_efficiency = components.digger.use_efficiency;
@@ -307,7 +307,7 @@ class ItemComponent {
         if (Array.isArray(components.digger.destroy_speeds)) {
           diggerConfig.destroy_speeds = [];
           for (const speedEntry of components.digger.destroy_speeds) {
-            const entry: any = {};
+                const entry: Record<string, unknown> = {};
 
             if (speedEntry.block) {
               entry.block = speedEntry.block;
@@ -333,7 +333,7 @@ class ItemComponent {
       }
 
       if (components.damage_absorption) {
-        const damageAbsorptionConfig: any = {};
+        const damageAbsorptionConfig: Record<string, unknown> = {};
 
         if (Array.isArray(components.damage_absorption.absorbable_causes)) {
           if (components.damage_absorption.absorbable_causes.length === 0) {
@@ -354,7 +354,7 @@ class ItemComponent {
       }
 
       if (components.durability) {
-        const durabilityConfig: any = {};
+        const durabilityConfig: Record<string, unknown> = {};
 
         if (typeof components.durability.max_durability === 'number') {
           if (components.durability.max_durability < 0) {
@@ -423,7 +423,7 @@ class ItemComponent {
           );
         }
 
-        const durabilitySensorConfig: any = {};
+        const durabilitySensorConfig: Record<string, unknown> = {};
 
         if (typeof components.durability_sensor.durability === 'number') {
           durabilitySensorConfig.durability =
@@ -440,7 +440,7 @@ class ItemComponent {
           durabilitySensorConfig.durability_thresholds = [];
           for (const threshold of components.durability_sensor
             .durability_thresholds) {
-            const thresholdConfig: any = {};
+                const thresholdConfig: Record<string, unknown> = {};
 
             if (typeof threshold.durability === 'number') {
               thresholdConfig.durability = threshold.durability;
@@ -526,7 +526,7 @@ class ItemComponent {
           );
         }
 
-        const dyeableConfig: any = {};
+        const dyeableConfig: Record<string, unknown> = {};
 
         if (components.dyeable.default_color !== undefined) {
           if (typeof components.dyeable.default_color === 'string') {
@@ -570,7 +570,7 @@ class ItemComponent {
       }
 
       if (components.enchantable) {
-        const enchantableConfig: any = {};
+        const enchantableConfig: Record<string, unknown> = {};
 
         if (typeof components.enchantable.slot === 'string') {
           // Validate slot enum
@@ -608,7 +608,7 @@ class ItemComponent {
       }
 
       // Helper function to validate food effects array
-      const validateFoodEffects = (effects?: any[]) => {
+      const validateFoodEffects = (effects?: Record<string, unknown>[]) => {
         if (effects && Array.isArray(effects)) {
           const validEffects = [
             'regeneration',
@@ -677,7 +677,7 @@ class ItemComponent {
       // Handle food component (both 'minecraft:food' and 'food' aliases)
       const foodConfig = components['minecraft:food'] || components.food;
       if (foodConfig) {
-        const foodConfigFinal: any = {};
+        const foodConfigFinal: Record<string, unknown> = {};
 
         if (typeof foodConfig.can_always_eat === 'boolean') {
           foodConfigFinal.can_always_eat = foodConfig.can_always_eat;
@@ -815,7 +815,7 @@ class ItemComponent {
           );
         }
 
-        const entityPlacerFinal: any = {};
+        const entityPlacerFinal: Record<string, unknown> = {};
 
         // Validate entity regex pattern
         if (typeof entityPlacerConfig.entity === 'string') {
@@ -846,7 +846,7 @@ class ItemComponent {
                 typeof dispenseOnItem === 'object' &&
                 dispenseOnItem !== null
               ) {
-                const dispenseOnObj: any = {};
+                        const dispenseOnObj: Record<string, unknown> = {};
 
                 if (typeof dispenseOnItem.name === 'string') {
                   dispenseOnObj.name = dispenseOnItem.name;
@@ -894,7 +894,7 @@ class ItemComponent {
               if (typeof useOnItem === 'string') {
                 entityPlacerFinal.use_on.push(useOnItem);
               } else if (typeof useOnItem === 'object' && useOnItem !== null) {
-                const useOnObj: any = {};
+                        const useOnObj: Record<string, unknown> = {};
 
                 if (typeof useOnItem.name === 'string') {
                   useOnObj.name = useOnItem.name;
@@ -935,7 +935,7 @@ class ItemComponent {
       // Handle fuel component (both 'minecraft:fuel' and 'fuel' aliases)
       const fuelConfig = components['minecraft:fuel'] || components.fuel;
       if (fuelConfig) {
-        const fuelFinal: any = {};
+        const fuelFinal: Record<string, unknown> = {};
 
         if (typeof fuelConfig.duration === 'number') {
           if (fuelConfig.duration >= 0.05) {
@@ -972,7 +972,7 @@ class ItemComponent {
       const kineticWeaponConfig =
         components['minecraft:kinetic_weapon'] || components.kinetic_weapon;
       if (kineticWeaponConfig) {
-        const kineticWeaponFinal: any = {};
+        const kineticWeaponFinal: Record<string, unknown> = {};
 
         // Validate creative_reach if present
         if (kineticWeaponConfig.creative_reach !== undefined) {
@@ -1269,7 +1269,7 @@ class ItemComponent {
       const hoverTextColorConfig =
         components['minecraft:hover_text_color'] || components.hover_text_color;
       if (hoverTextColorConfig) {
-        const hoverTextColorFinal: any = {};
+        const hoverTextColorFinal: Record<string, unknown> = {};
 
         if (typeof hoverTextColorConfig === 'string') {
           // Alternative string representation
@@ -1307,7 +1307,7 @@ class ItemComponent {
           ApplyComponents['minecraft:liquid_clipped'] = liquidClippedConfig;
         } else if (typeof liquidClippedConfig === 'object') {
           // Object representation
-          const liquidClippedFinal: any = {};
+          const liquidClippedFinal: Record<string, unknown> = {};
 
           if (liquidClippedConfig.value !== undefined) {
             if (typeof liquidClippedConfig.value === 'boolean') {
@@ -1340,7 +1340,7 @@ class ItemComponent {
           ApplyComponents['minecraft:max_stack_size'] = maxStackSizeConfig;
         } else if (typeof maxStackSizeConfig === 'object') {
           // Object representation
-          const maxStackSizeFinal: any = {};
+          const maxStackSizeFinal: Record<string, unknown> = {};
 
           if (maxStackSizeConfig.value !== undefined) {
             if (typeof maxStackSizeConfig.value === 'number') {
@@ -1366,14 +1366,14 @@ class ItemComponent {
 
       // Handle piercing_weapon component (both 'minecraft:piercing_weapon' and 'piercing_weapon' aliases)
       const piercingWeaponConfig =
-        (components as any)['minecraft:piercing_weapon'] ||
-        (components as any).piercing_weapon;
+        (components as Record<string, unknown>)['minecraft:piercing_weapon'] ||
+        (components as Record<string, unknown>).piercing_weapon;
       if (piercingWeaponConfig !== undefined) {
         if (typeof piercingWeaponConfig === 'object') {
-          const piercingWeaponFinal: any = {};
+          const piercingWeaponFinal: Record<string, unknown> = {};
 
           if (piercingWeaponConfig.creative_reach !== undefined) {
-            const creativeReachFinal: any = {};
+            const creativeReachFinal: Record<string, unknown> = {};
             if (typeof piercingWeaponConfig.creative_reach?.max === 'number') {
               creativeReachFinal.max = piercingWeaponConfig.creative_reach.max;
             }
@@ -1389,7 +1389,7 @@ class ItemComponent {
           }
 
           if (piercingWeaponConfig.reach !== undefined) {
-            const reachFinal: any = {};
+            const reachFinal: Record<string, unknown> = {};
             if (typeof piercingWeaponConfig.reach?.max === 'number') {
               reachFinal.max = piercingWeaponConfig.reach.max;
             }
@@ -1409,11 +1409,11 @@ class ItemComponent {
 
       // Handle projectile component (both 'minecraft:projectile' and 'projectile' aliases)
       const projectileConfig =
-        (components as any)['minecraft:projectile'] ||
-        (components as any).projectile;
+        (components as Record<string, unknown>)['minecraft:projectile'] ||
+        (components as Record<string, unknown>).projectile;
       if (projectileConfig !== undefined) {
         if (typeof projectileConfig === 'object') {
-          const projectileFinal: any = {};
+          const projectileFinal: Record<string, unknown> = {};
 
           if (typeof projectileConfig.minimum_critical_power === 'number') {
             if (projectileConfig.minimum_critical_power < 0) {
@@ -1449,10 +1449,10 @@ class ItemComponent {
 
       // Handle record component (both 'minecraft:record' and 'record' aliases)
       const recordConfig =
-        (components as any)['minecraft:record'] || (components as any).record;
+        (components as Record<string, unknown>)['minecraft:record'] || (components as Record<string, unknown>).record;
       if (recordConfig !== undefined) {
         if (typeof recordConfig === 'object') {
-          const recordFinal: any = {};
+          const recordFinal: Record<string, unknown> = {};
 
           if (typeof recordConfig.comparator_signal === 'number') {
             if (recordConfig.comparator_signal < 0) {
@@ -1489,10 +1489,10 @@ class ItemComponent {
 
       // Handle rarity component (both 'minecraft:rarity' and 'rarity' aliases)
       const rarityConfig =
-        (components as any)['minecraft:rarity'] || (components as any).rarity;
+        (components as Record<string, unknown>)['minecraft:rarity'] || (components as Record<string, unknown>).rarity;
       if (rarityConfig !== undefined) {
         if (typeof rarityConfig === 'object') {
-          const rarityFinal: any = {};
+          const rarityFinal: Record<string, unknown> = {};
 
           if (typeof rarityConfig.value === 'string') {
             const validRarities = [
@@ -1501,7 +1501,7 @@ class ItemComponent {
               'rare',
               'epic',
             ] as const;
-            if (!validRarities.includes(rarityConfig.value as any)) {
+            if (!validRarities.includes(rarityConfig.value as never)) {
               throw new Error(
                 '[compile component]: rarity: value must be one of: common, uncommon, rare, epic',
               );
@@ -1537,11 +1537,11 @@ class ItemComponent {
 
       // Handle repairable component (both 'minecraft:repairable' and 'repairable' aliases)
       const repairableConfig =
-        (components as any)['minecraft:repairable'] ||
-        (components as any).repairable;
+        (components as Record<string, unknown>)['minecraft:repairable'] ||
+        (components as Record<string, unknown>).repairable;
       if (repairableConfig !== undefined) {
         if (typeof repairableConfig === 'object') {
-          const repairableFinal: any = {};
+          const repairableFinal: Record<string, unknown> = {};
 
           // Handle on_repaired event
           if (repairableConfig.on_repaired !== undefined) {
@@ -1563,7 +1563,7 @@ class ItemComponent {
           // Handle repair_items array
           if (repairableConfig.repair_items !== undefined) {
             if (Array.isArray(repairableConfig.repair_items)) {
-              const repairItemsFinal: any[] = [];
+              const repairItemsFinal: Record<string, unknown>[] = [];
 
               for (const repairItem of repairableConfig.repair_items) {
                 if (typeof repairItem === 'string') {
@@ -1574,12 +1574,12 @@ class ItemComponent {
                   repairItem !== null
                 ) {
                   // Complex object format with items and repair_amount
-                  const repairItemFinal: any = {};
+                  const repairItemFinal: Record<string, unknown> = {};
 
                   // Validate items array
                   if (Array.isArray(repairItem.items)) {
                     const itemsValid = repairItem.items.every(
-                      (item: string) => {
+                      (item: unknown) => {
                         if (typeof item !== 'string') return false;
                         const itemRegex = /^[a-zA-Z_]\w*(?::[a-zA-Z_]\w*)?$/;
                         return itemRegex.test(item);
@@ -1637,10 +1637,10 @@ class ItemComponent {
 
       // Handle seed component (both 'minecraft:seed' and 'seed' aliases)
       const seedConfig =
-        (components as any)['minecraft:seed'] || (components as any).seed;
+        (components as Record<string, unknown>)['minecraft:seed'] || (components as Record<string, unknown>).seed;
       if (seedConfig !== undefined) {
         if (typeof seedConfig === 'object') {
-          const seedFinal: any = {};
+          const seedFinal: Record<string, unknown> = {};
 
           // Validate format version for seed component (requires 1.10.0+)
           const formatParts = this.#opt.format.split('.');
@@ -1683,7 +1683,7 @@ class ItemComponent {
           if (seedConfig.plant_at !== undefined) {
             if (Array.isArray(seedConfig.plant_at)) {
               const plantAtValid = seedConfig.plant_at.every(
-                (block: string) => {
+                (block: unknown) => {
                   if (typeof block !== 'string') return false;
                   const blockRegex = /^\w+(?::\w+)*$/;
                   return blockRegex.test(block);
@@ -1725,7 +1725,7 @@ class ItemComponent {
           if (seedConfig.plant_at_face !== undefined) {
             if (typeof seedConfig.plant_at_face === 'string') {
               const validFaces = ['UP', 'DOWN'] as const;
-              if (!validFaces.includes(seedConfig.plant_at_face as any)) {
+              if (!validFaces.includes(seedConfig.plant_at_face as never)) {
                 throw new Error(
                   "[compile component]: seed: plant_at_face must be either 'UP' or 'DOWN'",
                 );
@@ -1752,11 +1752,11 @@ class ItemComponent {
 
       // Handle stacked_by_data component (both 'minecraft:stacked_by_data' and 'stacked_by_data' aliases)
       const stackedByDataConfig =
-        (components as any)['minecraft:stacked_by_data'] ||
-        (components as any).stacked_by_data;
+        (components as Record<string, unknown>)['minecraft:stacked_by_data'] ||
+        (components as Record<string, unknown>).stacked_by_data;
       if (stackedByDataConfig !== undefined) {
         if (typeof stackedByDataConfig === 'object') {
-          const stackedByDataFinal: any = {};
+          const stackedByDataFinal: Record<string, unknown> = {};
 
           // Handle value (optional, defaults to true)
           if (stackedByDataConfig.value === undefined) {
@@ -1779,11 +1779,11 @@ class ItemComponent {
 
       // Handle should_despawn component (both 'minecraft:should_despawn' and 'should_despawn' aliases)
       const shouldDespawnConfig =
-        (components as any)['minecraft:should_despawn'] ||
-        (components as any).should_despawn;
+        (components as Record<string, unknown>)['minecraft:should_despawn'] ||
+        (components as Record<string, unknown>).should_despawn;
       if (shouldDespawnConfig !== undefined) {
         if (typeof shouldDespawnConfig === 'object') {
-          const shouldDespawnFinal: any = {};
+          const shouldDespawnFinal: Record<string, unknown> = {};
 
           // Handle value (optional, defaults to true)
           if (shouldDespawnConfig.value === undefined) {
@@ -1806,10 +1806,10 @@ class ItemComponent {
 
       // Handle shooter component (both 'minecraft:shooter' and 'shooter' aliases)
       const shooterConfig =
-        (components as any)['minecraft:shooter'] || (components as any).shooter;
+        (components as Record<string, unknown>)['minecraft:shooter'] || (components as Record<string, unknown>).shooter;
       if (shooterConfig !== undefined) {
         if (typeof shooterConfig === 'object') {
-          const shooterFinal: any = {};
+          const shooterFinal: Record<string, unknown> = {};
 
           // Validate format version for shooter component
           const formatParts = this.#opt.format.split('.');
@@ -1835,7 +1835,7 @@ class ItemComponent {
           }
 
           if (Array.isArray(shooterConfig.ammunition)) {
-            const ammunitionFinal: any[] = [];
+            const ammunitionFinal: Record<string, unknown>[] = [];
 
             for (const ammunitionItem of shooterConfig.ammunition) {
               if (typeof ammunitionItem === 'string') {
@@ -1852,7 +1852,7 @@ class ItemComponent {
                 ammunitionItem !== null
               ) {
                 // Complex object format with detailed properties
-                const ammunitionObject: any = {};
+                const ammunitionObject: Record<string, unknown> = {};
 
                 // Validate item (required)
                 if (typeof ammunitionItem.item === 'string') {
@@ -1998,11 +1998,11 @@ class ItemComponent {
 
       // Handle storage_weight_modifier component
       const storageWeightModifierConfig =
-        (components as any)['minecraft:storage_weight_modifier'] ||
-        (components as any).storage_weight_modifier;
+        (components as Record<string, unknown>)['minecraft:storage_weight_modifier'] ||
+        (components as Record<string, unknown>).storage_weight_modifier;
       if (storageWeightModifierConfig !== undefined) {
         if (typeof storageWeightModifierConfig === 'object') {
-          const storageWeightModifierFinal: any = {};
+          const storageWeightModifierFinal: Record<string, unknown> = {};
 
           // Validate format version (requires 1.21.40+)
           const formatParts = this.#opt.format.split('.');
@@ -2061,11 +2061,11 @@ class ItemComponent {
 
       // Handle storage_weight_limit component
       const storageWeightLimitConfig =
-        (components as any)['minecraft:storage_weight_limit'] ||
-        (components as any).storage_weight_limit;
+        (components as Record<string, unknown>)['minecraft:storage_weight_limit'] ||
+        (components as Record<string, unknown>).storage_weight_limit;
       if (storageWeightLimitConfig !== undefined) {
         if (typeof storageWeightLimitConfig === 'object') {
-          const storageWeightLimitFinal: any = {};
+          const storageWeightLimitFinal: Record<string, unknown> = {};
 
           // Validate format version (requires 1.21.40+)
           const formatParts = this.#opt.format.split('.');
@@ -2119,11 +2119,11 @@ class ItemComponent {
 
       // Handle storage_item component
       const storageItemConfig =
-        (components as any)['minecraft:storage_item'] ||
-        (components as any).storage_item;
+        (components as Record<string, unknown>)['minecraft:storage_item'] ||
+        (components as Record<string, unknown>).storage_item;
       if (storageItemConfig !== undefined) {
         if (typeof storageItemConfig === 'object') {
-          const storageItemFinal: any = {};
+          const storageItemFinal: Record<string, unknown> = {};
 
           // Validate format version (requires 1.21.40+)
           const formatParts = this.#opt.format.split('.');
@@ -2159,7 +2159,7 @@ class ItemComponent {
           if (storageItemConfig.allowed_items !== undefined) {
             if (Array.isArray(storageItemConfig.allowed_items)) {
               const allowedItemsValid = storageItemConfig.allowed_items.every(
-                (item: string) => {
+                (item: unknown) => {
                   if (typeof item !== 'string') return false;
                   const itemRegex = /^[a-zA-Z_]\w*(?::[a-zA-Z_]\w*)?$/;
                   return itemRegex.test(item);
@@ -2186,7 +2186,7 @@ class ItemComponent {
           if (storageItemConfig.banned_items !== undefined) {
             if (Array.isArray(storageItemConfig.banned_items)) {
               const bannedItemsValid = storageItemConfig.banned_items.every(
-                (item: string) => {
+                (item: unknown) => {
                   if (typeof item !== 'string') return false;
                   const itemRegex = /^[a-zA-Z_]\w*(?::[a-zA-Z_]\w*)?$/;
                   return itemRegex.test(item);
@@ -2283,11 +2283,11 @@ class ItemComponent {
 
       // Handle minecraft:throwable component
       const throwableConfig =
-        (components as any)['minecraft:throwable'] ||
-        (components as any).throwable;
+        (components as Record<string, unknown>)['minecraft:throwable'] ||
+        (components as Record<string, unknown>).throwable;
       if (throwableConfig !== undefined) {
         if (typeof throwableConfig === 'object') {
-          const throwableFinal: any = {};
+          const throwableFinal: Record<string, unknown> = {};
 
           // Handle do_swing_animation (optional, defaults to false)
           if (throwableConfig.do_swing_animation !== undefined) {
@@ -2383,15 +2383,15 @@ class ItemComponent {
 
       // Handle minecraft:tags component
       const tagsConfig =
-        (components as any)['minecraft:tags'] || (components as any).tags;
+        (components as Record<string, unknown>)['minecraft:tags'] || (components as Record<string, unknown>).tags;
       if (tagsConfig !== undefined) {
         if (typeof tagsConfig === 'object') {
-          const tagsFinal: any = {};
+          const tagsFinal: Record<string, unknown> = {};
 
           // Handle tags array (required)
           if (tagsConfig.tags !== undefined) {
             if (Array.isArray(tagsConfig.tags)) {
-              const tagsValid = tagsConfig.tags.every((tag: string) => {
+              const tagsValid = tagsConfig.tags.every((tag: unknown) => {
                 if (typeof tag !== 'string') return false;
                 const tagRegex = /^[a-zA-Z_][\w:]*$/;
                 return tagRegex.test(tag);
@@ -2423,11 +2423,11 @@ class ItemComponent {
 
       // Handle minecraft:swing_duration component
       const swingDurationConfig =
-        (components as any)['minecraft:swing_duration'] ||
-        (components as any).swing_duration;
+        (components as Record<string, unknown>)['minecraft:swing_duration'] ||
+        (components as Record<string, unknown>).swing_duration;
       if (swingDurationConfig !== undefined) {
         if (typeof swingDurationConfig === 'object') {
-          const swingDurationFinal: any = {};
+          const swingDurationFinal: Record<string, unknown> = {};
 
           // Handle value (required)
           if (swingDurationConfig.value !== undefined) {
@@ -2457,8 +2457,8 @@ class ItemComponent {
 
       // Handle minecraft:use_animation component
       const useAnimationConfig =
-        (components as any)['minecraft:use_animation'] ||
-        (components as any).use_animation;
+        (components as Record<string, unknown>)['minecraft:use_animation'] ||
+        (components as Record<string, unknown>).use_animation;
       if (useAnimationConfig !== undefined) {
         // Handle both string format (simplified) and object format
         if (typeof useAnimationConfig === 'string') {
@@ -2473,7 +2473,7 @@ class ItemComponent {
           }
         } else if (typeof useAnimationConfig === 'object') {
           // Object format: { "value": "eat" }
-          const useAnimationFinal: any = {};
+          const useAnimationFinal: Record<string, unknown> = {};
 
           // Handle value (required)
           if (useAnimationConfig.value !== undefined) {
@@ -2503,11 +2503,11 @@ class ItemComponent {
 
       // Handle minecraft:wearable component
       const wearableConfig =
-        (components as any)['minecraft:wearable'] ||
-        (components as any).wearable;
+        (components as Record<string, unknown>)['minecraft:wearable'] ||
+        (components as Record<string, unknown>).wearable;
       if (wearableConfig !== undefined) {
         if (typeof wearableConfig === 'object') {
-          const wearableFinal: any = {};
+          const wearableFinal: Record<string, unknown> = {};
 
           // Handle slot (required)
           if (wearableConfig.slot !== undefined) {
@@ -2582,11 +2582,11 @@ class ItemComponent {
 
       // Handle minecraft:use_modifiers component
       const useModifiersConfig =
-        (components as any)['minecraft:use_modifiers'] ||
-        (components as any).use_modifiers;
+        (components as Record<string, unknown>)['minecraft:use_modifiers'] ||
+        (components as Record<string, unknown>).use_modifiers;
       if (useModifiersConfig !== undefined) {
         if (typeof useModifiersConfig === 'object') {
-          const useModifiersFinal: any = {};
+          const useModifiersFinal: Record<string, unknown> = {};
 
           // Handle use_duration (required, non-negative number)
           if (useModifiersConfig.use_duration !== undefined) {
@@ -2643,11 +2643,11 @@ class ItemComponent {
 
       // Handle minecraft:swing_sounds component
       const swingSoundsConfig =
-        (components as any)['minecraft:swing_sounds'] ||
-        (components as any).swing_sounds;
+        (components as Record<string, unknown>)['minecraft:swing_sounds'] ||
+        (components as Record<string, unknown>).swing_sounds;
       if (swingSoundsConfig !== undefined) {
         if (typeof swingSoundsConfig === 'object') {
-          const swingSoundsFinal: any = {};
+          const swingSoundsFinal: Record<string, unknown> = {};
 
           // Handle sound (required)
           if (swingSoundsConfig.sound !== undefined) {
@@ -2705,7 +2705,7 @@ class ItemComponent {
       if (!this.#edit) this.#edit = [];
       let idx: number = -1;
       const idKey = '__icon_key__';
-      const found = this.#edit.find((v: any, i: number) => {
+      const found = this.#edit.find((v: Record<string, unknown>, i: number) => {
         if (
           v.type == 'batch' &&
           v.options[0] &&
@@ -2975,7 +2975,7 @@ class ItemComponent {
     if (Array.isArray(config.destroy_speeds)) {
       this.#opt.components.digger.destroy_speeds = [];
       for (const speedEntry of config.destroy_speeds) {
-        const entry: any = {};
+        const entry: Record<string, unknown> = {};
 
         if (speedEntry.block) {
           entry.block = speedEntry.block;
@@ -3111,7 +3111,7 @@ class ItemComponent {
 
       this.#opt.components.durability_sensor.durability_thresholds = [];
       for (const threshold of config.durability_thresholds) {
-        const thresholdConfig: any = {};
+        const thresholdConfig: Record<string, unknown> = {};
 
         if (typeof threshold.durability === 'number') {
           thresholdConfig.durability = threshold.durability;
@@ -3288,7 +3288,7 @@ class ItemComponent {
     remove_effects?: string[]; // deprecated
   }) {
     // Validate food effects
-    const validateFoodEffects = (effects?: any[]) => {
+    const validateFoodEffects = (effects?: Record<string, unknown>[]) => {
       if (effects && Array.isArray(effects)) {
         const validEffects = [
           'regeneration',
@@ -3956,7 +3956,7 @@ class ItemComponent {
     // Use the main minecraft:liquid_clipped property for consistency
     if (!this.#opt.components['minecraft:liquid_clipped']) {
       // Initialize as empty object if it doesn't exist
-      this.#opt.components['minecraft:liquid_clipped'] = {} as any;
+      this.#opt.components['minecraft:liquid_clipped'] = {} as Record<string, unknown>;
     }
 
     if (typeof config === 'boolean') {
@@ -3994,7 +3994,7 @@ class ItemComponent {
     // Use the main minecraft:max_stack_size property for consistency
     if (!this.#opt.components['minecraft:max_stack_size']) {
       // Initialize as empty object if it doesn't exist
-      this.#opt.components['minecraft:max_stack_size'] = {} as any;
+      this.#opt.components['minecraft:max_stack_size'] = {} as Record<string, unknown>;
     }
 
     if (typeof config === 'number') {
@@ -4039,7 +4039,7 @@ class ItemComponent {
       );
     }
 
-    const piercingWeaponConfig: any = {};
+    const piercingWeaponConfig: Record<string, unknown> = {};
 
     // Handle creative_reach
     if (config.creative_reach !== undefined) {
@@ -4052,7 +4052,7 @@ class ItemComponent {
         );
       }
 
-      const creativeReachFinal: any = {};
+      const creativeReachFinal: Record<string, unknown> = {};
       if (typeof config.creative_reach.max === 'number') {
         creativeReachFinal.max = config.creative_reach.max;
       }
@@ -4080,7 +4080,7 @@ class ItemComponent {
         );
       }
 
-      const reachFinal: any = {};
+      const reachFinal: Record<string, unknown> = {};
       if (typeof config.reach.max === 'number') {
         reachFinal.max = config.reach.max;
       }
@@ -4090,7 +4090,7 @@ class ItemComponent {
       piercingWeaponConfig.reach = reachFinal;
     }
 
-    (this.#opt.components as any)['minecraft:piercing_weapon'] =
+    (this.#opt.components as Record<string, unknown>)['minecraft:piercing_weapon'] =
       piercingWeaponConfig;
   }
 
@@ -4108,7 +4108,7 @@ class ItemComponent {
       );
     }
 
-    const projectileConfig: any = {};
+    const projectileConfig: Record<string, unknown> = {};
 
     // Handle minimum_critical_power
     if (config.minimum_critical_power !== undefined) {
@@ -4139,7 +4139,7 @@ class ItemComponent {
     }
 
     projectileConfig.projectile_entity = config.projectile_entity;
-    (this.#opt.components as any)['minecraft:projectile'] = projectileConfig;
+    (this.#opt.components as Record<string, unknown>)['minecraft:projectile'] = projectileConfig;
   }
 
   /**
@@ -4155,7 +4155,7 @@ class ItemComponent {
       throw new Error('[set error]: record: must be an object configuration');
     }
 
-    const recordConfig: any = {};
+    const recordConfig: Record<string, unknown> = {};
 
     // Handle comparator_signal
     if (config.comparator_signal !== undefined) {
@@ -4185,7 +4185,7 @@ class ItemComponent {
       );
     }
     recordConfig.sound_event = config.sound_event;
-    (this.#opt.components as any)['minecraft:record'] = recordConfig;
+    (this.#opt.components as Record<string, unknown>)['minecraft:record'] = recordConfig;
   }
 
   /**
@@ -4197,7 +4197,7 @@ class ItemComponent {
       throw new Error('[set error]: rarity: must be an object configuration');
     }
 
-    const rarityConfig: any = {};
+    const rarityConfig: Record<string, unknown> = {};
 
     // Handle value (required)
     if (config.value === undefined) {
@@ -4209,14 +4209,14 @@ class ItemComponent {
     }
 
     const validRarities = ['common', 'uncommon', 'rare', 'epic'] as const;
-    if (!validRarities.includes(config.value as any)) {
+    if (!validRarities.includes(config.value as never)) {
       throw new Error(
         '[set error]: rarity: value must be one of: common, uncommon, rare, epic',
       );
     }
 
     rarityConfig.value = config.value;
-    (this.#opt.components as any)['minecraft:rarity'] = rarityConfig;
+    (this.#opt.components as Record<string, unknown>)['minecraft:rarity'] = rarityConfig;
   }
 
   /**
@@ -4235,7 +4235,7 @@ class ItemComponent {
       );
     }
 
-    const repairableConfig: any = {};
+    const repairableConfig: Record<string, unknown> = {};
 
     // Handle on_repaired event
     if (config.on_repaired !== undefined) {
@@ -4257,7 +4257,7 @@ class ItemComponent {
     // Handle repair_items array
     if (config.repair_items !== undefined) {
       if (Array.isArray(config.repair_items)) {
-        const repairItemsFinal: any[] = [];
+        const repairItemsFinal: Record<string, unknown>[] = [];
 
         for (const repairItem of config.repair_items) {
           if (typeof repairItem === 'string') {
@@ -4271,7 +4271,7 @@ class ItemComponent {
             repairItemsFinal.push(repairItem);
           } else if (typeof repairItem === 'object' && repairItem !== null) {
             // Complex object format
-            const repairItemFinal: any = {};
+            const repairItemFinal: Record<string, unknown> = {};
 
             // Validate required items array
             if (!Array.isArray(repairItem.items)) {
@@ -4280,7 +4280,7 @@ class ItemComponent {
               );
             }
 
-            const itemsValid = repairItem.items.every((item: string) => {
+            const itemsValid = repairItem.items.every((item: unknown) => {
               if (typeof item !== 'string') return false;
               const itemRegex = /^[a-zA-Z_]\w*(?::[a-zA-Z_]\w*)?$/;
               return itemRegex.test(item);
@@ -4324,7 +4324,7 @@ class ItemComponent {
       }
     }
 
-    (this.#opt.components as any)['minecraft:repairable'] = repairableConfig;
+    (this.#opt.components as Record<string, unknown>)['minecraft:repairable'] = repairableConfig;
   }
 
   /**
@@ -4341,7 +4341,7 @@ class ItemComponent {
       throw new Error('[set error]: seed: must be an object configuration');
     }
 
-    const seedConfig: any = {};
+    const seedConfig: Record<string, unknown> = {};
 
     // Validate format version for seed component (requires 1.10.0+)
     const formatParts = this.#opt.format.split('.');
@@ -4372,7 +4372,7 @@ class ItemComponent {
     // Handle plant_at array
     if (config.plant_at !== undefined) {
       if (Array.isArray(config.plant_at)) {
-        const plantAtValid = config.plant_at.every((block: string) => {
+        const plantAtValid = config.plant_at.every((block: unknown) => {
           if (typeof block !== 'string') return false;
           return blockRegex.test(block);
         });
@@ -4411,7 +4411,7 @@ class ItemComponent {
     if (config.plant_at_face !== undefined) {
       if (typeof config.plant_at_face === 'string') {
         const validFaces = ['UP', 'DOWN'] as const;
-        if (!validFaces.includes(config.plant_at_face as any)) {
+        if (!validFaces.includes(config.plant_at_face as never)) {
           throw new Error(
             "[set error]: seed: plant_at_face must be either 'UP' or 'DOWN'",
           );
@@ -4427,7 +4427,7 @@ class ItemComponent {
       }
     }
 
-    (this.#opt.components as any)['minecraft:seed'] = seedConfig;
+    (this.#opt.components as Record<string, unknown>)['minecraft:seed'] = seedConfig;
   }
 
   /**
@@ -4441,7 +4441,7 @@ class ItemComponent {
       );
     }
 
-    const stackedByDataConfig: any = {};
+    const stackedByDataConfig: Record<string, unknown> = {};
 
     // Handle value (optional, defaults to true)
     if (config.value === undefined) {
@@ -4454,7 +4454,7 @@ class ItemComponent {
       );
     }
 
-    (this.#opt.components as any)['minecraft:stacked_by_data'] =
+    (this.#opt.components as Record<string, unknown>)['minecraft:stacked_by_data'] =
       stackedByDataConfig;
   }
 
@@ -4469,7 +4469,7 @@ class ItemComponent {
       );
     }
 
-    const shouldDespawnConfig: any = {};
+    const shouldDespawnConfig: Record<string, unknown> = {};
 
     // Handle value (optional, defaults to true)
     if (config.value === undefined) {
@@ -4482,7 +4482,7 @@ class ItemComponent {
       );
     }
 
-    (this.#opt.components as any)['minecraft:should_despawn'] =
+    (this.#opt.components as Record<string, unknown>)['minecraft:should_despawn'] =
       shouldDespawnConfig;
   }
 
@@ -4517,7 +4517,7 @@ class ItemComponent {
       throw new Error('[set error]: shooter: must be an object configuration');
     }
 
-    const shooterConfig: any = {};
+    const shooterConfig: Record<string, unknown> = {};
 
     // Validate format version for shooter component
     const formatParts = this.#opt.format.split('.');
@@ -4539,7 +4539,7 @@ class ItemComponent {
     }
 
     if (Array.isArray(config.ammunition)) {
-      const ammunitionFinal: any[] = [];
+      const ammunitionFinal: Record<string, unknown>[] = [];
 
       for (const ammunitionItem of config.ammunition) {
         if (typeof ammunitionItem === 'string') {
@@ -4556,7 +4556,7 @@ class ItemComponent {
           ammunitionItem !== null
         ) {
           // Complex object format with detailed properties
-          const ammunitionObject: any = {};
+          const ammunitionObject: Record<string, unknown> = {};
 
           // Validate item (required)
           if (typeof ammunitionItem.item === 'string') {
@@ -4684,7 +4684,7 @@ class ItemComponent {
       }
     }
 
-    (this.#opt.components as any)['minecraft:shooter'] = shooterConfig;
+    (this.#opt.components as Record<string, unknown>)['minecraft:shooter'] = shooterConfig;
   }
 
   /**
@@ -4725,7 +4725,7 @@ class ItemComponent {
       );
     }
 
-    (this.#opt.components as any)['minecraft:storage_weight_modifier'] = {
+    (this.#opt.components as Record<string, unknown>)['minecraft:storage_weight_modifier'] = {
       weight_in_storage_item: config.weight_in_storage_item,
     };
   }
@@ -4768,7 +4768,7 @@ class ItemComponent {
       );
     }
 
-    (this.#opt.components as any)['minecraft:storage_weight_limit'] = {
+    (this.#opt.components as Record<string, unknown>)['minecraft:storage_weight_limit'] = {
       storage_capacity_per_slot: config.storage_capacity_per_slot,
     };
   }
@@ -5046,7 +5046,7 @@ class ItemComponent {
         ) {
           this.#opt.components['minecraft:use_animation'] = {};
         }
-        (this.#opt.components['minecraft:use_animation'] as any).value =
+        (this.#opt.components['minecraft:use_animation'] as Record<string, unknown>).value =
           trimmedValue;
       }
     } else {
@@ -5198,13 +5198,13 @@ class ItemComponent {
     return this.#opt.components.max_stack_size;
   }
   public getShouldDespawn() {
-    return (this.#opt.components as any).should_despawn;
+    return (this.#opt.components as Record<string, unknown>).should_despawn;
   }
   public getHandEquipped() {
     return this.#opt.components.hand_equipped;
   }
   public getRepairable() {
-    return (this.#opt.components as any).repairable;
+    return (this.#opt.components as Record<string, unknown>).repairable;
   }
   public getFuel() {
     return this.#opt.components.fuel;
@@ -5234,13 +5234,13 @@ class ItemComponent {
     return this.#opt.components['minecraft:throwable'];
   }
   public getProjectile() {
-    return (this.#opt.components as any)['minecraft:projectile'];
+    return (this.#opt.components as Record<string, unknown>)['minecraft:projectile'];
   }
   public getRecord() {
-    return (this.#opt.components as any)['minecraft:record'];
+    return (this.#opt.components as Record<string, unknown>)['minecraft:record'];
   }
   public getGlint() {
-    return (this.#opt.components as any)['minecraft:glint'];
+    return (this.#opt.components as Record<string, unknown>)['minecraft:glint'];
   }
   public getUseAnimation() {
     return this.#opt.components['minecraft:use_animation'];

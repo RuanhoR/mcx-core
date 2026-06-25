@@ -1,4 +1,4 @@
-import path from 'node:path';
+import * as path from 'node:path';
 import { transformParseCtx } from '../../types';
 import * as t from '@babel/types';
 import { readFile } from 'node:fs/promises';

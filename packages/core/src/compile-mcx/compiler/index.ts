@@ -12,7 +12,7 @@ import { parse } from '@babel/parser';
 import { ParsedTagContentNode, ParsedTagNode } from '../../types';
 import McxAst, { MCXUtils } from '../../ast/tag';
 import PropParser from '../../ast/prop';
-import ts from 'typescript';
+import * as ts from 'typescript';
 export class CompileError extends Error {
   public loc: { line: number; column: number };
   constructor(message: string, loc: { line: number; column: number }) {

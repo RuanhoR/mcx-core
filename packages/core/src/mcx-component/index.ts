@@ -1,7 +1,7 @@
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { MCXCompileData } from '../compile-mcx/compiler/compileData';
 import { execESMMethod, RunScript } from './vm';
-import path from 'node:path';
+import * as path from 'node:path';
 import lib from '@mbler/mcx-component';
 import { MCXstructureLocComponentType } from '../compile-mcx/types';
 import { transformCtx } from '../types';

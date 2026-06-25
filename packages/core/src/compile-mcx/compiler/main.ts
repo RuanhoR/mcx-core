@@ -7,9 +7,9 @@ import { transform } from '../../transforms';
 import type { MCXCompileData } from './compileData';
 import { readFile, rm } from 'node:fs/promises';
 import MagicString from 'magic-string';
-import path from 'node:path';
+import * as path from 'node:path';
 import { transformCtx } from '../../types';
-import ts from 'typescript';
+import * as ts from 'typescript';
 import { readFileSync } from 'node:fs';
 import {
   generateItemTextureJson,

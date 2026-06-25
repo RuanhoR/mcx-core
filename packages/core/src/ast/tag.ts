@@ -131,7 +131,7 @@ class Lexer {
   *tokenStream(): IterableIterator<Token> {
     const tokenizer = new Tokenizer(this.text);
 
-    for (const token of tokenizer.splitTokens()) {
+    for (const token of Array.from(tokenizer.splitTokens())) {
       // 如果includeComments为false，跳过注释Token
       if (!this.includeComments && token.type === 'Comment') {
         continue;

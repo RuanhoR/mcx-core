@@ -4,7 +4,7 @@ import Utils from '../compile-mcx/compiler/utils';
 import { ParsedTagNode, transformCtx } from '../types';
 import config from './config';
 import McxUtils from '../utils';
-import path from 'node:path';
+import * as path from 'node:path';
 import { generateFileId } from './file_id';
 
 function extractVarDefIdList(express: t.LVal | t.VoidPattern): string[] {

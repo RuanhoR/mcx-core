@@ -705,7 +705,6 @@ interface BlockComponentOptions {
     replaceable?: Record<string, never>;
     flower_pottable?: Record<string, never>;
     chest_obstruction?: Record<string, never>;
-    destructible_by_explosion?: boolean | { explosion_resistance?: number };
     icon?: string | { filePath: string; classId: string };
   }>;
 }
@@ -860,7 +859,6 @@ export type {
   MCXFileBase,
   ui,
   Event,
-  EventOpt,
   MCXUIOpt,
   ParticleType,
   SoundEvent,

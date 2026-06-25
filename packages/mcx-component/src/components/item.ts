@@ -24,7 +24,7 @@ class ItemComponent {
     };
     if (
       typeof this.#opt.format == 'string' &&
-      /\d.\d.\d/.test(this.#opt.format)
+      /\d+\.\d+\.\d+/.test(this.#opt.format)
     ) {
       result['format_version'] = this.#opt.format;
     } else {
@@ -36,7 +36,7 @@ class ItemComponent {
     ) {
       result['minecraft:item'].description.identifier = this.#opt.id;
     } else {
-      throw new Error('[compile component]:cno id');
+      throw new Error('[compile component]: no id');
     }
     const ApplyComponents = result['minecraft:item'].components;
     if (typeof this.#opt.name == 'string') {

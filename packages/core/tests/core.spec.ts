@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import type { TransformPluginContext } from 'rollup';
+import type { ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration } from '@babel/types';
+import type { ParsedTagNode, ParsedTagContentNode, ParsedCommentNode } from '../src/types';
 import * as MCX from '../src/index.js';
 
 describe('compileJSFn', () => {
@@ -23,7 +26,7 @@ describe('compileJSFn', () => {
       'export const foo = 42; export function bar() {}',
     );
     const exports = result.BuildCache.export.filter(
-      (e: Record<string, unknown>) => e.type === 'ExportNamedDeclaration',
+      (e: ExportNamedDeclaration | ExportAllDeclaration | ExportDefaultDeclaration) => e.type === 'ExportNamedDeclaration',
     );
     expect(exports.length).toBeGreaterThanOrEqual(2);
   });
@@ -31,7 +34,7 @@ describe('compileJSFn', () => {
   it('should handle default export', () => {
     const result = MCX.compiler.compileJSFn('export default 42');
     const defaultExport = result.BuildCache.export.find(
-      (e: Record<string, unknown>) => e.type === 'ExportDefaultDeclaration',
+      (e: ExportNamedDeclaration | ExportAllDeclaration | ExportDefaultDeclaration) => e.type === 'ExportDefaultDeclaration',
     );
     expect(defaultExport).toBeDefined();
   });
@@ -39,7 +42,7 @@ describe('compileJSFn', () => {
   it('should handle re-exports', () => {
     const result = MCX.compiler.compileJSFn('export { foo, bar } from "./mod"');
     const reExports = result.BuildCache.export.filter(
-      (e: Record<string, unknown>) => e.type === 'ExportNamedDeclaration' && e.source !== undefined,
+      (e: ExportNamedDeclaration | ExportAllDeclaration | ExportDefaultDeclaration) => e.type === 'ExportNamedDeclaration' && 'source' in e && e.source !== undefined,
     );
     expect(reExports.length).toBeGreaterThanOrEqual(1);
   });
@@ -94,13 +97,16 @@ describe('compileMCXFn', () => {
 });
 
 describe('transform', () => {
-  const createCtx = (overrides = {}): Record<string, unknown> => ({
+  const createCtx = (overrides: Partial<TransformPluginContext> = {}): TransformPluginContext => ({
     error: (msg: unknown) => {
       throw new Error(String(msg));
     },
     warn: () => {},
+    debug: () => {},
+    info: () => {},
+    getCombinedSourcemap: () => ({ mappings: '' } as any),
     ...overrides,
-  });
+  } as TransformPluginContext);
 
   const outdirs = { dist: '', behavior: '', resources: '' };
 
@@ -144,13 +150,16 @@ describe('transform', () => {
 });
 
 describe('UI transform', () => {
-  const createCtx = (overrides = {}): Record<string, unknown> => ({
+  const createCtx = (overrides: Partial<TransformPluginContext> = {}): TransformPluginContext => ({
     error: (msg: unknown) => {
       throw new Error(String(msg));
     },
     warn: () => {},
+    debug: () => {},
+    info: () => {},
+    getCombinedSourcemap: () => ({ mappings: '' } as any),
     ...overrides,
-  });
+  } as TransformPluginContext);
 
   const outdirs = { dist: '', behavior: '', resources: '' };
 
@@ -159,7 +168,7 @@ describe('UI transform', () => {
       '<script>export const prop = ["name"]; export function handler() {}</script><Ui><input placeholderText="input name">{{ name }}</input><title>Form</title></Ui>',
     );
     expect(cd.strLoc.UI).toBeDefined();
-    expect(cd.strLoc.UI.name).toBe('Ui');
+    expect(cd.strLoc.UI!.name).toBe('Ui');
   });
 
   it('should generate {{ }} content as { useProp } in output', async () => {
@@ -231,10 +240,10 @@ describe('AST - comment handling', () => {
     const ast = new MCX.AST.tag('<div>Hello<!--comment-->World</div>');
     const result = ast.parseAST();
     expect(result.length).toBe(1);
-    const div = result[0];
+    const div = result[0]!;
     if (div.content) {
       const hasComment = div.content.some(
-        (item: Record<string, unknown> | undefined) => item?.type === 'Comment',
+        (item: ParsedTagContentNode | ParsedTagNode | ParsedCommentNode | undefined) => item?.type === 'Comment',
       );
       expect(hasComment).toBe(false);
     }
@@ -244,10 +253,10 @@ describe('AST - comment handling', () => {
     const ast = new MCX.AST.tag('<div>Hello<!--comment-->World</div>', true);
     const result = ast.parseAST();
     expect(result.length).toBe(1);
-    const div = result[0];
+    const div = result[0]!;
     if (div.content) {
       const comments = div.content.filter(
-        (item: Record<string, unknown> | undefined) => item?.type === 'Comment',
+        (item: ParsedTagContentNode | ParsedTagNode | ParsedCommentNode | undefined): item is ParsedCommentNode => item?.type === 'Comment',
       );
       expect(comments.length).toBeGreaterThanOrEqual(1);
     }
@@ -265,10 +274,10 @@ describe('AST - comment handling', () => {
     const ast = new MCX.AST.tag(code, true);
     const result = ast.parseAST();
     expect(result.length).toBe(1);
-    const root = result[0];
+    const root = result[0]!;
     if (root.content) {
       const comments = root.content.filter(
-        (item: Record<string, unknown> | undefined) => item?.type === 'Comment',
+        (item: ParsedTagContentNode | ParsedTagNode | ParsedCommentNode | undefined): item is ParsedCommentNode => item?.type === 'Comment',
       );
       expect(comments.length).toBeGreaterThanOrEqual(2);
     }

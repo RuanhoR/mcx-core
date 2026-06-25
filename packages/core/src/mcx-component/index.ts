@@ -16,7 +16,7 @@ let cachedOption: Record<string, string[] | [string, string][]> = {};
 
 /**
  * Security limits for file I/O operations inside file_edit expressions.
- * Components from @mbler/mcx-core are exempt from these limits.
+ * Components from @mbler/mcx-component are exempt from these limits.
  */
 const MAX_FILE_WRITES = 5;
 const MAX_FILE_READS = 1;
@@ -30,7 +30,7 @@ export function clearCachedOptions() {
  * Resolve a FilePoint to an absolute path on disk.
  *
  * - `base: 'root'` is only allowed when the calling component originates from
- *   @mbler/mcx-core (the `sourceIsMcxCore` flag). This prevents third-party
+ *   @mbler/mcx-component (the `sourceIsMcxCore` flag). This prevents third-party
  *   components from reading arbitrary filesystem locations.
  * - For `behavior` / `resources`, the file is resolved relative to the
  *   corresponding output directory. A path-traversal check ensures the resolved
@@ -47,7 +47,7 @@ export function resolveFilePoint(
   if (point.base === 'root') {
     if (!sourceIsMcxCore) {
       throw new Error(
-        '[mcx component]: "root" base is only allowed for components imported from @mbler/mcx-core',
+        '[mcx component]: "root" base is only allowed for components imported from @mbler/mcx-component',
       );
     }
     return path.resolve(point.file);
@@ -75,8 +75,8 @@ export function resolveFilePoint(
  * Built by walking the AST of the component source code.
  *
  * Example:
- *   import { ItemComponent } from '@mbler/mcx-core'
- *   → { ItemComponent: '@mbler/mcx-core' }
+ *   import { ItemComponent } from '@mbler/mcx-component'
+ *   → { ItemComponent: '@mbler/mcx-component' }
  *
  *   const { SomeHelper } = require('some-lib')
  *   → { SomeHelper: 'some-lib' }
@@ -110,7 +110,7 @@ function collectExportSources(code: string): ExportSourceMap {
     if (!node) return;
 
     // Pattern 1: ES module import declarations.
-    // e.g. import { ItemComponent, EntityComponent as Entity } from '@mbler/mcx-core'
+    // e.g. import { ItemComponent, EntityComponent as Entity } from '@mbler/mcx-component'
     if (t.isImportDeclaration(node)) {
       const pkg =
         typeof node.source.value === 'string' ? node.source.value : '';
@@ -192,13 +192,13 @@ function collectExportSources(code: string): ExportSourceMap {
 }
 
 /**
- * Validate that the component only imports from @mbler/mcx-core.
+ * Validate that the component only imports from @mbler/mcx-component.
  * Non-mcx-core imports are collected and each unique offending package
  * triggers a console warning (once per package per file).
  * Relative imports ('./...', '../...') are silently allowed.
  */
 function checkComponentImports(sources: ExportSourceMap, filePath: string) {
-  const allowedPackage = '@mbler/mcx-core';
+  const allowedPackage = '@mbler/mcx-component';
   const warned = new Set<string>();
   for (const [, pkg] of Object.entries(sources)) {
     if (
@@ -220,7 +220,7 @@ function checkComponentImports(sources: ExportSourceMap, filePath: string) {
  * Delegates to execEditInternal with a fresh limits counter.
  *
  * @param isMcxCoreSource - when true, the component originates from
- *   @mbler/mcx-core and is exempt from file I/O limits and root base
+ *   @mbler/mcx-component and is exempt from file I/O limits and root base
  *   restrictions.
  */
 export async function execEdit(
@@ -402,7 +402,7 @@ export async function generateItemTextureJson(output: {
  *
  * Per-component restrictions (checked after VM execution):
  * - path traversal guard on the output file point
- * - root base: only allowed if the export came from @mbler/mcx-core
+ * - root base: only allowed if the export came from @mbler/mcx-component
  * - file write limit (≤5) and read limit (≤1): only enforced for
  *   non-mcx-core components
  */
@@ -421,7 +421,7 @@ export async function compileComponent(
 
   // Execute the component script in a VM. The transformCjsHook rewrites
   // image file requires (e.g. require('./icon.png')) into
-  // require('@mbler/mcx-core').PNGImageComponent(require('node:path').join(...))
+  // require('@mbler/mcx-component').PNGImageComponent(require('node:path').join(...))
   // so that image assets are handled by the mcx-core ImageComponent classes.
   const scriptRunResult = (await new RunScript(compiledCode.File, 'esm').run(
     src,
@@ -442,7 +442,7 @@ export async function compileComponent(
           if (/^.+?\.(png|svg|jpg|jpeg|gif)$/.test(arg.value)) {
             const imageComponentRequire = t.memberExpression(
               t.callExpression(t.identifier('require'), [
-                t.stringLiteral('@mbler/mcx-core'),
+                t.stringLiteral('@mbler/mcx-component'),
               ]),
               t.identifier(
                 {
@@ -519,11 +519,13 @@ export async function compileComponent(
       throw new Error('[mcx component]: not mcx json component: unknown type');
 
     if (json._meta.file_edit) {
-      // Determine if THIS specific export comes from @mbler/mcx-core.
-      // If yes, the component is trusted and bypasses file I/O limits
-      // and root base restrictions. If not, restrictions apply.
-      const isMcxCoreSource = (exportSources[pointExport] ?? '').startsWith(
-        '@mbler/mcx-core',
+      // Determine if the component comes from @mbler/mcx-component.
+      // Check whether any import in the script originates from that package.
+      // This is more reliable than checking the specific export name,
+      // since local variables (e.g. const item = new ItemComponent()) are
+      // not captured by exportSources.
+      const isMcxCoreSource = Object.values(exportSources).some(
+        (src) => src && src.startsWith('@mbler/mcx-component'),
       );
       await execEdit(json._meta.file_edit, ctx, isMcxCoreSource);
     }

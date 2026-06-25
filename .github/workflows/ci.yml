@@ -21,4 +21,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --ignore-scripts
       - run: pnpm lint:packages
+      - run: pnpm build
       - run: pnpm test

@@ -25,7 +25,7 @@
     "lint:packages:fix": "pnpm -r lint:fix",
     "format": "prettier ./packages/create-mbler/src ./packages/core/src ./packages/types/index.d.ts ./packages/client/src --write",
     "test": "pnpm -r test",
-    "build": "pnpm -r --filter=@mbler/mcx-core --filter=@mbler/mcx build",
+    "build": "pnpm -r build",
     "check": "pnpm test && pnpm lint:packages && pnpm -r exec tsc --noEmit",
     "prepare": "simple-git-hooks"
   },

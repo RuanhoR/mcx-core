@@ -1,10 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import type { TransformPluginContext } from 'rollup';
-import type { ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration } from '@babel/types';
+import type {
+  ExportAllDeclaration,
+  ExportDefaultDeclaration,
+  ExportNamedDeclaration,
+} from '@babel/types';
 import * as t from '@babel/types';
-import type { ParsedTagNode, ParsedTagContentNode, ParsedCommentNode } from '../src/types';
+import type {
+  ParsedTagNode,
+  ParsedTagContentNode,
+  ParsedCommentNode,
+  MCXPosition,
+} from '../src/types';
 import * as MCX from '../src/index.js';
 import { Lexer } from '../src/ast/prop';
+import { isNonNullChain } from 'typescript';
 
 describe('compileJSFn', () => {
   it('should parse imports, calls, and exports', () => {
@@ -28,7 +38,12 @@ describe('compileJSFn', () => {
       'export const foo = 42; export function bar() {}',
     );
     const exports = result.BuildCache.export.filter(
-      (e: ExportNamedDeclaration | ExportAllDeclaration | ExportDefaultDeclaration) => e.type === 'ExportNamedDeclaration',
+      (
+        e:
+          | ExportNamedDeclaration
+          | ExportAllDeclaration
+          | ExportDefaultDeclaration,
+      ) => e.type === 'ExportNamedDeclaration',
     );
     expect(exports.length).toBeGreaterThanOrEqual(2);
   });
@@ -36,7 +51,12 @@ describe('compileJSFn', () => {
   it('should handle default export', () => {
     const result = MCX.compiler.compileJSFn('export default 42');
     const defaultExport = result.BuildCache.export.find(
-      (e: ExportNamedDeclaration | ExportAllDeclaration | ExportDefaultDeclaration) => e.type === 'ExportDefaultDeclaration',
+      (
+        e:
+          | ExportNamedDeclaration
+          | ExportAllDeclaration
+          | ExportDefaultDeclaration,
+      ) => e.type === 'ExportDefaultDeclaration',
     );
     expect(defaultExport).toBeDefined();
   });
@@ -44,7 +64,15 @@ describe('compileJSFn', () => {
   it('should handle re-exports', () => {
     const result = MCX.compiler.compileJSFn('export { foo, bar } from "./mod"');
     const reExports = result.BuildCache.export.filter(
-      (e: ExportNamedDeclaration | ExportAllDeclaration | ExportDefaultDeclaration) => e.type === 'ExportNamedDeclaration' && 'source' in e && e.source !== undefined,
+      (
+        e:
+          | ExportNamedDeclaration
+          | ExportAllDeclaration
+          | ExportDefaultDeclaration,
+      ) =>
+        e.type === 'ExportNamedDeclaration' &&
+        'source' in e &&
+        e.source !== undefined,
     );
     expect(reExports.length).toBeGreaterThanOrEqual(1);
   });
@@ -99,16 +127,22 @@ describe('compileMCXFn', () => {
 });
 
 describe('transform', () => {
-  const createCtx = (overrides: Partial<TransformPluginContext> = {}): TransformPluginContext => ({
-    error: (msg: unknown) => {
-      throw new Error(String(msg));
-    },
-    warn: () => {},
-    debug: () => {},
-    info: () => {},
-    getCombinedSourcemap: () => ({ mappings: '' } as ReturnType<TransformPluginContext['getCombinedSourcemap']>),
-    ...overrides,
-  } as TransformPluginContext);
+  const createCtx = (
+    overrides: Partial<TransformPluginContext> = {},
+  ): TransformPluginContext =>
+    ({
+      error: (msg: unknown) => {
+        throw new Error(String(msg));
+      },
+      warn: () => {},
+      debug: () => {},
+      info: () => {},
+      getCombinedSourcemap: () =>
+        ({ mappings: '' }) as ReturnType<
+          TransformPluginContext['getCombinedSourcemap']
+        >,
+      ...overrides,
+    }) as TransformPluginContext;
 
   const outdirs = { dist: '', behavior: '', resources: '' };
 
@@ -152,16 +186,22 @@ describe('transform', () => {
 });
 
 describe('UI transform', () => {
-  const createCtx = (overrides: Partial<TransformPluginContext> = {}): TransformPluginContext => ({
-    error: (msg: unknown) => {
-      throw new Error(String(msg));
-    },
-    warn: () => {},
-    debug: () => {},
-    info: () => {},
-    getCombinedSourcemap: () => ({ mappings: '' } as ReturnType<TransformPluginContext['getCombinedSourcemap']>),
-    ...overrides,
-  } as TransformPluginContext);
+  const createCtx = (
+    overrides: Partial<TransformPluginContext> = {},
+  ): TransformPluginContext =>
+    ({
+      error: (msg: unknown) => {
+        throw new Error(String(msg));
+      },
+      warn: () => {},
+      debug: () => {},
+      info: () => {},
+      getCombinedSourcemap: () =>
+        ({ mappings: '' }) as ReturnType<
+          TransformPluginContext['getCombinedSourcemap']
+        >,
+      ...overrides,
+    }) as TransformPluginContext;
 
   const outdirs = { dist: '', behavior: '', resources: '' };
 
@@ -292,7 +332,8 @@ describe('generateFileId', () => {
 
 describe('JsCompileData', () => {
   it('should create with default values', async () => {
-    const { JsCompileData } = await import('../src/compile-mcx/compiler/compileData');
+    const { JsCompileData } =
+      await import('../src/compile-mcx/compiler/compileData');
     const data = new JsCompileData(t.program([]));
     expect(data.File).toBe('__repl');
     expect(data.isFile).toBe(false);
@@ -300,7 +341,8 @@ describe('JsCompileData', () => {
   });
 
   it('should set file path', async () => {
-    const { JsCompileData } = await import('../src/compile-mcx/compiler/compileData');
+    const { JsCompileData } =
+      await import('../src/compile-mcx/compiler/compileData');
     const data = new JsCompileData(t.program([]));
     data.setFilePath('/test.ts');
     expect(data.isFile).toBe(true);
@@ -310,17 +352,39 @@ describe('JsCompileData', () => {
 
 describe('MCXCompileData', () => {
   it('should create with constructor args', async () => {
-    const { JsCompileData, MCXCompileData } = await import('../src/compile-mcx/compiler/compileData');
+    const { JsCompileData, MCXCompileData } =
+      await import('../src/compile-mcx/compiler/compileData');
     const jsir = new JsCompileData(t.program([]));
-    const data = new MCXCompileData([], jsir, { msg: [], Event: { subscribe: {}, isLoad: true, on: 'after' } });
+    const data = new MCXCompileData([], jsir, {
+      UI: null,
+      script: '',
+      Component: {},
+      Event: {
+        loc: {} as unknown as MCXPosition,
+        subscribe: {},
+        isLoad: true,
+        on: 'after',
+      },
+    });
     expect(data.raw).toEqual([]);
     expect(data.JSIR).toBe(jsir);
   });
 
   it('should set file path on MCXCompileData', async () => {
-    const { JsCompileData, MCXCompileData } = await import('../src/compile-mcx/compiler/compileData');
+    const { JsCompileData, MCXCompileData } =
+      await import('../src/compile-mcx/compiler/compileData');
     const jsir = new JsCompileData(t.program([]));
-    const data = new MCXCompileData([], jsir, { msg: [], Event: { subscribe: {}, isLoad: true, on: 'after' } });
+    const data = new MCXCompileData([], jsir, {
+      script: '',
+      UI: null,
+      Component: {},
+      Event: {
+        subscribe: {},
+        isLoad: true,
+        on: 'after',
+        loc: {} as unknown as MCXPosition,
+      },
+    });
     data.setFilePath('/test.mcx');
     expect(data.isFile).toBe(true);
     expect(data.File).toBe('/test.mcx');
@@ -336,7 +400,13 @@ describe('AST - comment handling', () => {
     const div = result[0]!;
     if (div.content) {
       const hasComment = div.content.some(
-        (item: ParsedTagContentNode | ParsedTagNode | ParsedCommentNode | undefined) => item?.type === 'Comment',
+        (
+          item:
+            | ParsedTagContentNode
+            | ParsedTagNode
+            | ParsedCommentNode
+            | undefined,
+        ) => item?.type === 'Comment',
       );
       expect(hasComment).toBe(false);
     }
@@ -349,7 +419,13 @@ describe('AST - comment handling', () => {
     const div = result[0]!;
     if (div.content) {
       const comments = div.content.filter(
-        (item: ParsedTagContentNode | ParsedTagNode | ParsedCommentNode | undefined): item is ParsedCommentNode => item?.type === 'Comment',
+        (
+          item:
+            | ParsedTagContentNode
+            | ParsedTagNode
+            | ParsedCommentNode
+            | undefined,
+        ): item is ParsedCommentNode => item?.type === 'Comment',
       );
       expect(comments.length).toBeGreaterThanOrEqual(1);
     }
@@ -370,7 +446,13 @@ describe('AST - comment handling', () => {
     const root = result[0]!;
     if (root.content) {
       const comments = root.content.filter(
-        (item: ParsedTagContentNode | ParsedTagNode | ParsedCommentNode | undefined): item is ParsedCommentNode => item?.type === 'Comment',
+        (
+          item:
+            | ParsedTagContentNode
+            | ParsedTagNode
+            | ParsedCommentNode
+            | undefined,
+        ): item is ParsedCommentNode => item?.type === 'Comment',
       );
       expect(comments.length).toBeGreaterThanOrEqual(2);
     }

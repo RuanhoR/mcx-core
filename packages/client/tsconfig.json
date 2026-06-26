@@ -1,11 +1,15 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
     "module": "esnext",
     "target": "esnext",
-    "lib": ["esnext"],
-    "types": ["node"],
+    "lib": [
+      "esnext"
+    ],
+    "types": [
+      "node"
+    ],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": false,
@@ -21,5 +25,8 @@
     "skipLibCheck": true,
     "declarationDir": "./dist/types"
   },
-  "include": ["./src/**/*", "./__test__/**/*"]
+  "include": [
+    "./src/**/*",
+    "./__test__/**/*"
+  ]
 }

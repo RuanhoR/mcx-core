@@ -12,12 +12,22 @@ import compareVar from '../src/utils';
 
 describe('ItemComponent', () => {
   it('should throw on missing format', () => {
-    const item = new ItemComponent({ id: 'test:item', name: 'Test', format: '', components: {} });
+    const item = new ItemComponent({
+      id: 'test:item',
+      name: 'Test',
+      format: '',
+      components: {},
+    });
     expect(() => item.toJSON()).toThrow('no format');
   });
 
   it('should throw on missing id', () => {
-    const item = new ItemComponent({ id: '', name: 'Test', format: '1.21.0', components: {} });
+    const item = new ItemComponent({
+      id: '',
+      name: 'Test',
+      format: '1.21.0',
+      components: {},
+    });
     expect(() => item.toJSON()).toThrow('no id');
   });
 
@@ -34,7 +44,9 @@ describe('ItemComponent', () => {
     const json = item.toJSON();
     expect(json['minecraft:item'].description.identifier).toBe('test:item');
     expect(json['minecraft:item'].components['minecraft:damage'].value).toBe(5);
-    expect(json['minecraft:item'].components['minecraft:allow_off_hand'].value).toBe(true);
+    expect(
+      json['minecraft:item'].components['minecraft:allow_off_hand'].value,
+    ).toBe(true);
   });
 });
 
@@ -64,9 +76,14 @@ describe('BlockComponent', () => {
         collision_box: true,
         selection_box: { origin: [-8, 0, -8], size: [16, 16, 16] },
         geometry: 'geometry.test_block',
-        material_instances: { '*': { texture: 'test_block', render_method: 'opaque' } },
+        material_instances: {
+          '*': { texture: 'test_block', render_method: 'opaque' },
+        },
         map_color: '#ff0000',
-        crafting_table: { crafting_tags: ['crafting_table'], table_name: 'Test Workbench' },
+        crafting_table: {
+          crafting_tags: ['crafting_table'],
+          table_name: 'Test Workbench',
+        },
         tick: { interval_range: [20, 60], looping: true },
         random_offset: { x: { range: { min: -2, max: 2 }, steps: 1 } },
         movable: { movement_type: 'immovable' },
@@ -74,9 +91,14 @@ describe('BlockComponent', () => {
         redstone_consumer: { min_power: 1, propagates_power: false },
         redstone_producer: { power: 15, connected_faces: ['up'] },
         support: { shape: 'fence' },
-        connection_rule: { accepts_connections_from: 'all', enabled_directions: ['north', 'south'] },
-        liquid_detection: { can_contain_liquid: true,
-          on_liquid_touches: 'blocking' },
+        connection_rule: {
+          accepts_connections_from: 'all',
+          enabled_directions: ['north', 'south'],
+        },
+        liquid_detection: {
+          can_contain_liquid: true,
+          on_liquid_touches: 'blocking',
+        },
         precipitation_interactions: { precipitation_behavior: 'snowlogging' },
         entity_fall_on: { minimum_fall_distance: 2 },
         replaceable: {},
@@ -87,9 +109,16 @@ describe('BlockComponent', () => {
     });
     const json = block.toJSON();
     expect(json['minecraft:block'].description.identifier).toBe('test:block');
-    expect(json['minecraft:block'].components['minecraft:display_name']).toBe('Test Block');
-    expect(json['minecraft:block'].components['minecraft:light_emission']).toBe(12);
-    expect(json['minecraft:block'].components['minecraft:crafting_table'].crafting_tags).toContain('crafting_table');
+    expect(json['minecraft:block'].components['minecraft:display_name']).toBe(
+      'Test Block',
+    );
+    expect(json['minecraft:block'].components['minecraft:light_emission']).toBe(
+      12,
+    );
+    expect(
+      (json['minecraft:block'].components['minecraft:crafting_table'] || {})
+        .crafting_tags,
+    ).toContain('crafting_table');
   });
 });
 

@@ -1,6 +1,6 @@
 <Event @after>
 McxExtendsBy = ./event$1.mcx
-PlayerJoin = eventHandler
+playerJoin = eventHandler
 </Event>
 <script lang="ts">
 import { add } from "./test.ts";

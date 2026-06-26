@@ -37,7 +37,7 @@ const mockEvent = vi.hoisted(() => ({
 vi.mock('@minecraft/server', () => ({
   world: {
     afterEvents: {
-      PlayerJoin: { ...mockEvent },
+      playerJoin: { ...mockEvent },
       PlayerLeave: { ...mockEvent },
       EntityDie: { ...mockEvent },
       ItemUse: { ...mockEvent },
@@ -62,28 +62,39 @@ const serverUI = await import('@minecraft/server-ui');
 describe('Event', () => {
   it('should create Event with basic options', () => {
     const event = new Event(
-      { on: 'after', data: { PlayerJoin: vi.fn() } },
-      () => { throw new Error('should not load extend'); },
+      { on: 'after', data: { playerJoin: vi.fn() } },
+      () => {
+        throw new Error('should not load extend');
+      },
     );
     expect(event).toBeDefined();
     expect(event.status).toBeDefined();
-    expect(event.status.all.PlayerJoin).toBeDefined();
+    expect(event.status.all.playerJoin).toBeDefined();
   });
 
   it('should create Event with tick (anti-shake)', () => {
     const event = new Event(
-      { on: 'after', tick: 5, data: { PlayerJoin: vi.fn() } },
-      () => { throw new Error('should not load extend'); },
+      { on: 'after', tick: 5, data: { playerJoin: vi.fn() } },
+      () => {
+        throw new Error('should not load extend');
+      },
     );
-    expect(typeof event.status.all.PlayerJoin).toBe('function');
+    expect(typeof event.status.all.playerJoin).toBe('function');
   });
 
   it('should load extends', () => {
     const extendLoader = vi.fn(
-      () => new Event({ on: 'after', data: {} }, () => { throw new Error('nested extend'); }),
+      () =>
+        new Event({ on: 'after', data: {} }, () => {
+          throw new Error('nested extend');
+        }),
     );
     new Event(
-      { on: 'after', data: { PlayerJoin: () => {} }, extends: [{} as unknown as MCXFile<'event'>] },
+      {
+        on: 'after',
+        data: { playerJoin: () => {} },
+        extends: [{} as unknown as MCXFile<'event'>],
+      },
       extendLoader,
     );
     expect(extendLoader).toHaveBeenCalledTimes(1);
@@ -92,44 +103,52 @@ describe('Event', () => {
   it('should subscribe to events', () => {
     const handler = vi.fn();
     const event = new Event(
-      { on: 'after', data: { PlayerJoin: handler } },
-      () => { throw new Error('extend'); },
+      { on: 'after', data: { playerJoin: handler } },
+      () => {
+        throw new Error('extend');
+      },
     );
-    const result = event.subscribe('PlayerJoin');
+    const result = event.subscribe('playerJoin');
     expect(result).toBe(true);
   });
 
   it('should reject duplicate subscription', () => {
     const handler = vi.fn();
     const event = new Event(
-      { on: 'after', data: { PlayerJoin: handler } },
-      () => { throw new Error('extend'); },
+      { on: 'after', data: { playerJoin: handler } },
+      () => {
+        throw new Error('extend');
+      },
     );
-    event.subscribe('PlayerJoin');
-    const result = event.subscribe('PlayerJoin');
+    event.subscribe('playerJoin');
+    const result = event.subscribe('playerJoin');
     expect(result).toBe(false);
   });
 
   it('should unsubscribe from events', () => {
     const handler = vi.fn();
     const event = new Event(
-      { on: 'after', data: { PlayerJoin: handler } },
-      () => { throw new Error('extend'); },
+      { on: 'after', data: { playerJoin: handler } },
+      () => {
+        throw new Error('extend');
+      },
     );
-    event.subscribe('PlayerJoin');
-    const result = event.unsubscribe('PlayerJoin');
+    event.subscribe('playerJoin');
+    const result = event.unsubscribe('playerJoin');
     expect(result).toBe(true);
   });
 
   it('should use world to bind events', async () => {
     const handler = vi.fn();
     const event = new Event(
-      { on: 'after', data: { PlayerJoin: handler } },
-      () => { throw new Error('extend'); },
+      { on: 'after', data: { playerJoin: handler } },
+      () => {
+        throw new Error('extend');
+      },
     );
     const { world: w } = await import('@minecraft/server');
     event.useWorld(w);
-    expect(w.afterEvents.PlayerJoin.subscribe).toHaveBeenCalled();
+    expect(w.afterEvents.playerJoin.subscribe).toHaveBeenCalled();
   });
 });
 
@@ -159,7 +178,7 @@ describe('App', () => {
     const eventMcx = {
       type: 'event',
       setup: () => ({ test: handler }),
-      app: { event: { data: { PlayerJoin: 'test' }, on: 'after' as const } },
+      app: { event: { data: { playerJoin: 'test' }, on: 'after' as const } },
     } as unknown as MCXFile<'event'>;
     const app = new App({
       type: 'app',
@@ -168,18 +187,20 @@ describe('App', () => {
     } as unknown as MCXFile<'app'>);
     const { world: w } = await import('@minecraft/server');
     app.mount(w);
-    expect(w.afterEvents.PlayerJoin.subscribe).toHaveBeenCalled();
+    expect(w.afterEvents.playerJoin.subscribe).toHaveBeenCalled();
   });
 
   it('should throw for non-app type in constructor', () => {
-    expect(() => new App({ type: 'event' } as unknown as MCXFile<'app'>)).toThrow();
+    expect(
+      () => new App({ type: 'event' } as unknown as MCXFile<'app'>),
+    ).toThrow();
   });
 
   it('should throw when event handler is not a function', async () => {
     const eventMcx = {
       type: 'event',
       setup: () => ({ test: 'not-a-function' }),
-      app: { event: { data: { PlayerJoin: 'test' }, on: 'after' as const } },
+      app: { event: { data: { playerJoin: 'test' }, on: 'after' as const } },
     } as unknown as MCXFile<'event'>;
     const app = new App({
       type: 'app',
@@ -231,26 +252,23 @@ describe('Utils', () => {
 });
 
 describe('ui', () => {
-  const createUIConfig = (overrides: Partial<MCXUIOpt> = {}): MCXUIOpt => ({
-    use: serverUI.ModalFormData,
-    UI: serverUI,
-    layout: [{ type: 'title', content: 'Test Form', params: {} }],
-    ...overrides,
-  } as unknown as MCXUIOpt);
+  const createUIConfig = (overrides: Partial<MCXUIOpt> = {}): MCXUIOpt =>
+    ({
+      use: serverUI.ModalFormData,
+      UI: serverUI,
+      layout: [{ type: 'title', content: 'Test Form', params: {} }],
+      ...overrides,
+    }) as unknown as MCXUIOpt;
 
   it('should construct ui with basic config', () => {
-    const instance = new ui(
-      createUIConfig(),
-      () => ({ prop: [] }),
-    );
+    const instance = new ui(createUIConfig(), () => ({ prop: [] }));
     expect(instance).toBeDefined();
   });
 
   it('should throw for invalid prop', () => {
-    expect(() => new ui(
-      createUIConfig(),
-      () => ({ prop: 'not-an-array' }),
-    )).toThrow('invalid prop');
+    expect(
+      () => new ui(createUIConfig(), () => ({ prop: 'not-an-array' })),
+    ).toThrow('invalid prop');
   });
 
   it('should construct ui with modal form layout', () => {
@@ -260,10 +278,18 @@ describe('ui', () => {
         UI: serverUI,
         layout: [
           { type: 'title', content: 'Form', params: {} },
-          { type: 'input', content: 'Name', params: { placeholderText: 'Enter name' } },
+          {
+            type: 'input',
+            content: 'Name',
+            params: { placeholderText: 'Enter name' },
+          },
           { type: 'slider', content: 'Count', params: { min: '0', max: '10' } },
           { type: 'toggle', content: 'Enable', params: { default: 'true' } },
-          { type: 'dropdown', content: 'Color', params: { option: 'red,green,blue' } },
+          {
+            type: 'dropdown',
+            content: 'Color',
+            params: { option: 'red,green,blue' },
+          },
           { type: 'body', content: 'Body text', params: {} },
           { type: 'divider', content: '', params: {} },
           { type: 'submit', content: 'Go', params: { click: () => {} } },
@@ -309,10 +335,33 @@ describe('ui', () => {
 
   it('should throw for invalid UI type', () => {
     class FakeUI {}
-    expect(() => new ui(
-      { use: FakeUI as unknown as typeof serverUI.ModalFormData, UI: serverUI, layout: [{ type: 'title', content: 'X', params: {} }] },
-      () => ({ prop: [] }),
-    )).toThrow('Invalid UI type');
+    expect(
+      () =>
+        new ui(
+          {
+            use: FakeUI as unknown as typeof serverUI.ModalFormData,
+            UI: serverUI,
+            layout: [
+              {
+                type: 'title',
+                content: 'X',
+                params: {} as unknown as {
+                  [key in
+                    | 'click'
+                    | 'default'
+                    | 'option'
+                    | 'min'
+                    | 'max'
+                    | 'placeholderText'
+                    | 'tip'
+                    | 'img']: string | { useProp: string };
+                },
+              },
+            ],
+          },
+          () => ({ prop: [] }),
+        ),
+    ).toThrow('Invalid UI type');
   });
 
   it('should accept string click for button as srcResult key', () => {
@@ -356,7 +405,9 @@ describe('ui', () => {
 
   it('should show action form with button click', async () => {
     const clickHandler = vi.fn();
-    const mockShow = vi.fn().mockResolvedValue({ canceled: false, selection: 0 });
+    const mockShow = vi
+      .fn()
+      .mockResolvedValue({ canceled: false, selection: 0 });
     class ActionMock extends ActionFormDataMock {
       show = mockShow;
     }
@@ -381,7 +432,9 @@ describe('ui', () => {
 
   it('should show message form with button click', async () => {
     const clickHandler = vi.fn();
-    const mockShow = vi.fn().mockResolvedValue({ canceled: false, selection: 0 });
+    const mockShow = vi
+      .fn()
+      .mockResolvedValue({ canceled: false, selection: 0 });
     class MessageMock extends MessageFormDataMock {
       show = mockShow;
     }
@@ -414,7 +467,9 @@ describe('ui', () => {
       } as unknown as MCXUIOpt,
       () => ({ prop: ['missing'] }),
     );
-    await expect(instance.show({} as Player, {})).rejects.toThrow('prop "missing" not found');
+    await expect(instance.show({} as Player, {})).rejects.toThrow(
+      'prop "missing" not found',
+    );
   });
 
   it('should throw for useProp params not found in show', async () => {
@@ -423,11 +478,17 @@ describe('ui', () => {
         use: serverUI.ModalFormData,
         UI: serverUI,
         layout: [
-          { type: 'input', content: 'Name', params: { default: { useProp: 'missing' } } },
+          {
+            type: 'input',
+            content: 'Name',
+            params: { default: { useProp: 'missing' } },
+          },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: ['missing'] }),
     );
-    await expect(instance.show({} as Player, {})).rejects.toThrow('prop "missing" not found');
+    await expect(instance.show({} as Player, {})).rejects.toThrow(
+      'prop "missing" not found',
+    );
   });
 });

@@ -8,6 +8,7 @@ import {
   EnchantableSlotEnum,
   EnchantableSlotArray,
 } from '../src/index';
+import compareVar from '../src/utils';
 
 describe('ItemComponent', () => {
   it('should throw on missing format', () => {
@@ -131,5 +132,27 @@ describe('enums', () => {
   it('should export EnchantableSlotArray', () => {
     expect(EnchantableSlotArray).toContain('all');
     expect(EnchantableSlotArray).toContain('armor_head');
+  });
+});
+
+describe('compareVar', () => {
+  it('should return 0 for equal versions', () => {
+    expect(compareVar('1.0.0', '1.0.0')).toBe(0);
+  });
+
+  it('should return 1 when first is greater', () => {
+    expect(compareVar('2.0.0', '1.0.0')).toBe(1);
+  });
+
+  it('should return -1 when first is smaller', () => {
+    expect(compareVar('1.0.0', '2.0.0')).toBe(-1);
+  });
+
+  it('should handle partial versions', () => {
+    expect(compareVar('1', '2')).toBe(-1);
+  });
+
+  it('should handle null/undefined inputs', () => {
+    expect(() => compareVar(null as unknown as string, '1.0.0')).not.toThrow();
   });
 });

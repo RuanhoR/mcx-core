@@ -6,7 +6,6 @@
   "scripts": {
     "lint": "eslint src --ext .js,.ts",
     "lint:fix": "eslint src --ext .js,.ts --fix",
-    "test": "vitest run",
     "clean": "rm -rf dist",
     "build": "rolldown -c"
   },

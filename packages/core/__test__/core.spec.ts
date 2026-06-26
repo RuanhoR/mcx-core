@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import type { TransformPluginContext } from 'rollup';
 import type { ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration } from '@babel/types';
+import * as t from '@babel/types';
 import type { ParsedTagNode, ParsedTagContentNode, ParsedCommentNode } from '../src/types';
 import * as MCX from '../src/index.js';
+import { Lexer } from '../src/ast/prop';
 
 describe('compileJSFn', () => {
   it('should parse imports, calls, and exports', () => {
@@ -232,6 +234,97 @@ describe('UI transform', () => {
       outdirs,
     );
     expect(code).toContain('Click');
+  });
+});
+
+describe('AST - prop parser', () => {
+  it('should parse key=value props separated by newlines', () => {
+    const lexer = new Lexer('a=1\nb=2\nc=hello');
+    const result = Array.from(lexer.tokenize());
+    expect(result).toHaveLength(3);
+    expect(result[0]!.key).toBe('a');
+    expect(result[0]!.value).toBe(1);
+    expect(result[1]!.value).toBe(2);
+    expect(result[2]!.value).toBe('hello');
+  });
+
+  it('should parse JSON array value props', () => {
+    const lexer = new Lexer('data=[1,2,3]');
+    const result = Array.from(lexer.tokenize());
+    expect(result[0]!.value).toEqual([1, 2, 3]);
+  });
+
+  it('should parse JSON object value props', () => {
+    const lexer = new Lexer('obj={"key":"val"}');
+    const result = Array.from(lexer.tokenize());
+    expect(result[0]!.value).toEqual({ key: 'val' });
+  });
+
+  it('should parse single prop without newline', () => {
+    const lexer = new Lexer('a=42');
+    const result = Array.from(lexer.tokenize());
+    expect(result).toHaveLength(1);
+    expect(result[0]!.key).toBe('a');
+    expect(result[0]!.value).toBe(42);
+  });
+});
+
+describe('config constants', () => {
+  it('should have required config values', async () => {
+    const mod = await import('../src/transforms/config');
+    const config = mod.default;
+    expect(config.scriptCompileFn).toBe('__main');
+    expect(config.eventImported).toBe('__mcx__event');
+    expect(config.eventVarName).toBe('__use_event');
+    expect(config.paramCtx).toBe('__mcx__ctx');
+  });
+});
+
+describe('generateFileId', () => {
+  it('should generate unique file IDs', async () => {
+    const { generateFileId } = await import('../src/transforms/file_id');
+    const id1 = generateFileId();
+    const id2 = generateFileId();
+    expect(id1).not.toBe(id2);
+    expect(id1).toMatch(/^__file_import_\d+__$/);
+  });
+});
+
+describe('JsCompileData', () => {
+  it('should create with default values', async () => {
+    const { JsCompileData } = await import('../src/compile-mcx/compiler/compileData');
+    const data = new JsCompileData(t.program([]));
+    expect(data.File).toBe('__repl');
+    expect(data.isFile).toBe(false);
+    expect(data.BuildCache).toBeDefined();
+  });
+
+  it('should set file path', async () => {
+    const { JsCompileData } = await import('../src/compile-mcx/compiler/compileData');
+    const data = new JsCompileData(t.program([]));
+    data.setFilePath('/test.ts');
+    expect(data.isFile).toBe(true);
+    expect(data.File).toBe('/test.ts');
+  });
+});
+
+describe('MCXCompileData', () => {
+  it('should create with constructor args', async () => {
+    const { JsCompileData, MCXCompileData } = await import('../src/compile-mcx/compiler/compileData');
+    const jsir = new JsCompileData(t.program([]));
+    const data = new MCXCompileData([], jsir, { msg: [], Event: { subscribe: {}, isLoad: true, on: 'after' } });
+    expect(data.raw).toEqual([]);
+    expect(data.JSIR).toBe(jsir);
+  });
+
+  it('should set file path on MCXCompileData', async () => {
+    const { JsCompileData, MCXCompileData } = await import('../src/compile-mcx/compiler/compileData');
+    const jsir = new JsCompileData(t.program([]));
+    const data = new MCXCompileData([], jsir, { msg: [], Event: { subscribe: {}, isLoad: true, on: 'after' } });
+    data.setFilePath('/test.mcx');
+    expect(data.isFile).toBe(true);
+    expect(data.File).toBe('/test.mcx');
+    expect(data.JSIR.isFile).toBe(true);
   });
 });
 

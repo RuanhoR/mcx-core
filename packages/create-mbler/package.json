@@ -35,7 +35,6 @@
     "dev": "rolldown -c -w",
     "lint": "eslint src --ext .js,.ts",
     "lint:fix": "eslint src --ext .js,.ts --fix",
-    "test": "vitest run",
     "prepublish": "pnpm build"
   },
   "bin": {

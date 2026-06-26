@@ -19,9 +19,9 @@ export default [
     }
   },
 
-  // Simple TypeScript configuration for production code
+  // Simple TypeScript configuration for production code and tests
   {
-    files: ['packages/**/src/**/*.ts', 'packages/**/tests/**/*.ts'],
+    files: ['packages/**/src/**/*.ts', 'packages/**/__test__/**/*.ts'],
     languageOptions: {
       parser: tsparser,
       ecmaVersion: 'latest',

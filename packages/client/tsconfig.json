@@ -21,5 +21,5 @@
     "skipLibCheck": true,
     "declarationDir": "./dist/types"
   },
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*", "./__test__/**/*"]
 }

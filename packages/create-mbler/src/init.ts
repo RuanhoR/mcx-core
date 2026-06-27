@@ -66,7 +66,7 @@ export async function initProject(inputOpt: InputResult) {
     engines: { node: '>=18.0.0' },
     scripts: {
       dev: 'mbler watch',
-      build: 'mcx-tsc && BUILD_MODULE=release mbler build',
+      build: 'mcx-tsc && cross-env BUILD_MODULE=release mbler build',
       'dev-build': 'mbler build',
     },
     type: 'module',
@@ -74,6 +74,7 @@ export async function initProject(inputOpt: InputResult) {
       '@minecraft/server': mcVersionToGameTest(inputOpt.McVersion),
     },
     devDependencies: {
+      'cross-env': '^7.0.3',
       mbler: 'latest',
     },
   };

@@ -1,12 +1,12 @@
 {
   "name": "@mbler/mcx-core",
-  "version": "0.1.2-rc.7",
+  "version": "0.1.2-rc.8",
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {
     "lint": "eslint src --ext .js,.ts",
     "lint:fix": "eslint src --ext .js,.ts --fix",
-    "clean": "rm -rf dist",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "rolldown -c"
   },
   "keywords": [

@@ -80,6 +80,7 @@ export async function initProject(inputOpt: InputResult) {
   };
   if (isMcx) {
     packageJson.dependencies['@mbler/mcx'] = '0.0.3-alpha.r1';
+    packageJson.dependencies['@mbler/mcx-component'] = '0.0.0-alpha.1';
     packageJson.devDependencies['@mbler/mcx-core'] = 'latest';
   }
   await writeFile(

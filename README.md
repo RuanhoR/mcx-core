@@ -70,6 +70,81 @@ mcx-core/
 └── .github/workflows/     # CI (pnpm install → lint:packages → test)
 ```
 
+## Example MCX
+
+Below is a complete example showcasing all four MCX file types — Component, Event, UI, and App.
+
+### 1. Define an Item Component (`items/custom_sword.mcx`)
+
+```xml
+<Component>
+  <items>
+    <item id="sword.json">sword</item>
+  </items>
+</Component>
+<script lang="ts">
+import { ItemComponent } from "@mbler/mcx-component";
+
+export const sword = new ItemComponent({
+  id: "demo:custom_sword",
+  name: "Custom Sword",
+  components: {
+    "minecraft:damage": 7,
+    "minecraft:max_stack_size": 1,
+    "minecraft:hand_equipped": true,
+  },
+});
+</script>
+```
+
+### 2. Subscribe to a Game Event (`events/player_join.mcx`)
+
+```xml
+<Event @after>
+playerJoin = onPlayerJoin
+</Event>
+<script lang="ts">
+import { world } from "@minecraft/server";
+
+export function onPlayerJoin(event: PlayerJoinAfterEvent) {
+  event.player.sendMessage("Welcome to the server!");
+}
+</script>
+```
+
+### 3. Build a UI Form (`ui/greeting.mcx`)
+
+```xml
+<Ui>
+<form title="Welcome" iconPath="textures/ui/icon_set_1.png">
+  <label>Hello, {{ playerName }}!</label>
+  <button click="handleClose">Close</button>
+</form>
+</Ui>
+<script lang="ts">
+export const prop = ["playerName"];
+
+export function handleClose() {
+  // close the form
+}
+</script>
+```
+
+### 4. Wire Everything Together in an App (`app.mcx`)
+
+```xml
+<script lang="ts">
+import sword from "./items/custom_sword.mcx";
+import "./events/player_join.mcx";
+import { createApp } from "@mbler/mcx";
+import { world } from "@minecraft/server";
+
+createApp({}).mount(world);
+</script>
+```
+
+Each `.mcx` file is compiled into MCBE-compatible JSON and TypeScript/JavaScript by the MCX compiler pipeline.
+
 ## Quick Start
 
 ### Create a new project

@@ -1,4 +1,3 @@
-import type { ParserOptions } from '@babel/parser';
 import type {
   ImportDeclaration,
   ExportAllDeclaration,

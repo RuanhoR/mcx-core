@@ -15,9 +15,12 @@ export default class Utils {
     if (typeof file !== 'string')
       throw new Error('[read file]: not found file ' + fileDir);
     try {
-      return Parser.parse(file).program;
+      return Parser.parse(file, parserOpt).program;
     } catch (err: unknown) {
-      throw new Error('[compiler]: babel error' + (err instanceof Error ? err.stack : String(err)));
+      throw new Error(
+        '[compiler]: babel error' +
+          (err instanceof Error ? err.stack : String(err)),
+      );
     }
   }
   public static async FileContent(fileDir: string): Promise<string> {

@@ -12,7 +12,7 @@ import { parse } from '@babel/parser';
 import { ParsedTagContentNode, ParsedTagNode } from '../../types';
 import McxAst, { MCXUtils } from '../../ast/tag';
 import PropParser from '../../ast/prop';
-import * as ts from 'typescript';
+import ts from 'typescript';
 export class CompileError extends Error {
   public loc: { line: number; column: number };
   constructor(message: string, loc: { line: number; column: number }) {
@@ -41,7 +41,10 @@ function extractLoc(node: unknown): { line: number; column: number } {
   // MCX Token with unified position: start: { line, column }
   const start = n.start as Record<string, unknown> | undefined;
   if (start && typeof start.line === 'number') {
-    return { line: start.line, column: typeof start.column === 'number' ? (start.column as number) : -1 };
+    return {
+      line: start.line,
+      column: typeof start.column === 'number' ? (start.column as number) : -1,
+    };
   }
   return { line: -1, column: -1 };
 }
@@ -306,7 +309,9 @@ class CompileMCX {
   private checkComponentName(
     name: string,
   ): name is MCXstructureLocComponentType {
-    return (Object.values(_MCXstructureLocComponentTypes) as string[]).includes(name);
+    return (Object.values(_MCXstructureLocComponentTypes) as string[]).includes(
+      name,
+    );
   }
   private checkComponentParentName(
     name: string,

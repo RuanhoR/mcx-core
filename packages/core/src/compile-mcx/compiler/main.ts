@@ -1,16 +1,16 @@
 import type { Plugin, TransformResult } from 'rollup';
 import type { Plugin as RolldownPlugin } from 'rolldown';
 import { CompileOpt } from '../types';
-import { extname, isAbsolute, join } from 'node:path';
+import { extname } from 'node:path';
 import { CompileError, compileMCXFn } from '.';
 import { transform } from '../../transforms';
 import type { MCXCompileData } from './compileData';
-import { readFile, rm } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import MagicString from 'magic-string';
 import * as path from 'node:path';
 import { createRequire } from 'node:module';
 import { transformCtx } from '../../types';
-import * as ts from 'typescript';
+import ts from 'typescript';
 import { readFileSync } from 'node:fs';
 import {
   generateItemTextureJson,
@@ -115,7 +115,8 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
             }
             return path.join(
               pkgDir,
-              (targetObj.default as string) || (Object.values(targetObj)[0] as string),
+              (targetObj.default as string) ||
+                (Object.values(targetObj)[0] as string),
             );
           }
         }

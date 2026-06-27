@@ -1,4 +1,9 @@
-import type { ParticleType, SoundEvent, EnchantableSlot, Rarity, ItemComponentOptions, FoodEffect, EntityComponentOptions } from '@mbler/mcx-component';
+import type {
+  Rarity,
+  ItemComponentOptions,
+  FoodEffect,
+  EntityComponentOptions,
+} from '@mbler/mcx-component';
 
 export interface FilePoint {
   base: 'behavior' | 'resources' | 'root';
@@ -70,5 +75,14 @@ export interface BaseJson {
   };
 }
 
-export type { Rarity, ItemComponentOptions, FoodEffect, EntityComponentOptions };
-export type { ParticleType, SoundEvent, EnchantableSlot } from '@mbler/mcx-component';
+export type {
+  Rarity,
+  ItemComponentOptions,
+  FoodEffect,
+  EntityComponentOptions,
+};
+export type {
+  ParticleType,
+  SoundEvent,
+  EnchantableSlot,
+} from '@mbler/mcx-component';

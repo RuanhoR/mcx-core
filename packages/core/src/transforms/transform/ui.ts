@@ -1,5 +1,4 @@
-import { MCXstructureLoc } from '../../compile-mcx/types';
-import { ContentToken, ParsedTagNode, transformParseCtx } from '../../types';
+import { ParsedTagNode, transformParseCtx } from '../../types';
 import * as t from '@babel/types';
 import config from '../config';
 export async function Comp(ctx: transformParseCtx) {

@@ -55,7 +55,7 @@ export class ui implements typesPkg.ui {
   private _UI: MCXUIOpt['use'];
   private _prop: string[];
   private _layout: ParsedUIOption['layout'];
-  private _uiType: 'modal' | 'action' | 'message';
+  private _uiType!: 'modal' | 'action' | 'message';
   constructor(UIConfig: MCXUIOpt, mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, unknown> }) => Record<string, unknown>) {
     this._mcxSrcFn = mcxSrcFn;
     this._srcResult = mcxSrcFn({ $prop: {} });
@@ -71,19 +71,6 @@ export class ui implements typesPkg.ui {
     }
     this._mcUI = UIConfig.UI;
 
-    const tempUI = new this._UI();
-    if (tempUI instanceof this._mcUI.ModalFormData) {
-      this._uiType = 'modal';
-    } else if (tempUI instanceof this._mcUI.ActionFormData) {
-      this._uiType = 'action';
-    } else if (tempUI instanceof this._mcUI.MessageFormData) {
-      this._uiType = 'message';
-    } else {
-      throw new Error(
-        '[mcx runtime]: Invalid UI type, must be ModalFormData, ActionFormData or MessageFormData',
-      );
-    }
-
     this._layout = UIConfig.layout.map(
       (i): ParsedUIOption['layout'][number] => {
         if (i.type == 'button' && i.params.click && typeof i.params.click === 'string') {
@@ -95,6 +82,21 @@ export class ui implements typesPkg.ui {
   }
   private _generateUI(layout: ResolvedLayoutItem[]) {
     const ui = new this._UI();
+
+    if (!this._uiType) {
+      if (ui instanceof this._mcUI.ModalFormData) {
+        this._uiType = 'modal';
+      } else if (ui instanceof this._mcUI.ActionFormData) {
+        this._uiType = 'action';
+      } else if (ui instanceof this._mcUI.MessageFormData) {
+        this._uiType = 'message';
+      } else {
+        throw new Error(
+          '[mcx runtime]: Invalid UI type, must be ModalFormData, ActionFormData or MessageFormData',
+        );
+      }
+    }
+
     let MsgFormUse = 0;
     const clickEvent: Map<number, (value: ModalFormResponse | MessageFormData | ActionFormResponse) => void> = new Map();
 

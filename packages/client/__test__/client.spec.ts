@@ -333,35 +333,33 @@ describe('ui', () => {
     expect(instance).toBeDefined();
   });
 
-  it('should throw for invalid UI type', () => {
+  it('should throw for invalid UI type', async () => {
     class FakeUI {}
-    expect(
-      () =>
-        new ui(
+    const instance = new ui(
+      {
+        use: FakeUI as unknown as typeof serverUI.ModalFormData,
+        UI: serverUI,
+        layout: [
           {
-            use: FakeUI as unknown as typeof serverUI.ModalFormData,
-            UI: serverUI,
-            layout: [
-              {
-                type: 'title',
-                content: 'X',
-                params: {} as unknown as {
-                  [key in
-                    | 'click'
-                    | 'default'
-                    | 'option'
-                    | 'min'
-                    | 'max'
-                    | 'placeholderText'
-                    | 'tip'
-                    | 'img']: string | { useProp: string };
-                },
-              },
-            ],
+            type: 'title',
+            content: 'X',
+            params: {} as unknown as {
+              [key in
+                | 'click'
+                | 'default'
+                | 'option'
+                | 'min'
+                | 'max'
+                | 'placeholderText'
+                | 'tip'
+                | 'img']: string | { useProp: string };
+            },
           },
-          () => ({ prop: [] }),
-        ),
-    ).toThrow('Invalid UI type');
+        ],
+      },
+      () => ({ prop: [] }),
+    );
+    await expect(instance.show({} as Player, {})).rejects.toThrow('Invalid UI type');
   });
 
   it('should accept string click for button as srcResult key', () => {

@@ -134,6 +134,7 @@ export class ui implements typesPkg.ui {
     }
 
     let MsgFormUse = 0;
+    let ActionBtnUse = 0;
     const clickEvent: Map<
       number,
       (
@@ -192,7 +193,8 @@ export class ui implements typesPkg.ui {
             String(i.content),
             (i.params.img as string | undefined) || void 0,
           );
-          if (i.params.click) clickEvent.set(parseInt(iIndex), i.params.click);
+          if (i.params.click) clickEvent.set(ActionBtnUse, i.params.click);
+          ActionBtnUse++;
         } else if (i.type == 'body') {
           actionUi.label(String(i.content));
         } else if (i.type == 'divider') {

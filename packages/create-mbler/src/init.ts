@@ -41,7 +41,43 @@ function mcVersionToGameTest(mcVersion: string): string {
   };
   return map[mcVersion] || '2.0.0';
 }
-
+/**
+ * 从npm registry获取指定包的最新版本
+ * @param pkgName - 包名称
+ * @param registry - npm registry地址，默认为官方源
+ * @returns 返回最新版本号
+ * @throws 当请求失败或包不存在时抛出错误
+ */
+async function getLatestPackageVersion(
+  pkgName: string,
+  registry: string = 'https://registry.npmjs.com',
+): Promise<string> {
+  try {
+    const url = `${registry}/${pkgName}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(`Package "${pkgName}" not found`);
+      }
+      throw new Error(`Failed to fetch package info: ${response.statusText}`);
+    }
+    const data = (await response.json()) as {
+      'dist-tags': { latest?: string };
+    };
+    const latestVersion = data['dist-tags']?.latest;
+    if (!latestVersion) {
+      throw new Error(`No version information found for package "${pkgName}"`);
+    }
+    return latestVersion;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(
+        `Failed to get latest version for "${pkgName}": ${error.message}`,
+      );
+    }
+    throw error;
+  }
+}
 export async function initProject(inputOpt: InputResult) {
   const dir = path.resolve(inputOpt.createAt);
   const isMcx = inputOpt.Language === 'mcx';
@@ -75,13 +111,18 @@ export async function initProject(inputOpt: InputResult) {
     },
     devDependencies: {
       'cross-env': '^7.0.3',
-      mbler: 'latest',
+      mbler: '^' + (await getLatestPackageVersion('mbler')),
+      '@mbler/mcx-types':
+        '^' + (await getLatestPackageVersion('@mbler/mcx-types')),
     },
   };
   if (isMcx) {
-    packageJson.dependencies['@mbler/mcx'] = '0.0.3-alpha.r1';
-    packageJson.dependencies['@mbler/mcx-component'] = '0.0.0-alpha.1';
-    packageJson.devDependencies['@mbler/mcx-core'] = 'latest';
+    packageJson.dependencies['@mbler/mcx'] =
+      await getLatestPackageVersion('@mbler/mcx');
+    packageJson.dependencies['@mbler/mcx-component'] =
+      await getLatestPackageVersion('@mbler/mcx-component');
+    packageJson.devDependencies['@mbler/mcx-core'] =
+      await getLatestPackageVersion('@mbler/mcx-core');
   }
   await writeFile(
     path.join(dir, 'package.json'),
@@ -89,14 +130,27 @@ export async function initProject(inputOpt: InputResult) {
   );
   const ui = inputOpt.OtherModule.includes('ui');
   const beta = inputOpt.OtherModule.includes('beta-api');
-  const mblerConfig = `import { defineConfig } from "mbler"
+  const mblerConfig = `// @ts-check
+import { defineConfig } from "mbler"
 export default defineConfig({
   description: '${inputOpt.Description}',
   mcVersion: '${inputOpt.McVersion}',
-  minify: false,
-  script: { main: 'index.ts', ui: ${ui}, lang: '${inputOpt.Language}', UseBeta: ${beta} },
-  build: { bundle: true, cache: "file" },
-  outdir: { resources: './dist/res', behavior: './dist/dep', dist: './dist.mcaddon' }
+  minify: 'oxc',
+  script: {
+    main: 'index.ts',
+    ui: ${ui},
+    lang: '${inputOpt.Language}',
+    UseBeta: ${beta}
+  },
+  build: {
+    bundle: true,
+    cache: "file"
+  },
+  outdir: {
+    resources: './dist/res',
+    behavior: './dist/dep',
+    dist: './dist.mcaddon'
+  }
 });\n`;
   await writeFile(path.join(dir, 'mbler.config.js'), mblerConfig);
   if (inputOpt.Language !== 'js') {

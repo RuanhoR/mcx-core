@@ -32,7 +32,7 @@ export interface MCXUIOpt {
       | {
           useProp: string;
         };
-    for?: {
+    for?: string | {
       variable: string;
       useProp: string;
     };

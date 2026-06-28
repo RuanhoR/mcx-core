@@ -62,9 +62,7 @@ class ItemComponent {
         };
       }
       if (typeof components.icon == 'string' && components.icon.trim()) {
-        ApplyComponents['minecraft:icon'] = {
-          textures: components.icon.trim(),
-        };
+        ApplyComponents['minecraft:icon'] = components.icon;
       } else if (
         typeof components.icon == 'object' &&
         components.icon &&
@@ -307,7 +305,7 @@ class ItemComponent {
         if (Array.isArray(components.digger.destroy_speeds)) {
           diggerConfig.destroy_speeds = [];
           for (const speedEntry of components.digger.destroy_speeds) {
-                const entry: Record<string, unknown> = {};
+            const entry: Record<string, unknown> = {};
 
             if (speedEntry.block) {
               entry.block = speedEntry.block;
@@ -325,7 +323,7 @@ class ItemComponent {
               );
             }
 
-            diggerConfig.destroy_speeds.push(entry);
+            (diggerConfig.destroy_speeds as Array<Record<string, unknown>>).push(entry);
           }
         }
 
@@ -440,7 +438,7 @@ class ItemComponent {
           durabilitySensorConfig.durability_thresholds = [];
           for (const threshold of components.durability_sensor
             .durability_thresholds) {
-                const thresholdConfig: Record<string, unknown> = {};
+            const thresholdConfig: Record<string, unknown> = {};
 
             if (typeof threshold.durability === 'number') {
               thresholdConfig.durability = threshold.durability;
@@ -476,7 +474,7 @@ class ItemComponent {
               thresholdConfig.sound_event = threshold.sound_event;
             }
 
-            durabilitySensorConfig.durability_thresholds.push(thresholdConfig);
+            (durabilitySensorConfig.durability_thresholds as Array<Record<string, unknown>>).push(thresholdConfig);
           }
         }
 
@@ -608,7 +606,7 @@ class ItemComponent {
       }
 
       // Helper function to validate food effects array
-      const validateFoodEffects = (effects?: Record<string, unknown>[]) => {
+      const validateFoodEffects = (effects?: t.FoodEffect[]) => {
         if (effects && Array.isArray(effects)) {
           const validEffects = [
             'regeneration',
@@ -841,12 +839,12 @@ class ItemComponent {
             entityPlacerFinal.dispense_on = [];
             for (const dispenseOnItem of entityPlacerConfig.dispense_on) {
               if (typeof dispenseOnItem === 'string') {
-                entityPlacerFinal.dispense_on.push(dispenseOnItem);
+                (entityPlacerFinal.dispense_on as Array<string | Record<string, unknown>>).push(dispenseOnItem);
               } else if (
                 typeof dispenseOnItem === 'object' &&
                 dispenseOnItem !== null
               ) {
-                        const dispenseOnObj: Record<string, unknown> = {};
+                const dispenseOnObj: Record<string, unknown> = {};
 
                 if (typeof dispenseOnItem.name === 'string') {
                   dispenseOnObj.name = dispenseOnItem.name;
@@ -867,7 +865,7 @@ class ItemComponent {
                   dispenseOnObj.tags = dispenseOnItem.tags;
                 }
 
-                entityPlacerFinal.dispense_on.push(dispenseOnObj);
+                (entityPlacerFinal.dispense_on as Array<string | Record<string, unknown>>).push(dispenseOnObj);
               } else {
                 throw new Error(
                   '[compile component]: entity_placer: dispense_on items must be strings or objects',
@@ -892,9 +890,9 @@ class ItemComponent {
             entityPlacerFinal.use_on = [];
             for (const useOnItem of entityPlacerConfig.use_on) {
               if (typeof useOnItem === 'string') {
-                entityPlacerFinal.use_on.push(useOnItem);
+                (entityPlacerFinal.use_on as Array<string | Record<string, unknown>>).push(useOnItem);
               } else if (typeof useOnItem === 'object' && useOnItem !== null) {
-                        const useOnObj: Record<string, unknown> = {};
+                const useOnObj: Record<string, unknown> = {};
 
                 if (typeof useOnItem.name === 'string') {
                   useOnObj.name = useOnItem.name;
@@ -912,7 +910,7 @@ class ItemComponent {
                   useOnObj.tags = useOnItem.tags;
                 }
 
-                entityPlacerFinal.use_on.push(useOnObj);
+                (entityPlacerFinal.use_on as Array<string | Record<string, unknown>>).push(useOnObj);
               } else {
                 throw new Error(
                   '[compile component]: entity_placer: use_on items must be strings or objects',
@@ -1369,32 +1367,35 @@ class ItemComponent {
         (components as Record<string, unknown>)['minecraft:piercing_weapon'] ||
         (components as Record<string, unknown>).piercing_weapon;
       if (piercingWeaponConfig !== undefined) {
-        if (typeof piercingWeaponConfig === 'object') {
+        if (typeof piercingWeaponConfig === 'object' && piercingWeaponConfig !== null) {
+          const cfg = piercingWeaponConfig as Record<string, unknown>;
           const piercingWeaponFinal: Record<string, unknown> = {};
 
-          if (piercingWeaponConfig.creative_reach !== undefined) {
+          if (cfg.creative_reach !== undefined) {
             const creativeReachFinal: Record<string, unknown> = {};
-            if (typeof piercingWeaponConfig.creative_reach?.max === 'number') {
-              creativeReachFinal.max = piercingWeaponConfig.creative_reach.max;
+            const creativeReachCfg = cfg.creative_reach as Record<string, unknown>;
+            if (typeof creativeReachCfg.max === 'number') {
+              creativeReachFinal.max = creativeReachCfg.max;
             }
-            if (typeof piercingWeaponConfig.creative_reach?.min === 'number') {
-              creativeReachFinal.min = piercingWeaponConfig.creative_reach.min;
+            if (typeof creativeReachCfg.min === 'number') {
+              creativeReachFinal.min = creativeReachCfg.min;
             }
             piercingWeaponFinal.creative_reach = creativeReachFinal;
           }
 
-          if (typeof piercingWeaponConfig.hitbox_margin === 'number') {
+          if (typeof cfg.hitbox_margin === 'number') {
             piercingWeaponFinal.hitbox_margin =
-              piercingWeaponConfig.hitbox_margin;
+              cfg.hitbox_margin;
           }
 
-          if (piercingWeaponConfig.reach !== undefined) {
+          if (cfg.reach !== undefined) {
             const reachFinal: Record<string, unknown> = {};
-            if (typeof piercingWeaponConfig.reach?.max === 'number') {
-              reachFinal.max = piercingWeaponConfig.reach.max;
+            const reachCfg = cfg.reach as Record<string, unknown>;
+            if (typeof reachCfg.max === 'number') {
+              reachFinal.max = reachCfg.max;
             }
-            if (typeof piercingWeaponConfig.reach?.min === 'number') {
-              reachFinal.min = piercingWeaponConfig.reach.min;
+            if (typeof reachCfg.min === 'number') {
+              reachFinal.min = reachCfg.min;
             }
             piercingWeaponFinal.reach = reachFinal;
           }
@@ -1412,29 +1413,30 @@ class ItemComponent {
         (components as Record<string, unknown>)['minecraft:projectile'] ||
         (components as Record<string, unknown>).projectile;
       if (projectileConfig !== undefined) {
-        if (typeof projectileConfig === 'object') {
+        if (typeof projectileConfig === 'object' && projectileConfig !== null) {
+          const cfg = projectileConfig as Record<string, unknown>;
           const projectileFinal: Record<string, unknown> = {};
 
-          if (typeof projectileConfig.minimum_critical_power === 'number') {
-            if (projectileConfig.minimum_critical_power < 0) {
+          if (typeof cfg.minimum_critical_power === 'number') {
+            if (cfg.minimum_critical_power < 0) {
               throw new Error(
                 '[compile component]: projectile: minimum_critical_power must be >= 0',
               );
             }
             projectileFinal.minimum_critical_power =
-              projectileConfig.minimum_critical_power;
+              cfg.minimum_critical_power;
           }
 
-          if (typeof projectileConfig.projectile_entity === 'string') {
+          if (typeof cfg.projectile_entity === 'string') {
             const entityPattern =
               /^(?:\w+(?:\.\w+):(?=\w))?(?:\w+(?:\.\w+))(?:<((?:\w+(?:\.\w+):(?=\w))?\w+(?:\.\w+))*>)?$/;
-            if (!entityPattern.test(projectileConfig.projectile_entity)) {
+            if (!entityPattern.test(cfg.projectile_entity)) {
               throw new Error(
                 '[compile component]: projectile: projectile_entity must match pattern ^(?:\\w+(?:\\.\\w+):(?=\\w))?(?:\\w+(?:\\.\\w+))(?:<((?:\\w+(?:\\.\\w+):(?=\\w))?\\w+(?:\\.\\w+))*>)?$',
               );
             }
             projectileFinal.projectile_entity =
-              projectileConfig.projectile_entity;
+              cfg.projectile_entity;
           } else {
             throw new Error(
               '[compile component]: projectile: projectile_entity is required and must be a string',
@@ -1449,32 +1451,33 @@ class ItemComponent {
 
       // Handle record component (both 'minecraft:record' and 'record' aliases)
       const recordConfig =
-        (components as Record<string, unknown>)['minecraft:record'] || (components as Record<string, unknown>).record;
+        (components as Record<string, unknown>)['minecraft:record'] ||
+        (components as Record<string, unknown>).record;
       if (recordConfig !== undefined) {
-        if (typeof recordConfig === 'object') {
+        if (typeof recordConfig === 'object' && recordConfig !== null) {
+          const cfg = recordConfig as Record<string, unknown>;
           const recordFinal: Record<string, unknown> = {};
 
-          if (typeof recordConfig.comparator_signal === 'number') {
-            if (recordConfig.comparator_signal < 0) {
+          if (typeof cfg.comparator_signal === 'number') {
+            if (cfg.comparator_signal < 0) {
               throw new Error(
                 '[compile component]: record: comparator_signal must be >= 0',
               );
             }
-            recordFinal.comparator_signal = recordConfig.comparator_signal;
+            recordFinal.comparator_signal = cfg.comparator_signal;
           }
 
-          if (typeof recordConfig.duration === 'number') {
-            if (recordConfig.duration <= 0) {
+          if (typeof cfg.duration === 'number') {
+            if (cfg.duration <= 0) {
               throw new Error(
                 '[compile component]: record: duration must be > 0',
               );
             }
-            recordFinal.duration = recordConfig.duration;
+            recordFinal.duration = cfg.duration;
           }
 
-          if (typeof recordConfig.sound_event === 'string') {
-            // SoundEvent should already be validated through the type system
-            recordFinal.sound_event = recordConfig.sound_event;
+          if (typeof cfg.sound_event === 'string') {
+            recordFinal.sound_event = cfg.sound_event;
           } else {
             throw new Error(
               '[compile component]: record: sound_event is required and must be a string',
@@ -1489,24 +1492,26 @@ class ItemComponent {
 
       // Handle rarity component (both 'minecraft:rarity' and 'rarity' aliases)
       const rarityConfig =
-        (components as Record<string, unknown>)['minecraft:rarity'] || (components as Record<string, unknown>).rarity;
+        (components as Record<string, unknown>)['minecraft:rarity'] ||
+        (components as Record<string, unknown>).rarity;
       if (rarityConfig !== undefined) {
-        if (typeof rarityConfig === 'object') {
+        if (typeof rarityConfig === 'object' && rarityConfig !== null) {
+          const cfg = rarityConfig as Record<string, unknown>;
           const rarityFinal: Record<string, unknown> = {};
 
-          if (typeof rarityConfig.value === 'string') {
+          if (typeof cfg.value === 'string') {
             const validRarities = [
               'common',
               'uncommon',
               'rare',
               'epic',
             ] as const;
-            if (!validRarities.includes(rarityConfig.value as never)) {
+            if (!validRarities.includes(cfg.value as never)) {
               throw new Error(
                 '[compile component]: rarity: value must be one of: common, uncommon, rare, epic',
               );
             }
-            rarityFinal.value = rarityConfig.value;
+            rarityFinal.value = cfg.value;
           } else {
             throw new Error(
               '[compile component]: rarity: value is required and must be a string',
@@ -1540,19 +1545,20 @@ class ItemComponent {
         (components as Record<string, unknown>)['minecraft:repairable'] ||
         (components as Record<string, unknown>).repairable;
       if (repairableConfig !== undefined) {
-        if (typeof repairableConfig === 'object') {
+        if (typeof repairableConfig === 'object' && repairableConfig !== null) {
+          const cfg = repairableConfig as Record<string, unknown>;
           const repairableFinal: Record<string, unknown> = {};
 
           // Handle on_repaired event
-          if (repairableConfig.on_repaired !== undefined) {
-            if (typeof repairableConfig.on_repaired === 'string') {
+          if (cfg.on_repaired !== undefined) {
+            if (typeof cfg.on_repaired === 'string') {
               const eventRegex = /^[a-zA-Z_]\w*(?::[a-zA-Z_]\w*)?$/;
-              if (!eventRegex.test(repairableConfig.on_repaired)) {
+              if (!eventRegex.test(cfg.on_repaired)) {
                 throw new Error(
                   '[compile component]: repairable: on_repaired must be a valid event identifier pattern',
                 );
               }
-              repairableFinal.on_repaired = repairableConfig.on_repaired;
+              repairableFinal.on_repaired = cfg.on_repaired;
             } else {
               throw new Error(
                 '[compile component]: repairable: on_repaired must be a string',
@@ -1561,14 +1567,14 @@ class ItemComponent {
           }
 
           // Handle repair_items array
-          if (repairableConfig.repair_items !== undefined) {
-            if (Array.isArray(repairableConfig.repair_items)) {
+          if (cfg.repair_items !== undefined) {
+            if (Array.isArray(cfg.repair_items)) {
               const repairItemsFinal: Record<string, unknown>[] = [];
 
-              for (const repairItem of repairableConfig.repair_items) {
+              for (const repairItem of cfg.repair_items) {
                 if (typeof repairItem === 'string') {
                   // Simple string format - just add as is
-                  repairItemsFinal.push(repairItem);
+                  (repairItemsFinal as (string | Record<string, unknown>)[]).push(repairItem);
                 } else if (
                   typeof repairItem === 'object' &&
                   repairItem !== null
@@ -1637,9 +1643,11 @@ class ItemComponent {
 
       // Handle seed component (both 'minecraft:seed' and 'seed' aliases)
       const seedConfig =
-        (components as Record<string, unknown>)['minecraft:seed'] || (components as Record<string, unknown>).seed;
+        (components as Record<string, unknown>)['minecraft:seed'] ||
+        (components as Record<string, unknown>).seed;
       if (seedConfig !== undefined) {
-        if (typeof seedConfig === 'object') {
+        if (typeof seedConfig === 'object' && seedConfig !== null) {
+          const cfg = seedConfig as Record<string, unknown>;
           const seedFinal: Record<string, unknown> = {};
 
           // Validate format version for seed component (requires 1.10.0+)
@@ -1659,15 +1667,15 @@ class ItemComponent {
           }
 
           // Handle crop_result (required)
-          if (seedConfig.crop_result !== undefined) {
-            if (typeof seedConfig.crop_result === 'string') {
+          if (cfg.crop_result !== undefined) {
+            if (typeof cfg.crop_result === 'string') {
               const blockRegex = /^\w+(?::\w+)*$/;
-              if (!blockRegex.test(seedConfig.crop_result)) {
+              if (!blockRegex.test(cfg.crop_result)) {
                 throw new Error(
                   '[compile component]: seed: crop_result must be a valid block identifier',
                 );
               }
-              seedFinal.crop_result = seedConfig.crop_result;
+              seedFinal.crop_result = cfg.crop_result;
             } else {
               throw new Error(
                 '[compile component]: seed: crop_result is required and must be a string',
@@ -1680,9 +1688,9 @@ class ItemComponent {
           }
 
           // Handle plant_at array
-          if (seedConfig.plant_at !== undefined) {
-            if (Array.isArray(seedConfig.plant_at)) {
-              const plantAtValid = seedConfig.plant_at.every(
+          if (cfg.plant_at !== undefined) {
+            if (Array.isArray(cfg.plant_at)) {
+              const plantAtValid = cfg.plant_at.every(
                 (block: unknown) => {
                   if (typeof block !== 'string') return false;
                   const blockRegex = /^\w+(?::\w+)*$/;
@@ -1696,7 +1704,7 @@ class ItemComponent {
                 );
               }
 
-              seedFinal.plant_at = [...seedConfig.plant_at];
+              seedFinal.plant_at = [...cfg.plant_at];
             } else {
               throw new Error(
                 '[compile component]: seed: plant_at must be an array of strings',
@@ -1705,8 +1713,8 @@ class ItemComponent {
           }
 
           // Handle deprecated properties (with warnings based on format version)
-          if (seedConfig.plant_at_any_solid_surface !== undefined) {
-            if (typeof seedConfig.plant_at_any_solid_surface === 'boolean') {
+          if (cfg.plant_at_any_solid_surface !== undefined) {
+            if (typeof cfg.plant_at_any_solid_surface === 'boolean') {
               // Check if format version supports this deprecated property
               if (formatVersion >= 1.19) {
                 throw new Error(
@@ -1714,7 +1722,7 @@ class ItemComponent {
                 );
               }
               seedFinal.plant_at_any_solid_surface =
-                seedConfig.plant_at_any_solid_surface;
+                cfg.plant_at_any_solid_surface;
             } else {
               throw new Error(
                 '[compile component]: seed: plant_at_any_solid_surface must be a boolean',
@@ -1722,10 +1730,10 @@ class ItemComponent {
             }
           }
 
-          if (seedConfig.plant_at_face !== undefined) {
-            if (typeof seedConfig.plant_at_face === 'string') {
+          if (cfg.plant_at_face !== undefined) {
+            if (typeof cfg.plant_at_face === 'string') {
               const validFaces = ['UP', 'DOWN'] as const;
-              if (!validFaces.includes(seedConfig.plant_at_face as never)) {
+              if (!validFaces.includes(cfg.plant_at_face as never)) {
                 throw new Error(
                   "[compile component]: seed: plant_at_face must be either 'UP' or 'DOWN'",
                 );
@@ -1736,7 +1744,7 @@ class ItemComponent {
                   '[compile component]: seed: plant_at_face is deprecated and no longer works after format versions of at least 1.19.0',
                 );
               }
-              seedFinal.plant_at_face = seedConfig.plant_at_face;
+              seedFinal.plant_at_face = cfg.plant_at_face;
             } else {
               throw new Error(
                 '[compile component]: seed: plant_at_face must be a string',
@@ -1755,14 +1763,14 @@ class ItemComponent {
         (components as Record<string, unknown>)['minecraft:stacked_by_data'] ||
         (components as Record<string, unknown>).stacked_by_data;
       if (stackedByDataConfig !== undefined) {
-        if (typeof stackedByDataConfig === 'object') {
+        if (typeof stackedByDataConfig === 'object' && stackedByDataConfig !== null) {
+          const cfg = stackedByDataConfig as Record<string, unknown>;
           const stackedByDataFinal: Record<string, unknown> = {};
 
-          // Handle value (optional, defaults to true)
-          if (stackedByDataConfig.value === undefined) {
+          if (cfg.value === undefined) {
             stackedByDataFinal.value = true;
-          } else if (typeof stackedByDataConfig.value === 'boolean') {
-            stackedByDataFinal.value = stackedByDataConfig.value;
+          } else if (typeof cfg.value === 'boolean') {
+            stackedByDataFinal.value = cfg.value;
           } else {
             throw new Error(
               '[compile component]: stacked_by_data: value must be a boolean if provided',
@@ -1782,14 +1790,14 @@ class ItemComponent {
         (components as Record<string, unknown>)['minecraft:should_despawn'] ||
         (components as Record<string, unknown>).should_despawn;
       if (shouldDespawnConfig !== undefined) {
-        if (typeof shouldDespawnConfig === 'object') {
+        if (typeof shouldDespawnConfig === 'object' && shouldDespawnConfig !== null) {
+          const cfg = shouldDespawnConfig as Record<string, unknown>;
           const shouldDespawnFinal: Record<string, unknown> = {};
 
-          // Handle value (optional, defaults to true)
-          if (shouldDespawnConfig.value === undefined) {
+          if (cfg.value === undefined) {
             shouldDespawnFinal.value = true;
-          } else if (typeof shouldDespawnConfig.value === 'boolean') {
-            shouldDespawnFinal.value = shouldDespawnConfig.value;
+          } else if (typeof cfg.value === 'boolean') {
+            shouldDespawnFinal.value = cfg.value;
           } else {
             throw new Error(
               '[compile component]: should_despawn: value must be a boolean if provided',
@@ -1806,9 +1814,11 @@ class ItemComponent {
 
       // Handle shooter component (both 'minecraft:shooter' and 'shooter' aliases)
       const shooterConfig =
-        (components as Record<string, unknown>)['minecraft:shooter'] || (components as Record<string, unknown>).shooter;
+        (components as Record<string, unknown>)['minecraft:shooter'] ||
+        (components as Record<string, unknown>).shooter;
       if (shooterConfig !== undefined) {
-        if (typeof shooterConfig === 'object') {
+        if (typeof shooterConfig === 'object' && shooterConfig !== null) {
+          const cfg = shooterConfig as Record<string, unknown>;
           const shooterFinal: Record<string, unknown> = {};
 
           // Validate format version for shooter component
@@ -1828,16 +1838,16 @@ class ItemComponent {
           }
 
           // Handle ammunition (required)
-          if (shooterConfig.ammunition === undefined) {
+          if (cfg.ammunition === undefined) {
             throw new Error(
               '[compile component]: shooter: ammunition is required',
             );
           }
 
-          if (Array.isArray(shooterConfig.ammunition)) {
+          if (Array.isArray(cfg.ammunition)) {
             const ammunitionFinal: Record<string, unknown>[] = [];
 
-            for (const ammunitionItem of shooterConfig.ammunition) {
+            for (const ammunitionItem of cfg.ammunition) {
               if (typeof ammunitionItem === 'string') {
                 // Simple string format - just add as is
                 const itemRegex = /^[a-zA-Z_]\w*(?::[a-zA-Z_]\w*)?$/;
@@ -1846,7 +1856,7 @@ class ItemComponent {
                     '[compile component]: shooter: ammunition entries must be valid item identifiers when using string format',
                   );
                 }
-                ammunitionFinal.push(ammunitionItem);
+            (ammunitionFinal as (string | Record<string, unknown>)[]).push(ammunitionItem);
               } else if (
                 typeof ammunitionItem === 'object' &&
                 ammunitionItem !== null
@@ -1927,9 +1937,9 @@ class ItemComponent {
           }
 
           // Handle charge_on_draw (optional)
-          if (shooterConfig.charge_on_draw !== undefined) {
-            if (typeof shooterConfig.charge_on_draw === 'boolean') {
-              shooterFinal.charge_on_draw = shooterConfig.charge_on_draw;
+          if (cfg.charge_on_draw !== undefined) {
+            if (typeof cfg.charge_on_draw === 'boolean') {
+              shooterFinal.charge_on_draw = cfg.charge_on_draw;
             } else {
               throw new Error(
                 '[compile component]: shooter: charge_on_draw must be a boolean',
@@ -1938,12 +1948,12 @@ class ItemComponent {
           }
 
           // Handle max_draw_duration (optional)
-          if (shooterConfig.max_draw_duration !== undefined) {
+          if (cfg.max_draw_duration !== undefined) {
             if (
-              typeof shooterConfig.max_draw_duration === 'number' &&
-              shooterConfig.max_draw_duration >= 0
+              typeof cfg.max_draw_duration === 'number' &&
+              cfg.max_draw_duration >= 0
             ) {
-              shooterFinal.max_draw_duration = shooterConfig.max_draw_duration;
+              shooterFinal.max_draw_duration = cfg.max_draw_duration;
             } else {
               throw new Error(
                 '[compile component]: shooter: max_draw_duration must be a non-negative number',
@@ -1952,9 +1962,9 @@ class ItemComponent {
           }
 
           // Handle auto_charge (optional)
-          if (shooterConfig.auto_charge !== undefined) {
-            if (typeof shooterConfig.auto_charge === 'boolean') {
-              shooterFinal.auto_charge = shooterConfig.auto_charge;
+          if (cfg.auto_charge !== undefined) {
+            if (typeof cfg.auto_charge === 'boolean') {
+              shooterFinal.auto_charge = cfg.auto_charge;
             } else {
               throw new Error(
                 '[compile component]: shooter: auto_charge must be a boolean',
@@ -1963,12 +1973,12 @@ class ItemComponent {
           }
 
           // Handle launch_power (optional)
-          if (shooterConfig.launch_power !== undefined) {
+          if (cfg.launch_power !== undefined) {
             if (
-              typeof shooterConfig.launch_power === 'number' &&
-              shooterConfig.launch_power >= 0
+              typeof cfg.launch_power === 'number' &&
+              cfg.launch_power >= 0
             ) {
-              shooterFinal.launch_power = shooterConfig.launch_power;
+              shooterFinal.launch_power = cfg.launch_power;
             } else {
               throw new Error(
                 '[compile component]: shooter: launch_power must be a non-negative number',
@@ -1977,12 +1987,12 @@ class ItemComponent {
           }
 
           // Handle scale_power_by_draw_duration (optional)
-          if (shooterConfig.scale_power_by_draw_duration !== undefined) {
+          if (cfg.scale_power_by_draw_duration !== undefined) {
             if (
-              typeof shooterConfig.scale_power_by_draw_duration === 'boolean'
+              typeof cfg.scale_power_by_draw_duration === 'boolean'
             ) {
               shooterFinal.scale_power_by_draw_duration =
-                shooterConfig.scale_power_by_draw_duration;
+                cfg.scale_power_by_draw_duration;
             } else {
               throw new Error(
                 '[compile component]: shooter: scale_power_by_draw_duration must be a boolean',
@@ -1998,10 +2008,10 @@ class ItemComponent {
 
       // Handle storage_weight_modifier component
       const storageWeightModifierConfig =
-        (components as Record<string, unknown>)['minecraft:storage_weight_modifier'] ||
-        (components as Record<string, unknown>).storage_weight_modifier;
+        components['minecraft:storage_weight_modifier'] ||
+        components.storage_weight_modifier;
       if (storageWeightModifierConfig !== undefined) {
-        if (typeof storageWeightModifierConfig === 'object') {
+        if (typeof storageWeightModifierConfig === 'object' && storageWeightModifierConfig !== null) {
           const storageWeightModifierFinal: Record<string, unknown> = {};
 
           // Validate format version (requires 1.21.40+)
@@ -2061,10 +2071,10 @@ class ItemComponent {
 
       // Handle storage_weight_limit component
       const storageWeightLimitConfig =
-        (components as Record<string, unknown>)['minecraft:storage_weight_limit'] ||
-        (components as Record<string, unknown>).storage_weight_limit;
+        components['minecraft:storage_weight_limit'] ||
+        components.storage_weight_limit;
       if (storageWeightLimitConfig !== undefined) {
-        if (typeof storageWeightLimitConfig === 'object') {
+        if (typeof storageWeightLimitConfig === 'object' && storageWeightLimitConfig !== null) {
           const storageWeightLimitFinal: Record<string, unknown> = {};
 
           // Validate format version (requires 1.21.40+)
@@ -2119,10 +2129,10 @@ class ItemComponent {
 
       // Handle storage_item component
       const storageItemConfig =
-        (components as Record<string, unknown>)['minecraft:storage_item'] ||
-        (components as Record<string, unknown>).storage_item;
+        components['minecraft:storage_item'] ||
+        components.storage_item;
       if (storageItemConfig !== undefined) {
-        if (typeof storageItemConfig === 'object') {
+        if (typeof storageItemConfig === 'object' && storageItemConfig !== null) {
           const storageItemFinal: Record<string, unknown> = {};
 
           // Validate format version (requires 1.21.40+)
@@ -2283,10 +2293,10 @@ class ItemComponent {
 
       // Handle minecraft:throwable component
       const throwableConfig =
-        (components as Record<string, unknown>)['minecraft:throwable'] ||
-        (components as Record<string, unknown>).throwable;
+        components['minecraft:throwable'] ||
+        components.throwable;
       if (throwableConfig !== undefined) {
-        if (typeof throwableConfig === 'object') {
+        if (typeof throwableConfig === 'object' && throwableConfig !== null) {
           const throwableFinal: Record<string, unknown> = {};
 
           // Handle do_swing_animation (optional, defaults to false)
@@ -2383,9 +2393,10 @@ class ItemComponent {
 
       // Handle minecraft:tags component
       const tagsConfig =
-        (components as Record<string, unknown>)['minecraft:tags'] || (components as Record<string, unknown>).tags;
+        components['minecraft:tags'] ||
+        components.tags;
       if (tagsConfig !== undefined) {
-        if (typeof tagsConfig === 'object') {
+        if (typeof tagsConfig === 'object' && tagsConfig !== null) {
           const tagsFinal: Record<string, unknown> = {};
 
           // Handle tags array (required)
@@ -2423,10 +2434,10 @@ class ItemComponent {
 
       // Handle minecraft:swing_duration component
       const swingDurationConfig =
-        (components as Record<string, unknown>)['minecraft:swing_duration'] ||
-        (components as Record<string, unknown>).swing_duration;
+        components['minecraft:swing_duration'] ||
+        components.swing_duration;
       if (swingDurationConfig !== undefined) {
-        if (typeof swingDurationConfig === 'object') {
+        if (typeof swingDurationConfig === 'object' && swingDurationConfig !== null) {
           const swingDurationFinal: Record<string, unknown> = {};
 
           // Handle value (required)
@@ -2457,8 +2468,8 @@ class ItemComponent {
 
       // Handle minecraft:use_animation component
       const useAnimationConfig =
-        (components as Record<string, unknown>)['minecraft:use_animation'] ||
-        (components as Record<string, unknown>).use_animation;
+        components['minecraft:use_animation'] ||
+        components.use_animation;
       if (useAnimationConfig !== undefined) {
         // Handle both string format (simplified) and object format
         if (typeof useAnimationConfig === 'string') {
@@ -2503,8 +2514,8 @@ class ItemComponent {
 
       // Handle minecraft:wearable component
       const wearableConfig =
-        (components as Record<string, unknown>)['minecraft:wearable'] ||
-        (components as Record<string, unknown>).wearable;
+        components['minecraft:wearable'] ||
+        components.wearable;
       if (wearableConfig !== undefined) {
         if (typeof wearableConfig === 'object') {
           const wearableFinal: Record<string, unknown> = {};
@@ -2585,16 +2596,17 @@ class ItemComponent {
         (components as Record<string, unknown>)['minecraft:use_modifiers'] ||
         (components as Record<string, unknown>).use_modifiers;
       if (useModifiersConfig !== undefined) {
-        if (typeof useModifiersConfig === 'object') {
+        if (typeof useModifiersConfig === 'object' && useModifiersConfig !== null) {
+          const umCfg = useModifiersConfig as Record<string, unknown>;
           const useModifiersFinal: Record<string, unknown> = {};
 
           // Handle use_duration (required, non-negative number)
-          if (useModifiersConfig.use_duration !== undefined) {
+          if (umCfg.use_duration !== undefined) {
             if (
-              typeof useModifiersConfig.use_duration === 'number' &&
-              useModifiersConfig.use_duration >= 0
+              typeof umCfg.use_duration === 'number' &&
+              umCfg.use_duration >= 0
             ) {
-              useModifiersFinal.use_duration = useModifiersConfig.use_duration;
+              useModifiersFinal.use_duration = umCfg.use_duration;
             } else {
               throw new Error(
                 '[compile component]: use_modifiers: use_duration must be a non-negative number',
@@ -2607,13 +2619,13 @@ class ItemComponent {
           }
 
           // Handle movement_modifier (optional, number ≤ 1)
-          if (useModifiersConfig.movement_modifier !== undefined) {
+          if (umCfg.movement_modifier !== undefined) {
             if (
-              typeof useModifiersConfig.movement_modifier === 'number' &&
-              useModifiersConfig.movement_modifier <= 1
+              typeof umCfg.movement_modifier === 'number' &&
+              umCfg.movement_modifier <= 1
             ) {
               useModifiersFinal.movement_modifier =
-                useModifiersConfig.movement_modifier;
+                umCfg.movement_modifier;
             } else {
               throw new Error(
                 '[compile component]: use_modifiers: movement_modifier must be a number ≤ 1',
@@ -2622,10 +2634,10 @@ class ItemComponent {
           }
 
           // Handle has_vibration (optional, boolean)
-          if (useModifiersConfig.has_vibration !== undefined) {
-            if (typeof useModifiersConfig.has_vibration === 'boolean') {
+          if (umCfg.has_vibration !== undefined) {
+            if (typeof umCfg.has_vibration === 'boolean') {
               useModifiersFinal.has_vibration =
-                useModifiersConfig.has_vibration;
+                umCfg.has_vibration;
             } else {
               throw new Error(
                 '[compile component]: use_modifiers: has_vibration must be a boolean',
@@ -2646,16 +2658,17 @@ class ItemComponent {
         (components as Record<string, unknown>)['minecraft:swing_sounds'] ||
         (components as Record<string, unknown>).swing_sounds;
       if (swingSoundsConfig !== undefined) {
-        if (typeof swingSoundsConfig === 'object') {
+        if (typeof swingSoundsConfig === 'object' && swingSoundsConfig !== null) {
+          const ssCfg = swingSoundsConfig as Record<string, unknown>;
           const swingSoundsFinal: Record<string, unknown> = {};
 
           // Handle sound (required)
-          if (swingSoundsConfig.sound !== undefined) {
+          if (ssCfg.sound !== undefined) {
             if (
-              typeof swingSoundsConfig.sound === 'string' &&
-              swingSoundsConfig.sound.trim().length > 0
+              typeof ssCfg.sound === 'string' &&
+              ssCfg.sound.trim().length > 0
             ) {
-              swingSoundsFinal.sound = swingSoundsConfig.sound.trim();
+              swingSoundsFinal.sound = ssCfg.sound.trim();
             } else {
               throw new Error(
                 '[compile component]: swing_sounds: sound must be a non-empty string',
@@ -2705,7 +2718,7 @@ class ItemComponent {
       if (!this.#edit) this.#edit = [];
       let idx: number = -1;
       const idKey = '__icon_key__';
-      const found = this.#edit.find((v: Record<string, unknown>, i: number) => {
+      const found = this.#edit.find((v, i: number) => {
         if (
           v.type == 'batch' &&
           v.options[0] &&
@@ -2993,7 +3006,7 @@ class ItemComponent {
           );
         }
 
-        this.#opt.components.digger.destroy_speeds.push(entry);
+        this.#opt.components.digger.destroy_speeds.push(entry as { block: string | { name?: string; states?: Record<string, number | string | boolean>; tags?: string }; speed: number });
       }
     }
   }
@@ -3146,7 +3159,7 @@ class ItemComponent {
         }
 
         this.#opt.components.durability_sensor.durability_thresholds.push(
-          thresholdConfig,
+          thresholdConfig as { durability: number; particle_type?: t.ParticleType; sound_event?: t.SoundEvent },
         );
       }
     }
@@ -3288,7 +3301,7 @@ class ItemComponent {
     remove_effects?: string[]; // deprecated
   }) {
     // Validate food effects
-    const validateFoodEffects = (effects?: Record<string, unknown>[]) => {
+    const validateFoodEffects = (effects?: t.FoodEffect[]) => {
       if (effects && Array.isArray(effects)) {
         const validEffects = [
           'regeneration',
@@ -3956,7 +3969,10 @@ class ItemComponent {
     // Use the main minecraft:liquid_clipped property for consistency
     if (!this.#opt.components['minecraft:liquid_clipped']) {
       // Initialize as empty object if it doesn't exist
-      this.#opt.components['minecraft:liquid_clipped'] = {} as Record<string, unknown>;
+      this.#opt.components['minecraft:liquid_clipped'] = {} as Record<
+        string,
+        unknown
+      >;
     }
 
     if (typeof config === 'boolean') {
@@ -3994,7 +4010,10 @@ class ItemComponent {
     // Use the main minecraft:max_stack_size property for consistency
     if (!this.#opt.components['minecraft:max_stack_size']) {
       // Initialize as empty object if it doesn't exist
-      this.#opt.components['minecraft:max_stack_size'] = {} as Record<string, unknown>;
+      this.#opt.components['minecraft:max_stack_size'] = {} as Record<
+        string,
+        unknown
+      >;
     }
 
     if (typeof config === 'number') {
@@ -4039,7 +4058,7 @@ class ItemComponent {
       );
     }
 
-    const piercingWeaponConfig: Record<string, unknown> = {};
+    const cfg: Record<string, unknown> = {};
 
     // Handle creative_reach
     if (config.creative_reach !== undefined) {
@@ -4059,7 +4078,7 @@ class ItemComponent {
       if (typeof config.creative_reach.min === 'number') {
         creativeReachFinal.min = config.creative_reach.min;
       }
-      piercingWeaponConfig.creative_reach = creativeReachFinal;
+      cfg.creative_reach = creativeReachFinal;
     }
 
     // Handle hitbox_margin
@@ -4069,7 +4088,7 @@ class ItemComponent {
           '[set error]: piercing_weapon: hitbox_margin must be a number',
         );
       }
-      piercingWeaponConfig.hitbox_margin = config.hitbox_margin;
+      cfg.hitbox_margin = config.hitbox_margin;
     }
 
     // Handle reach
@@ -4087,11 +4106,12 @@ class ItemComponent {
       if (typeof config.reach.min === 'number') {
         reachFinal.min = config.reach.min;
       }
-      piercingWeaponConfig.reach = reachFinal;
+      cfg.reach = reachFinal;
     }
 
-    (this.#opt.components as Record<string, unknown>)['minecraft:piercing_weapon'] =
-      piercingWeaponConfig;
+    (this.#opt.components as Record<string, unknown>)[
+      'minecraft:piercing_weapon'
+    ] = cfg;
   }
 
   /**
@@ -4108,7 +4128,7 @@ class ItemComponent {
       );
     }
 
-    const projectileConfig: Record<string, unknown> = {};
+    const cfg: Record<string, unknown> = {};
 
     // Handle minimum_critical_power
     if (config.minimum_critical_power !== undefined) {
@@ -4120,7 +4140,7 @@ class ItemComponent {
           '[set error]: projectile: minimum_critical_power must be a number >= 0',
         );
       }
-      projectileConfig.minimum_critical_power = config.minimum_critical_power;
+      cfg.minimum_critical_power = config.minimum_critical_power;
     }
 
     // Handle projectile_entity (required)
@@ -4138,8 +4158,9 @@ class ItemComponent {
       );
     }
 
-    projectileConfig.projectile_entity = config.projectile_entity;
-    (this.#opt.components as Record<string, unknown>)['minecraft:projectile'] = projectileConfig;
+    cfg.projectile_entity = config.projectile_entity;
+    (this.#opt.components as Record<string, unknown>)['minecraft:projectile'] =
+      cfg;
   }
 
   /**
@@ -4155,7 +4176,7 @@ class ItemComponent {
       throw new Error('[set error]: record: must be an object configuration');
     }
 
-    const recordConfig: Record<string, unknown> = {};
+    const cfg: Record<string, unknown> = {};
 
     // Handle comparator_signal
     if (config.comparator_signal !== undefined) {
@@ -4167,7 +4188,7 @@ class ItemComponent {
           '[set error]: record: comparator_signal must be a number >= 0',
         );
       }
-      recordConfig.comparator_signal = config.comparator_signal;
+      cfg.comparator_signal = config.comparator_signal;
     }
 
     // Handle duration
@@ -4175,7 +4196,7 @@ class ItemComponent {
       if (typeof config.duration !== 'number' || config.duration <= 0) {
         throw new Error('[set error]: record: duration must be a number > 0');
       }
-      recordConfig.duration = config.duration;
+      cfg.duration = config.duration;
     }
 
     // Handle sound_event (required)
@@ -4184,8 +4205,9 @@ class ItemComponent {
         '[set error]: record: sound_event is required and must be a string',
       );
     }
-    recordConfig.sound_event = config.sound_event;
-    (this.#opt.components as Record<string, unknown>)['minecraft:record'] = recordConfig;
+    cfg.sound_event = config.sound_event;
+    (this.#opt.components as Record<string, unknown>)['minecraft:record'] =
+      cfg;
   }
 
   /**
@@ -4197,7 +4219,7 @@ class ItemComponent {
       throw new Error('[set error]: rarity: must be an object configuration');
     }
 
-    const rarityConfig: Record<string, unknown> = {};
+    const cfg: Record<string, unknown> = {};
 
     // Handle value (required)
     if (config.value === undefined) {
@@ -4215,8 +4237,9 @@ class ItemComponent {
       );
     }
 
-    rarityConfig.value = config.value;
-    (this.#opt.components as Record<string, unknown>)['minecraft:rarity'] = rarityConfig;
+    cfg.value = config.value;
+    (this.#opt.components as Record<string, unknown>)['minecraft:rarity'] =
+      cfg;
   }
 
   /**
@@ -4235,7 +4258,7 @@ class ItemComponent {
       );
     }
 
-    const repairableConfig: Record<string, unknown> = {};
+    const cfg: Record<string, unknown> = {};
 
     // Handle on_repaired event
     if (config.on_repaired !== undefined) {
@@ -4246,7 +4269,7 @@ class ItemComponent {
             '[set error]: repairable: on_repaired must be a valid event identifier pattern',
           );
         }
-        repairableConfig.on_repaired = config.on_repaired;
+        cfg.on_repaired = config.on_repaired;
       } else {
         throw new Error(
           '[set error]: repairable: on_repaired must be a string',
@@ -4268,7 +4291,7 @@ class ItemComponent {
                 '[set error]: repairable: repair_items string entries must be valid Minecraft item identifiers',
               );
             }
-            repairItemsFinal.push(repairItem);
+            (repairItemsFinal as (string | Record<string, unknown>)[]).push(repairItem);
           } else if (typeof repairItem === 'object' && repairItem !== null) {
             // Complex object format
             const repairItemFinal: Record<string, unknown> = {};
@@ -4316,7 +4339,7 @@ class ItemComponent {
           }
         }
 
-        repairableConfig.repair_items = repairItemsFinal;
+        cfg.repair_items = repairItemsFinal;
       } else {
         throw new Error(
           '[set error]: repairable: repair_items must be an array',
@@ -4324,7 +4347,8 @@ class ItemComponent {
       }
     }
 
-    (this.#opt.components as Record<string, unknown>)['minecraft:repairable'] = repairableConfig;
+    (this.#opt.components as Record<string, unknown>)['minecraft:repairable'] =
+      cfg;
   }
 
   /**
@@ -4341,7 +4365,7 @@ class ItemComponent {
       throw new Error('[set error]: seed: must be an object configuration');
     }
 
-    const seedConfig: Record<string, unknown> = {};
+    const cfg: Record<string, unknown> = {};
 
     // Validate format version for seed component (requires 1.10.0+)
     const formatParts = this.#opt.format.split('.');
@@ -4367,7 +4391,7 @@ class ItemComponent {
         '[set error]: seed: crop_result must be a valid block identifier',
       );
     }
-    seedConfig.crop_result = config.crop_result;
+    cfg.crop_result = config.crop_result;
 
     // Handle plant_at array
     if (config.plant_at !== undefined) {
@@ -4383,7 +4407,7 @@ class ItemComponent {
           );
         }
 
-        seedConfig.plant_at = [...config.plant_at];
+        cfg.plant_at = [...config.plant_at];
       } else {
         throw new Error(
           '[set error]: seed: plant_at must be an array of strings',
@@ -4399,7 +4423,7 @@ class ItemComponent {
             '[set error]: seed: plant_at_any_solid_surface is deprecated and no longer works after format versions of at least 1.19.0',
           );
         }
-        seedConfig.plant_at_any_solid_surface =
+        cfg.plant_at_any_solid_surface =
           config.plant_at_any_solid_surface;
       } else {
         throw new Error(
@@ -4421,13 +4445,14 @@ class ItemComponent {
             '[set error]: seed: plant_at_face is deprecated and no longer works after format versions of at least 1.19.0',
           );
         }
-        seedConfig.plant_at_face = config.plant_at_face;
+        cfg.plant_at_face = config.plant_at_face;
       } else {
         throw new Error('[set error]: seed: plant_at_face must be a string');
       }
     }
 
-    (this.#opt.components as Record<string, unknown>)['minecraft:seed'] = seedConfig;
+    (this.#opt.components as Record<string, unknown>)['minecraft:seed'] =
+      cfg;
   }
 
   /**
@@ -4441,21 +4466,22 @@ class ItemComponent {
       );
     }
 
-    const stackedByDataConfig: Record<string, unknown> = {};
+    const cfg: Record<string, unknown> = {};
 
     // Handle value (optional, defaults to true)
     if (config.value === undefined) {
-      stackedByDataConfig.value = true;
+      cfg.value = true;
     } else if (typeof config.value === 'boolean') {
-      stackedByDataConfig.value = config.value;
+      cfg.value = config.value;
     } else {
       throw new Error(
         '[set error]: stacked_by_data: value must be a boolean if provided',
       );
     }
 
-    (this.#opt.components as Record<string, unknown>)['minecraft:stacked_by_data'] =
-      stackedByDataConfig;
+    (this.#opt.components as Record<string, unknown>)[
+      'minecraft:stacked_by_data'
+    ] = cfg;
   }
 
   /**
@@ -4469,21 +4495,22 @@ class ItemComponent {
       );
     }
 
-    const shouldDespawnConfig: Record<string, unknown> = {};
+    const cfg: Record<string, unknown> = {};
 
     // Handle value (optional, defaults to true)
     if (config.value === undefined) {
-      shouldDespawnConfig.value = true;
+      cfg.value = true;
     } else if (typeof config.value === 'boolean') {
-      shouldDespawnConfig.value = config.value;
+      cfg.value = config.value;
     } else {
       throw new Error(
         '[set error]: should_despawn: value must be a boolean if provided',
       );
     }
 
-    (this.#opt.components as Record<string, unknown>)['minecraft:should_despawn'] =
-      shouldDespawnConfig;
+    (this.#opt.components as Record<string, unknown>)[
+      'minecraft:should_despawn'
+    ] = cfg;
   }
 
   /**
@@ -4517,7 +4544,7 @@ class ItemComponent {
       throw new Error('[set error]: shooter: must be an object configuration');
     }
 
-    const shooterConfig: Record<string, unknown> = {};
+    const cfg: Record<string, unknown> = {};
 
     // Validate format version for shooter component
     const formatParts = this.#opt.format.split('.');
@@ -4550,7 +4577,7 @@ class ItemComponent {
               '[set error]: shooter: ammunition entries must be valid item identifiers when using string format',
             );
           }
-          ammunitionFinal.push(ammunitionItem);
+            (ammunitionFinal as (string | Record<string, unknown>)[]).push(ammunitionItem);
         } else if (
           typeof ammunitionItem === 'object' &&
           ammunitionItem !== null
@@ -4622,7 +4649,7 @@ class ItemComponent {
         }
       }
 
-      shooterConfig.ammunition = ammunitionFinal;
+      cfg.ammunition = ammunitionFinal;
     } else {
       throw new Error('[set error]: shooter: ammunition must be an array');
     }
@@ -4630,7 +4657,7 @@ class ItemComponent {
     // Handle charge_on_draw (optional)
     if (config.charge_on_draw !== undefined) {
       if (typeof config.charge_on_draw === 'boolean') {
-        shooterConfig.charge_on_draw = config.charge_on_draw;
+        cfg.charge_on_draw = config.charge_on_draw;
       } else {
         throw new Error(
           '[set error]: shooter: charge_on_draw must be a boolean',
@@ -4644,7 +4671,7 @@ class ItemComponent {
         typeof config.max_draw_duration === 'number' &&
         config.max_draw_duration >= 0
       ) {
-        shooterConfig.max_draw_duration = config.max_draw_duration;
+        cfg.max_draw_duration = config.max_draw_duration;
       } else {
         throw new Error(
           '[set error]: shooter: max_draw_duration must be a non-negative number',
@@ -4655,7 +4682,7 @@ class ItemComponent {
     // Handle auto_charge (optional)
     if (config.auto_charge !== undefined) {
       if (typeof config.auto_charge === 'boolean') {
-        shooterConfig.auto_charge = config.auto_charge;
+        cfg.auto_charge = config.auto_charge;
       } else {
         throw new Error('[set error]: shooter: auto_charge must be a boolean');
       }
@@ -4664,7 +4691,7 @@ class ItemComponent {
     // Handle launch_power (optional)
     if (config.launch_power !== undefined) {
       if (typeof config.launch_power === 'number' && config.launch_power >= 0) {
-        shooterConfig.launch_power = config.launch_power;
+        cfg.launch_power = config.launch_power;
       } else {
         throw new Error(
           '[set error]: shooter: launch_power must be a non-negative number',
@@ -4675,7 +4702,7 @@ class ItemComponent {
     // Handle scale_power_by_draw_duration (optional)
     if (config.scale_power_by_draw_duration !== undefined) {
       if (typeof config.scale_power_by_draw_duration === 'boolean') {
-        shooterConfig.scale_power_by_draw_duration =
+        cfg.scale_power_by_draw_duration =
           config.scale_power_by_draw_duration;
       } else {
         throw new Error(
@@ -4684,7 +4711,8 @@ class ItemComponent {
       }
     }
 
-    (this.#opt.components as Record<string, unknown>)['minecraft:shooter'] = shooterConfig;
+    (this.#opt.components as Record<string, unknown>)['minecraft:shooter'] =
+      cfg;
   }
 
   /**
@@ -4725,7 +4753,9 @@ class ItemComponent {
       );
     }
 
-    (this.#opt.components as Record<string, unknown>)['minecraft:storage_weight_modifier'] = {
+    (this.#opt.components as Record<string, unknown>)[
+      'minecraft:storage_weight_modifier'
+    ] = {
       weight_in_storage_item: config.weight_in_storage_item,
     };
   }
@@ -4768,7 +4798,9 @@ class ItemComponent {
       );
     }
 
-    (this.#opt.components as Record<string, unknown>)['minecraft:storage_weight_limit'] = {
+    (this.#opt.components as Record<string, unknown>)[
+      'minecraft:storage_weight_limit'
+    ] = {
       storage_capacity_per_slot: config.storage_capacity_per_slot,
     };
   }
@@ -5046,8 +5078,12 @@ class ItemComponent {
         ) {
           this.#opt.components['minecraft:use_animation'] = {};
         }
-        (this.#opt.components['minecraft:use_animation'] as Record<string, unknown>).value =
-          trimmedValue;
+        (
+          this.#opt.components['minecraft:use_animation'] as Record<
+            string,
+            unknown
+          >
+        ).value = trimmedValue;
       }
     } else {
       throw new Error(
@@ -5234,10 +5270,14 @@ class ItemComponent {
     return this.#opt.components['minecraft:throwable'];
   }
   public getProjectile() {
-    return (this.#opt.components as Record<string, unknown>)['minecraft:projectile'];
+    return (this.#opt.components as Record<string, unknown>)[
+      'minecraft:projectile'
+    ];
   }
   public getRecord() {
-    return (this.#opt.components as Record<string, unknown>)['minecraft:record'];
+    return (this.#opt.components as Record<string, unknown>)[
+      'minecraft:record'
+    ];
   }
   public getGlint() {
     return (this.#opt.components as Record<string, unknown>)['minecraft:glint'];
@@ -5250,6 +5290,69 @@ class ItemComponent {
   }
   public getUseModifiers() {
     return this.#opt.components['minecraft:use_modifiers'];
+  }
+  public getFormat() {
+    return this.#opt.format;
+  }
+  public getDamage() {
+    return this.#opt.components.damage;
+  }
+  public getCanDestroyInCreative() {
+    return this.#opt.components.canDestroyInCreative;
+  }
+  public getDigger() {
+    return this.#opt.components.digger;
+  }
+  public getDurabilitySensor() {
+    return this.#opt.components.durability_sensor;
+  }
+  public getDyeable() {
+    return this.#opt.components.dyeable;
+  }
+  public getEnchantable() {
+    return this.#opt.components.enchantable;
+  }
+  public getFood() {
+    return this.#opt.components['minecraft:food'];
+  }
+  public getFireResistant() {
+    return this.#opt.components['minecraft:fire_resistant'];
+  }
+  public getEntityPlacer() {
+    return this.#opt.components['minecraft:entity_placer'];
+  }
+  public getKineticWeapon() {
+    return this.#opt.components['minecraft:kinetic_weapon'];
+  }
+  public getInteractButton() {
+    return this.#opt.components['minecraft:interact_button'];
+  }
+  public getHoverTextColor() {
+    return this.#opt.components['minecraft:hover_text_color'];
+  }
+  public getLiquidClipped() {
+    return this.#opt.components['minecraft:liquid_clipped'];
+  }
+  public getPiercingWeapon() {
+    return (this.#opt.components as Record<string, unknown>).piercing_weapon;
+  }
+  public getRarity() {
+    return (this.#opt.components as Record<string, unknown>).rarity;
+  }
+  public getSeed() {
+    return (this.#opt.components as Record<string, unknown>).seed;
+  }
+  public getStackedByData() {
+    return (this.#opt.components as Record<string, unknown>).stacked_by_data;
+  }
+  public getShooter() {
+    return (this.#opt.components as Record<string, unknown>).shooter;
+  }
+  public getSwingDuration() {
+    return this.#opt.components['minecraft:swing_duration'];
+  }
+  public getSwingSounds() {
+    return this.#opt.components['minecraft:swing_sounds'];
   }
 }
 export { ItemComponent };

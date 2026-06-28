@@ -275,6 +275,41 @@ describe('UI transform', () => {
     );
     expect(code).toContain('Click');
   });
+
+  it('should compile for attribute into layout', async () => {
+    const cd = MCX.compiler.compileMCXFn(
+      '<script>export const prop = ["items"]; export function handler() {}</script><Ui><button for="v in items" click="handler">{{ v.label }}</button></Ui>',
+    );
+    const code = await MCX.transform(
+      cd,
+      new Map(),
+      '/root/test.mcx',
+      createCtx(),
+      { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
+      outdirs,
+    );
+    expect(code).toContain('for:');
+    expect(code).toContain('variable:');
+    expect(code).toContain('"v"');
+    expect(code).toContain('useProp:');
+    expect(code).toContain('"items"');
+  });
+
+  it('should reject invalid for syntax', async () => {
+    const cd = MCX.compiler.compileMCXFn(
+      '<script>export const prop = ["items"]</script><Ui><button for="bad syntax">test</button></Ui>',
+    );
+    await expect(
+      MCX.transform(
+        cd,
+        new Map(),
+        '/root/test.mcx',
+        createCtx(),
+        { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
+        outdirs,
+      ),
+    ).rejects.toThrow();
+  });
 });
 
 describe('AST - prop parser', () => {

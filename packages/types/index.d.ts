@@ -46,6 +46,10 @@ interface MCXUIOpt {
       | {
           useProp: string;
         };
+    for?: {
+      variable: string;
+      useProp: string;
+    };
   }[];
   use:
     | typeof serverUI.ModalFormData

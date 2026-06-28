@@ -239,7 +239,12 @@ class Parser {
         const nextIndex = i + 1;
         const nextChar =
           nextIndex < tagContent.length ? tagContent[nextIndex] : ' ';
-        quoteChar = null;
+        if (nextChar === '"' || nextChar === "'") {
+          quoteChar = nextChar;
+          i = nextIndex;
+        } else {
+          quoteChar = ' ';
+        }
       } else if (char === ' ' && inKey && currentKey) {
         attributes[currentKey.trim()] = 'true';
         currentKey = '';

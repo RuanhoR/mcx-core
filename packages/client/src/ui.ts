@@ -9,11 +9,12 @@ import type {
   ModalFormResponse,
 } from '@minecraft/server-ui';
 type UnresolvedParams = MCXUIOpt['layout'][number]['params'];
-type UnresolvedLayout = Omit<MCXUIOpt['layout'][number], 'params'> & {
+type UnresolvedLayoutItem = Omit<MCXUIOpt['layout'][number], 'params'> & {
   params: {
     [K in keyof UnresolvedParams]: UnresolvedParams[K];
   };
 };
+type UnresolvedLayout = UnresolvedLayoutItem[];
 interface ParsedParams extends Omit<UnresolvedParams, 'click'> {
   click:
     | ((value: ModalFormResponse | MessageFormData | ActionFormResponse) => void)
@@ -28,6 +29,10 @@ interface ParsedUIOption extends Omit<MCXUIOpt, 'layout'> {
           useProp: string;
         };
     type: MCXUIOpt['layout'][number]['type'];
+    for?: {
+      variable: string;
+      useProp: string;
+    };
   }[];
 }
 interface ResolvedParams {
@@ -38,6 +43,10 @@ interface ResolvedLayoutItem {
   type: MCXUIOpt['layout'][number]['type'];
   params: ResolvedParams;
   content: string;
+  for?: {
+    variable: string;
+    useProp: string;
+  };
 }
 export class ui implements typesPkg.ui {
   private _mcUI: typeof import('@minecraft/server-ui');
@@ -46,8 +55,6 @@ export class ui implements typesPkg.ui {
   private _UI: MCXUIOpt['use'];
   private _prop: string[];
   private _layout: ParsedUIOption['layout'];
-  private _usePropLayoutIndexList: number[] = [];
-  private _usePropParamsMap: Map<number, string[]> = new Map();
   private _uiType: 'modal' | 'action' | 'message';
   constructor(UIConfig: MCXUIOpt, mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, unknown> }) => Record<string, unknown>) {
     this._mcxSrcFn = mcxSrcFn;
@@ -85,32 +92,6 @@ export class ui implements typesPkg.ui {
         return i as unknown as ParsedUIOption['layout'][number];
       },
     );
-    this._init();
-  }
-  private _init() {
-    for (const layoutIndex in this._layout) {
-      const layout = this._layout[layoutIndex];
-      if (!layout) continue;
-      if (typeof layout.content !== 'string') {
-        if (typeof layout.content?.useProp == 'string') {
-          this._usePropLayoutIndexList.push(parseInt(layoutIndex));
-        } else {
-          throw new Error(
-            "[mcx runtime]: can't load ui: useProp is not a string",
-          );
-        }
-      }
-      for (const [paramKey, paramValue] of Object.entries(layout.params)) {
-        if (typeof paramValue === 'object' && paramValue !== null && 'useProp' in paramValue) {
-          const existing = this._usePropParamsMap.get(parseInt(layoutIndex));
-          if (existing) {
-            existing.push(paramKey);
-          } else {
-            this._usePropParamsMap.set(parseInt(layoutIndex), [paramKey]);
-          }
-        }
-      }
-    }
   }
   private _generateUI(layout: ResolvedLayoutItem[]) {
     const ui = new this._UI();
@@ -199,7 +180,7 @@ export class ui implements typesPkg.ui {
       }
     }
 
-    const cLayout: UnresolvedLayout[] = JSON.parse(
+    const cLayout: UnresolvedLayoutItem[] = JSON.parse(
       JSON.stringify(this._layout),
     );
 
@@ -209,44 +190,88 @@ export class ui implements typesPkg.ui {
       }
     }
 
-    for (const propIndex of this._usePropLayoutIndexList) {
-      const layout = cLayout[propIndex] as UnresolvedLayout;
-      if (!layout || typeof layout.content !== 'object' || !layout.content.useProp)
-        continue;
-      const resolved = prop[layout.content.useProp];
-      if (resolved === undefined) {
-        throw new Error(
-          `[mcx runtime]: prop "${layout.content.useProp}" not found in props`,
-        );
-      }
-      layout.content = resolved as string | { useProp: string };
-    }
-
-    for (const [layoutIndex, paramKeys] of this._usePropParamsMap.entries()) {
-      const layout = cLayout[layoutIndex] as UnresolvedLayout & { params: Record<string, string | { useProp: string } | ((value: ModalFormResponse | MessageFormData | ActionFormResponse) => void)> };
-      if (!layout) continue;
-      for (const paramKey of paramKeys) {
-        const paramValue = layout.params[paramKey];
-        if (typeof paramValue !== 'object' || !paramValue || !('useProp' in paramValue))
-          continue;
-        const useProp = paramValue.useProp;
-        const resolved = prop[useProp];
-        if (resolved === undefined) {
+    // expand for-loop items
+    const expandedLayout: UnresolvedLayoutItem[] = [];
+    for (const item of cLayout) {
+      if (item.for && typeof item.for.useProp === 'string') {
+        const arr = prop[item.for.useProp];
+        if (!Array.isArray(arr)) {
           throw new Error(
-            `[mcx runtime]: prop "${useProp}" not found in props`,
+            `[mcx runtime]: for "${item.for.useProp}" is not an array`,
           );
         }
-        if (paramKey === 'click') {
-          layout.params[paramKey] = (typeof resolved === 'string'
-            ? srcResult[resolved]
-            : resolved) as string | { useProp: string };
-        } else {
-          layout.params[paramKey] = resolved as string | { useProp: string };
+        const varName = item.for.variable;
+        for (const element of arr) {
+          const copy = JSON.parse(JSON.stringify(item)) as UnresolvedLayoutItem;
+          if (
+            typeof copy.content === 'object' &&
+            copy.content &&
+            'useProp' in copy.content &&
+            typeof copy.content.useProp === 'string' &&
+            copy.content.useProp.startsWith(varName + '.')
+          ) {
+            const key = copy.content.useProp.slice(varName.length + 1);
+            copy.content = String((element as Record<string, unknown>)[key] ?? '');
+          }
+          for (const paramKey of Object.keys(copy.params)) {
+            const paramValue = copy.params[paramKey as keyof typeof copy.params];
+            if (
+              typeof paramValue === 'object' &&
+              paramValue &&
+              'useProp' in paramValue &&
+              typeof paramValue.useProp === 'string' &&
+              paramValue.useProp.startsWith(varName + '.')
+            ) {
+              const key = paramValue.useProp.slice(varName.length + 1);
+              (copy.params as Record<string, unknown>)[paramKey] = (element as Record<string, unknown>)[key];
+            }
+          }
+          delete copy.for;
+          expandedLayout.push(copy);
+        }
+      } else {
+        expandedLayout.push(item);
+      }
+    }
+
+    // resolve remaining useProp references on expanded layout
+    for (const layout of expandedLayout) {
+      if (typeof layout.content === 'object' && layout.content && 'useProp' in layout.content && typeof layout.content.useProp === 'string') {
+        const resolved = prop[layout.content.useProp];
+        if (resolved === undefined) {
+          throw new Error(
+            `[mcx runtime]: prop "${layout.content.useProp}" not found in props`,
+          );
+        }
+        layout.content = resolved as string;
+      }
+      for (const paramKey of Object.keys(layout.params)) {
+        const paramValue = layout.params[paramKey as keyof typeof layout.params];
+        if (
+          typeof paramValue === 'object' &&
+          paramValue &&
+          'useProp' in paramValue &&
+          typeof paramValue.useProp === 'string'
+        ) {
+          const useProp = paramValue.useProp;
+          const resolved = prop[useProp];
+          if (resolved === undefined) {
+            throw new Error(
+              `[mcx runtime]: prop "${useProp}" not found in props`,
+            );
+          }
+          if (paramKey === 'click') {
+            (layout.params as Record<string, unknown>)[paramKey] = typeof resolved === 'string'
+              ? srcResult[resolved]
+              : resolved;
+          } else {
+            (layout.params as Record<string, unknown>)[paramKey] = resolved;
+          }
         }
       }
     }
 
-    const _temp = this._generateUI(cLayout as unknown as ResolvedLayoutItem[]);
+    const _temp = this._generateUI(expandedLayout as unknown as ResolvedLayoutItem[]);
     const ui = _temp[0];
     const promise = ui.show(player);
     const formResponse = await promise;

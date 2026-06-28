@@ -32,6 +32,10 @@ export interface MCXUIOpt {
       | {
           useProp: string;
         };
+    for?: {
+      variable: string;
+      useProp: string;
+    };
   }[];
   use: typeof ModalFormData | typeof MessageFormData | typeof ActionFormData;
   UI: typeof import('@minecraft/server-ui');

@@ -26,6 +26,7 @@ export async function Comp(ctx: transformParseCtx) {
     type: string;
     loc?: ParsedTagNode['loc'];
     for?: { variable: string; useProp: string };
+    if?: { useProp: string };
   }[] = [];
   for (const uiClientTag of uiTagNode.content) {
     if (uiClientTag.type == 'TagNode') {
@@ -61,6 +62,11 @@ export async function Comp(ctx: transformParseCtx) {
           );
         }
       }
+      // parse if attribute
+      let _if: { useProp: string } | undefined;
+      if (typeof uiClientTag.arr.if === 'string') {
+        _if = { useProp: uiClientTag.arr.if as string };
+      }
       // add to tree
       UITree.push({
         arr: uiClientTag.arr,
@@ -69,7 +75,8 @@ export async function Comp(ctx: transformParseCtx) {
           .join(''),
         type: uiClientTag.name,
         loc: uiClientTag.loc,
-        for: _for,
+        ...(_for ? { for: _for } : {}),
+        ...(_if ? { if: _if } : {}),
       });
     }
     // continue TagContentNode
@@ -80,6 +87,7 @@ export async function Comp(ctx: transformParseCtx) {
     params: Record<string, string | boolean>,
     content: string,
     _for?: { variable: string; useProp: string },
+    _if?: { useProp: string },
   ) {
     const props: t.ObjectProperty[] = [
       t.objectProperty(t.identifier('type'), t.stringLiteral(name)),
@@ -134,14 +142,28 @@ export async function Comp(ctx: transformParseCtx) {
         ),
       );
     }
+    if (_if) {
+      props.push(
+        t.objectProperty(
+          t.identifier('if'),
+          t.objectExpression([
+            t.objectProperty(
+              t.identifier('useProp'),
+              t.stringLiteral(_if.useProp),
+            ),
+          ]),
+        ),
+      );
+    }
     parsedObj.push(t.objectExpression(props));
   }
   // generate type and parsed tree
   for (const tp of UITree) {
     const name = tp.type;
-    // strip 'for' from regular params so it doesn't appear in both params and for
+    // strip 'for' and 'if' from regular params so they don't appear in both params and top-level
     const cleanedArr = { ...tp.arr };
     delete cleanedArr.for;
+    delete cleanedArr.if;
     // only ModalFormData Element
     if (['input', 'dropdown', 'submit', 'toggle', 'slider'].includes(name)) {
       // ModalFromData
@@ -157,7 +179,7 @@ export async function Comp(ctx: transformParseCtx) {
         );
       }
       MCXUIType = 'ModalFormData';
-      pushToTree(name, cleanedArr, tp.content, tp.for);
+      pushToTree(name, cleanedArr, tp.content, tp.for, tp.if);
     }
     // only MessageFormData Element
     else if (['button-m'].includes(name)) {
@@ -173,11 +195,11 @@ export async function Comp(ctx: transformParseCtx) {
         );
       }
       MCXUIType = 'MessageFormData';
-      pushToTree(name, cleanedArr, tp.content, tp.for);
+      pushToTree(name, cleanedArr, tp.content, tp.for, tp.if);
     }
     // public
     else if (['body', 'divider', 'title', 'label'].includes(name)) {
-      pushToTree(name, cleanedArr, tp.content, tp.for);
+      pushToTree(name, cleanedArr, tp.content, tp.for, tp.if);
     } else if (name == 'button') {
       if (MCXUIType !== 'ActionFormData' && MCXUIType)
         internalCtx.rollupContext.error(
@@ -189,7 +211,7 @@ export async function Comp(ctx: transformParseCtx) {
               }
             : void 0,
         );
-      pushToTree(name, cleanedArr, tp.content, tp.for);
+      pushToTree(name, cleanedArr, tp.content, tp.for, tp.if);
       MCXUIType = 'ActionFormData';
     } else {
       internalCtx.rollupContext.error(

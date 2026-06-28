@@ -35,6 +35,9 @@ interface ParsedUIOption extends Omit<MCXUIOpt, 'layout'> {
       variable: string;
       useProp: string;
     };
+    if?: string | {
+      useProp: string;
+    };
   }[];
 }
 interface ResolvedParams {
@@ -49,6 +52,9 @@ interface ResolvedLayoutItem {
   content: string;
   for?: string | {
     variable: string;
+    useProp: string;
+  };
+  if?: string | {
     useProp: string;
   };
 }
@@ -102,6 +108,9 @@ export class ui implements typesPkg.ui {
               `[mcx runtime]: invalid for syntax "${i.for}", expected "variable in propName"`,
             );
           }
+        }
+        if (typeof i.if === 'string') {
+          i.if = { useProp: i.if };
         }
         return i as unknown as ParsedUIOption['layout'][number];
       },
@@ -243,6 +252,9 @@ export class ui implements typesPkg.ui {
         const varName = item.for.variable;
         for (const element of arr) {
           const copy = JSON.parse(JSON.stringify(item)) as UnresolvedLayoutItem;
+          if (typeof item.params.click === 'function') {
+            (copy.params as Record<string, unknown>).click = item.params.click;
+          }
           if (
             typeof copy.content === 'object' &&
             copy.content &&
@@ -278,6 +290,21 @@ export class ui implements typesPkg.ui {
             }
           }
           delete copy.for;
+          // resolve if per copy
+          if (
+            copy.if &&
+            typeof copy.if !== 'string' &&
+            typeof copy.if.useProp === 'string'
+          ) {
+            if (copy.if.useProp === varName) {
+              if (!element) continue;
+              delete copy.if;
+            } else if (copy.if.useProp.startsWith(varName + '.')) {
+              const key = copy.if.useProp.slice(varName.length + 1);
+              if (!(element as Record<string, unknown>)[key]) continue;
+              delete copy.if;
+            }
+          }
           expandedLayout.push(copy);
         }
       } else {
@@ -327,8 +354,23 @@ export class ui implements typesPkg.ui {
       }
     }
 
+    // resolve if and filter out falsy items
+    const filteredLayout: typeof expandedLayout = [];
+    for (const layout of expandedLayout) {
+      if (
+        layout.if &&
+        typeof layout.if !== 'string' &&
+        typeof layout.if.useProp === 'string'
+      ) {
+        const resolved = prop[layout.if.useProp];
+        if (!resolved) continue;
+        delete layout.if;
+      }
+      filteredLayout.push(layout);
+    }
+
     const _temp = this._generateUI(
-      expandedLayout as unknown as ResolvedLayoutItem[],
+      filteredLayout as unknown as ResolvedLayoutItem[],
     );
     const ui = _temp[0];
     const promise = ui.show(player);

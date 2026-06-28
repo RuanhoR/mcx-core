@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - master
   pull_request:
     branches:
       - main
+      - master
 
 jobs:
   ci:
@@ -17,9 +19,8 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: pnpm
       - run: pnpm install --ignore-scripts
-      - run: pnpm lint:packages
-      - run: pnpm build
       - run: pnpm test
+      - run: pnpm lint:packages

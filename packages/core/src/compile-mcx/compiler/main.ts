@@ -214,17 +214,17 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
           cache.set(id, compileData);
         } catch (err: unknown) {
           if (err instanceof CompileError) {
-            const error: CompileError = err;
-            this.error(error.message, {
-              column: error.loc.column,
-              line: error.loc.line,
+            this.error(err.message, {
+              column: err.loc.column,
+              line: err.loc.line,
             });
+          } else {
+            this.error(
+              err instanceof Error
+                ? `${err.message} : ${err.stack}`
+                : String(err),
+            );
           }
-          this.error(
-            err instanceof Error
-              ? `${err.message} : ${err.stack}`
-              : String(err),
-          );
           return;
         }
         compileData.setFilePath(id);

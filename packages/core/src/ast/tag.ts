@@ -349,10 +349,11 @@ class Parser {
           .replace(/^<\/\s*/, '')
           .replace(/\s*>$/, '')
           .trim();
-        // 找到最近的匹配开始标签
+        let matched = false;
         for (let s = stack.length - 1; s >= 0; s--) {
           const candidate = stack[s];
           if (candidate && candidate.name === name) {
+            matched = true;
             // 设置结束
             candidate.end = token;
             candidate.loc.end = { ...token.end };
@@ -368,6 +369,11 @@ class Parser {
             }
             break;
           }
+        }
+        if (!matched) {
+          throw new Error(
+            `Unmatched closing tag </${name}> at line ${token.start.line}, column ${token.start.column}`,
+          );
         }
       }
     }

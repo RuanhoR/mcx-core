@@ -4,3 +4,4 @@ export { Event } from './event';
 export { createApp } from './createApp';
 export { Utils, types };
 export { ui } from './ui';
+export { Command, registryCommand } from './command';

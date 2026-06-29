@@ -34,6 +34,10 @@ const mockEvent = vi.hoisted(() => ({
   unsubscribe: vi.fn(),
 }));
 
+const startupSubscribeMock = vi.hoisted(() => vi.fn());
+const registerCommandMock = vi.hoisted(() => vi.fn());
+const registerEnumMock = vi.hoisted(() => vi.fn());
+
 vi.mock('@minecraft/server', () => ({
   world: {
     afterEvents: {
@@ -43,6 +47,34 @@ vi.mock('@minecraft/server', () => ({
       ItemUse: { ...mockEvent },
     },
     beforeEvents: {},
+  },
+  system: {
+    beforeEvents: {
+      startup: {
+        subscribe: startupSubscribeMock,
+        unsubscribe: vi.fn(),
+      },
+    },
+  },
+  CustomCommandParamType: {
+    Boolean: 'Boolean',
+    Float: 'Float',
+    Integer: 'Integer',
+    String: 'String',
+    PlayerSelector: 'PlayerSelector',
+    EntitySelector: 'EntitySelector',
+    EntityType: 'EntityType',
+    BlockType: 'BlockType',
+    ItemType: 'ItemType',
+    Location: 'Location',
+    Enum: 'Enum',
+  },
+  CommandPermissionLevel: {
+    Any: 0,
+    GameDirectors: 1,
+    Admin: 2,
+    Host: 3,
+    Owner: 4,
   },
 }));
 
@@ -57,6 +89,7 @@ const { createApp } = await import('../src/createApp');
 const { ui } = await import('../src/ui');
 const { generateAntiShake } = await import('../src/lib/Utils');
 const { App } = await import('../src/lib/App');
+const { Command, registryCommand } = await import('../src/command');
 const serverUI = await import('@minecraft/server-ui');
 
 describe('Event', () => {
@@ -488,5 +521,142 @@ describe('ui', () => {
     await expect(instance.show({} as Player, {})).rejects.toThrow(
       'prop "missing" not found',
     );
+  });
+});
+
+describe('Command', () => {
+  it('should construct with a name', () => {
+    const cmd = new Command('my:test');
+    expect(cmd.getName()).toBe('my:test');
+  });
+
+  it('should add mandatory parameters with string type', () => {
+    const cmd = new Command('my:cmd');
+    cmd.addMandatoryParameter('target', 'player');
+    const customCmd = cmd.toCustomCommand();
+    expect(customCmd.mandatoryParameters).toHaveLength(1);
+    expect(customCmd.mandatoryParameters![0]!.name).toBe('target');
+    expect(customCmd.mandatoryParameters![0]!.type).toBe('PlayerSelector');
+  });
+
+  it('should add optional parameters with object type', () => {
+    const cmd = new Command('my:cmd');
+    cmd.addOptionalParameter('count', { type: 'number', min: 0, max: 99 });
+    const customCmd = cmd.toCustomCommand();
+    expect(customCmd.optionalParameters).toHaveLength(1);
+    expect(customCmd.optionalParameters![0]!.name).toBe('count');
+    expect(customCmd.optionalParameters![0]!.type).toBe('Float');
+  });
+
+  it('should support builder pattern', () => {
+    const cmd = new Command('my:cmd')
+      .addMandatoryParameter('target', 'player')
+      .addOptionalParameter('count', 'integer')
+      .setDescription('Test command')
+      .setCheatsRequired(false);
+    const customCmd = cmd.toCustomCommand();
+    expect(customCmd.description).toBe('Test command');
+    expect(customCmd.cheatsRequired).toBe(false);
+  });
+
+  it('should resolve all param types correctly', () => {
+    const cmd = new Command('my:cmd')
+      .addMandatoryParameter('a', 'boolean')
+      .addMandatoryParameter('b', 'float')
+      .addMandatoryParameter('c', 'string')
+      .addMandatoryParameter('d', 'player')
+      .addMandatoryParameter('e', 'entity')
+      .addMandatoryParameter('f', 'entityType')
+      .addMandatoryParameter('g', 'blockType')
+      .addMandatoryParameter('h', 'itemType')
+      .addMandatoryParameter('i', 'location')
+      .addMandatoryParameter('j', 'enum')
+      .addOptionalParameter('k', 'integer');
+    const customCmd = cmd.toCustomCommand();
+    expect(customCmd.mandatoryParameters![0]!.type).toBe('Boolean');
+    expect(customCmd.mandatoryParameters![1]!.type).toBe('Float');
+    expect(customCmd.mandatoryParameters![2]!.type).toBe('String');
+    expect(customCmd.mandatoryParameters![3]!.type).toBe('PlayerSelector');
+    expect(customCmd.mandatoryParameters![4]!.type).toBe('EntitySelector');
+    expect(customCmd.mandatoryParameters![5]!.type).toBe('EntityType');
+    expect(customCmd.mandatoryParameters![6]!.type).toBe('BlockType');
+    expect(customCmd.mandatoryParameters![7]!.type).toBe('ItemType');
+    expect(customCmd.mandatoryParameters![8]!.type).toBe('Location');
+    expect(customCmd.mandatoryParameters![9]!.type).toBe('Enum');
+    expect(customCmd.optionalParameters![0]!.type).toBe('Integer');
+  });
+
+  it('should set permission level', () => {
+    const cmd = new Command('my:cmd')
+      .setPermissionLevel(2);
+    expect(cmd.toCustomCommand().permissionLevel).toBe(2);
+  });
+
+  it('should default cheatsRequired to true', () => {
+    const cmd = new Command('my:cmd');
+    expect(cmd.toCustomCommand().cheatsRequired).toBe(true);
+  });
+
+  it('should not include empty parameter arrays', () => {
+    const cmd = new Command('my:cmd');
+    const result = cmd.toCustomCommand();
+    expect(result.mandatoryParameters).toBeUndefined();
+    expect(result.optionalParameters).toBeUndefined();
+  });
+});
+
+describe('registryCommand', () => {
+  beforeEach(() => {
+    registerCommandMock.mockClear();
+    registerEnumMock.mockClear();
+  });
+
+  it('should subscribe to startup on first registryCommand call', () => {
+    const cmd = new Command('my:cmd01');
+    registryCommand(cmd);
+    expect(startupSubscribeMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not subscribe again on second registryCommand call', () => {
+    const cmd = new Command('my:cmd02');
+    registryCommand(cmd);
+    expect(startupSubscribeMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('.action() should call registryCommand and not duplicate subscription', () => {
+    const cmd = new Command('my:actcmd');
+    cmd.action(() => ({ status: 0 } as any));
+    expect(startupSubscribeMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should register all queued commands at startup', () => {
+    const startupCb = startupSubscribeMock.mock.calls[0]![0];
+    const mockRegistry = {
+      registerCommand: registerCommandMock,
+      registerEnum: registerEnumMock,
+    };
+    startupCb({ customCommandRegistry: mockRegistry });
+    expect(registerCommandMock).toHaveBeenCalledTimes(3);
+    expect(registerCommandMock.mock.calls[0]![0]!.name).toBe('my:cmd01');
+    expect(registerCommandMock.mock.calls[1]![0]!.name).toBe('my:cmd02');
+    expect(registerCommandMock.mock.calls[2]![0]!.name).toBe('my:actcmd');
+  });
+
+  it('should error when registering via registryCommand after startup', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const cmd = new Command('my:cmd03');
+    registryCommand(cmd);
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(consoleSpy.mock.calls[0]![0]).toContain('Cannot register command');
+    consoleSpy.mockRestore();
+  });
+
+  it('.action() should error when called after startup', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const cmd = new Command('my:actafter');
+    cmd.action(() => ({ status: 0 } as any));
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(consoleSpy.mock.calls[0]![0]).toContain('Cannot register command');
+    consoleSpy.mockRestore();
   });
 });

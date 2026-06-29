@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx",
-  "version": "0.0.4-rc.7",
+  "version": "0.0.4-rc.8",
   "description": "MCX Runtime Framework",
   "main": "dist/index.js",
   "scripts": {
@@ -28,7 +28,7 @@
     "registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/index.d.ts",
   "author": "ruanhor",
   "license": "MIT",
   "devDependencies": {

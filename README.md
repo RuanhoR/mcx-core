@@ -7,7 +7,7 @@ The core monorepo for **MCX** — a domain-specific language (DSL) for building 
 <p>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
-  <img src="https://img.shields.io/badge/pnpm-11-F69220?style=for-the-badge&logo=pnpm&logoColor=white" alt="pnpm">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
   <img src="https://img.shields.io/badge/MCBE-Addon-7C3AED?style=for-the-badge" alt="MCBE Addon">
 </p>
 
@@ -19,11 +19,11 @@ The core monorepo for **MCX** — a domain-specific language (DSL) for building 
 
 ## Other README Versions
 
-| Language | Link |
-|----------|------|
-| 中文 | [./docs/README.zh.md](./docs/README.zh.md) |
-| 한국어 | [./docs/README.ko.md](./docs/README.ko.md) |
-| 日本語 | [./docs/README.ja.md](./docs/README.ja.md) |
+| Language | Link                                       |
+| -------- | ------------------------------------------ |
+| 中文     | [./docs/README.zh.md](./docs/README.zh.md) |
+| 한국어   | [./docs/README.ko.md](./docs/README.ko.md) |
+| 日本語   | [./docs/README.ja.md](./docs/README.ja.md) |
 
 ## Introduction
 
@@ -47,13 +47,13 @@ The pipeline: **`.mcx` file → parser → AST → transform (Babel) → compile
 
 This is a pnpm workspace monorepo containing the following packages:
 
-| Package | Version | Description |
-|---------|---------|-------------|
-| [`@mbler/mcx-core`](./packages/core) | [![npm](https://img.shields.io/npm/v/@mbler/mcx-core.svg)](https://www.npmjs.com/package/@mbler/mcx-core) | The DSL compiler — parser, AST, transform pipeline, and Rollup/Rolldown plugins |
-| [`@mbler/mcx`](./packages/client) | [![npm](https://img.shields.io/npm/v/@mbler/mcx.svg)](https://www.npmjs.com/package/@mbler/mcx) | Runtime framework — `createApp`, `Event`, `ui`, `Utils` |
-| [`@mbler/mcx-types`](./packages/types) | [![npm](https://img.shields.io/npm/v/@mbler/mcx-types.svg)](https://www.npmjs.com/package/@mbler/mcx-types) | Shared TypeScript type declarations for MCBE JSON formats |
-| [`@mbler/mcx-component`](./packages/mcx-component) | [![npm](https://img.shields.io/npm/v/@mbler/mcx-component.svg)](https://www.npmjs.com/package/@mbler/mcx-component) | Component runtime classes (Item, Block, Entity, Image) used at compile time |
-| [`create-mbler`](./packages/create-mbler) | [![npm](https://img.shields.io/npm/v/create-mbler.svg)](https://www.npmjs.com/package/create-mbler) | CLI scaffolding tool for new mbler projects |
+| Package                                            | Version                                                                                                             | Description                                                                     |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| [`@mbler/mcx-core`](./packages/core)               | [![npm](https://img.shields.io/npm/v/@mbler/mcx-core.svg)](https://www.npmjs.com/package/@mbler/mcx-core)           | The DSL compiler — parser, AST, transform pipeline, and Rollup/Rolldown plugins |
+| [`@mbler/mcx`](./packages/client)                  | [![npm](https://img.shields.io/npm/v/@mbler/mcx.svg)](https://www.npmjs.com/package/@mbler/mcx)                     | Runtime framework — `createApp`, `Event`, `ui`, `Utils`                         |
+| [`@mbler/mcx-types`](./packages/types)             | [![npm](https://img.shields.io/npm/v/@mbler/mcx-types.svg)](https://www.npmjs.com/package/@mbler/mcx-types)         | Shared TypeScript type declarations for MCBE JSON formats                       |
+| [`@mbler/mcx-component`](./packages/mcx-component) | [![npm](https://img.shields.io/npm/v/@mbler/mcx-component.svg)](https://www.npmjs.com/package/@mbler/mcx-component) | Component runtime classes (Item, Block, Entity, Image) used at compile time     |
+| [`create-mbler`](./packages/create-mbler)          | [![npm](https://img.shields.io/npm/v/create-mbler.svg)](https://www.npmjs.com/package/create-mbler)                 | CLI scaffolding tool for new mbler projects                                     |
 
 ### Monorepo Structure
 
@@ -170,17 +170,17 @@ For full documentation and tutorials, visit the **[Docs](https://mbler-docs.ruan
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Language | TypeScript (strict mode) |
-| Package manager | pnpm 11 |
-| Build | Rolldown |
-| Bundler plugins | Rollup / Rolldown plugin for `.mcx` files |
-| AST | Babel (`@babel/parser`, `@babel/generator`, `@babel/types`) |
-| Type system | `@volar/language-core` for language service |
-| Testing | Vitest |
-| Linting | ESLint + Prettier |
-| CI | GitHub Actions |
+| Layer           | Technology                                                  |
+| --------------- | ----------------------------------------------------------- |
+| Language        | TypeScript (strict mode)                                    |
+| Package manager | pnpm 11                                                     |
+| Build           | Rolldown                                                    |
+| Bundler plugins | Rollup / Rolldown plugin for `.mcx` files                   |
+| AST             | Babel (`@babel/parser`, `@babel/generator`, `@babel/types`) |
+| Type system     | `@volar/language-core` for language service                 |
+| Testing         | Vitest                                                      |
+| Linting         | ESLint + Prettier                                           |
+| CI              | GitHub Actions                                              |
 
 ## Development
 

@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-core",
-  "version": "0.1.2-rc.10",
+  "version": "0.1.2-rc.11",
   "description": "a DSL compiler of mcx",
   "main": "dist/index.js",
   "scripts": {
@@ -36,6 +36,8 @@
     "@mbler/mcx-component": "workspace:*",
     "@mbler/mcx-types": "workspace:*",
     "@volar/language-core": "^2.4.28",
+    "@vue/compiler-core": "^3.5.39",
+    "@vue/compiler-sfc": "^3.5.39",
     "magic-string": "0.30.21",
     "typescript": "5.9.3"
   },

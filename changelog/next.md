@@ -2,6 +2,10 @@
 
 This changelog tracks changes committed after the v0.0.1 release tag.
 
+### 2026-07-02
+
+- **refactor(core)**: Replaced custom XML parser (`Tokenizer`/`Lexer`/`Parser` in `ast/tag.ts`) with `@vue/compiler-core`'s `baseParse()`; added `@vue/compiler-core` and `@vue/compiler-sfc` as dependencies (`532 lines → 220 lines`)
+
 ### 2026-05-26 — 2026-05-31
 
 - **wip**: `setIcon(PNGImageComponent)` — ItemComponent integration with filesystem (`ef937db`)

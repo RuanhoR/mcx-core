@@ -124,6 +124,18 @@ describe('compileMCXFn', () => {
     );
     expect(result.strLoc.script).toContain("console.log('hello')");
   });
+
+  it('should parse multi-line Event content', () => {
+    const result = MCX.compiler.compileMCXFn(
+      '<script>x</script>\n<Event @after>\nitemUse = onUseItem\nentityHurt = onEntityHurt\nprojectileHitBlock = onProjectileHitBlock\n</Event>',
+    );
+    expect(Object.keys(result.strLoc.Event.subscribe)).toHaveLength(3);
+    expect(result.strLoc.Event.subscribe.itemUse).toBe('onUseItem');
+    expect(result.strLoc.Event.subscribe.entityHurt).toBe('onEntityHurt');
+    expect(result.strLoc.Event.subscribe.projectileHitBlock).toBe(
+      'onProjectileHitBlock',
+    );
+  });
 });
 
 describe('transform', () => {

@@ -45,7 +45,10 @@ export default class McxAst {
   }
 
   parseAST(): ParsedTagNode[] {
-    const ast: RootNode = baseParse(this.text, { comments: true });
+    const ast: RootNode = baseParse(this.text, {
+      comments: true,
+      whitespace: 'preserve',
+    });
     const result: ParsedTagNode[] = [];
     for (const child of ast.children) {
       const node = this.convertTemplateChild(child);

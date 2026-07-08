@@ -31,7 +31,7 @@
     "rolldown-plugin-dts": "0.25.2"
   },
   "scripts": {
-    "build": "rolldown -c && node -e \"require('fs').rmSync('./dist/_tmp',{recursive:true,force:true})\"",
+    "build": "rolldown -c",
     "dev": "rolldown -c -w",
     "lint": "eslint src --ext .js,.ts",
     "lint:fix": "eslint src --ext .js,.ts --fix",
@@ -41,8 +41,11 @@
     "create-mbler": "./bin/create-mbler.js"
   },
   "exports": {
-    "./cli": "./bin/cli.js",
-    ".": "./dist/main.mjs"
+    ".": {
+      "import": "./dist/main.js",
+      "require": "./dist/main.js",
+      "types": "./dist/main.d.ts"
+    }
   },
   "main": "./dist/main.js"
 }

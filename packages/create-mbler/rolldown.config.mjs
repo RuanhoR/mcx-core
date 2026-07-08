@@ -6,7 +6,7 @@ export default defineConfig({
   input: path.resolve('src/main.ts'),
   output: {
     dir: './dist',
-    entryFileNames: 'main.mjs',
+    entryFileNames: '[name].js',
     format: 'esm',
   },
   external: ['inquirer', 'commander'],

@@ -36,7 +36,11 @@ describe('Utils.TypeVerify', () => {
 describe('Utils.AbsoluteJoin', () => {
   it('should join relative path with base', () => {
     const result = Utils.AbsoluteJoin('/base', './relative/file.ts');
-    expect(result).toBe('/base/relative/file.ts');
+    expect(result).toBe(
+      process.platform === 'win32'
+        ? '\\base\\relative\\file.ts'
+        : '/base/relative/file.ts',
+    );
   });
 
   it('should return absolute path as-is', () => {

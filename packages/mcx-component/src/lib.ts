@@ -3,11 +3,13 @@ import { extname } from 'node:path';
 import { BlockComponent } from './components/block';
 import { EntityComponent } from './components/entity';
 import { ItemComponent } from './components/item';
+import { RecipeComponent } from './components/recipe';
 
 const lib = {
   item: ItemComponent,
   entity: EntityComponent,
   block: BlockComponent,
+  recipe: RecipeComponent,
 };
 
 class ImageComponent {
@@ -60,6 +62,7 @@ export {
   ItemComponent,
   BlockComponent,
   EntityComponent,
+  RecipeComponent,
   PNGImageComponent,
   JPGImageComponent,
   SVGImageComponent,

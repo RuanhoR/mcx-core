@@ -24,7 +24,7 @@ class EntityComponent {
     };
     if (
       typeof this.#opt.format == 'string' &&
-      /\d+\.\d+\.\d+/.test(this.#opt.format)
+      /^\d+\.\d+\.\d+$/.test(this.#opt.format)
     ) {
       result['format_version'] = this.#opt.format;
     } else {
@@ -32,7 +32,7 @@ class EntityComponent {
     }
     if (
       typeof this.#opt.id == 'string' &&
-      /[a-zA-Z0-9_]:[a-zA-Z0-9_]/.test(this.#opt.id)
+      /^[a-zA-Z0-9_\/\.-]+:[a-zA-Z0-9_\/\.-]+$/.test(this.#opt.id)
     ) {
       result['minecraft:entity'].description.identifier = this.#opt.id;
     } else {
@@ -203,7 +203,7 @@ class EntityComponent {
             addriderConfig.spawn_event = components.addrider.spawn_event;
           }
 
-          ApplyComponents['addrider'] = addriderConfig;
+          ApplyComponents['minecraft:addrider'] = addriderConfig;
         }
         if (components['minecraft:admire_item']) {
           const admireItemConfig = components['minecraft:admire_item'];
@@ -1546,7 +1546,7 @@ class EntityComponent {
   public setId(newValue: string): void {
     if (
       typeof newValue == 'string' &&
-      /[a-zA-Z0-9_]:[a-zA-Z0-9_]/.test(newValue)
+      /^[a-zA-Z0-9_\/\.-]+:[a-zA-Z0-9_\/\.-]+$/.test(newValue)
     ) {
       this.#opt.id = newValue;
     } else {
@@ -1555,7 +1555,7 @@ class EntityComponent {
   }
 
   public setFormat(newValue: string): void {
-    if (typeof newValue == 'string' && /\d.\d.\d/.test(newValue)) {
+    if (typeof newValue == 'string' && /^\d+\.\d+\.\d+$/.test(newValue)) {
       this.#opt.format = newValue;
     } else {
       throw new Error('[set error]: format: type error or invalid format');

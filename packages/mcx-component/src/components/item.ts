@@ -68,13 +68,19 @@ class ItemComponent {
       if (components.block_placer) {
         // Validate format version for block_placer (requires 1.21.50+)
         const formatParts = this.#opt.format.split('.');
-        const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
-        const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
+        const major = parseInt(formatParts[0]!);
+        const minor = parseInt(formatParts[1]!);
+        const patch = parseInt(formatParts[2] || '0');
 
-        if (
-          formatVersion < 1.21 ||
-          (formatVersion === 1.21 && patchVersion < 50)
-        ) {
+        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+          if (major > reqMajor) return true;
+          if (major < reqMajor) return false;
+          if (minor > reqMinor) return true;
+          if (minor < reqMinor) return false;
+          return patch >= reqPatch;
+        }
+
+        if (!isVersionGE(1, 21, 50)) {
           throw new Error(
             '[compile component]: block_placer component requires format version 1.21.50 or higher',
           );
@@ -136,13 +142,19 @@ class ItemComponent {
       if (components.compostable) {
         // Validate format version for compostable (requires 1.21.60+)
         const formatParts = this.#opt.format.split('.');
-        const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
-        const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
+        const major = parseInt(formatParts[0]!);
+        const minor = parseInt(formatParts[1]!);
+        const patch = parseInt(formatParts[2] || '0');
 
-        if (
-          formatVersion < 1.21 ||
-          (formatVersion === 1.21 && patchVersion < 60)
-        ) {
+        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+          if (major > reqMajor) return true;
+          if (major < reqMajor) return false;
+          if (minor > reqMinor) return true;
+          if (minor < reqMinor) return false;
+          return patch >= reqPatch;
+        }
+
+        if (!isVersionGE(1, 21, 60)) {
           throw new Error(
             '[compile component]: compostable component requires format version 1.21.60 or higher',
           );
@@ -173,13 +185,19 @@ class ItemComponent {
       if (components.bundle_interaction) {
         // Validate format version for bundle_interaction (requires 1.21.40+)
         const formatParts = this.#opt.format.split('.');
-        const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
-        const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
+        const major = parseInt(formatParts[0]!);
+        const minor = parseInt(formatParts[1]!);
+        const patch = parseInt(formatParts[2] || '0');
 
-        if (
-          formatVersion < 1.21 ||
-          (formatVersion === 1.21 && patchVersion < 40)
-        ) {
+        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+          if (major > reqMajor) return true;
+          if (major < reqMajor) return false;
+          if (minor > reqMinor) return true;
+          if (minor < reqMinor) return false;
+          return patch >= reqPatch;
+        }
+
+        if (!isVersionGE(1, 21, 40)) {
           throw new Error(
             '[compile component]: bundle_interaction component requires format version 1.21.40 or higher',
           );
@@ -216,13 +234,19 @@ class ItemComponent {
       if (components.storage_item) {
         // Validate format version for storage_item (requires 1.21.40+)
         const formatParts = this.#opt.format.split('.');
-        const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
-        const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
+        const major = parseInt(formatParts[0]!);
+        const minor = parseInt(formatParts[1]!);
+        const patch = parseInt(formatParts[2] || '0');
 
-        if (
-          formatVersion < 1.21 ||
-          (formatVersion === 1.21 && patchVersion < 40)
-        ) {
+        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+          if (major > reqMajor) return true;
+          if (major < reqMajor) return false;
+          if (minor > reqMinor) return true;
+          if (minor < reqMinor) return false;
+          return patch >= reqPatch;
+        }
+
+        if (!isVersionGE(1, 21, 40)) {
           throw new Error(
             '[compile component]: storage_item component requires format version 1.21.40 or higher',
           );
@@ -395,13 +419,19 @@ class ItemComponent {
       if (components.durability_sensor) {
         // Validate format version for durability_sensor (requires 1.21.50+)
         const formatParts = this.#opt.format.split('.');
-        const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
-        const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
+        const major = parseInt(formatParts[0]!);
+        const minor = parseInt(formatParts[1]!);
+        const patch = parseInt(formatParts[2] || '0');
 
-        if (
-          formatVersion < 1.21 ||
-          (formatVersion === 1.21 && patchVersion < 50)
-        ) {
+        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+          if (major > reqMajor) return true;
+          if (major < reqMajor) return false;
+          if (minor > reqMinor) return true;
+          if (minor < reqMinor) return false;
+          return patch >= reqPatch;
+        }
+
+        if (!isVersionGE(1, 21, 50)) {
           throw new Error(
             '[compile component]: durability_sensor component requires format version 1.21.50 or higher',
           );
@@ -509,13 +539,19 @@ class ItemComponent {
       if (components.dyeable) {
         // Validate format version for dyeable (requires 1.21.30+)
         const formatParts = this.#opt.format.split('.');
-        const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
-        const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
+        const major = parseInt(formatParts[0]!);
+        const minor = parseInt(formatParts[1]!);
+        const patch = parseInt(formatParts[2] || '0');
 
-        if (
-          formatVersion < 1.21 ||
-          (formatVersion === 1.21 && patchVersion < 30)
-        ) {
+        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+          if (major > reqMajor) return true;
+          if (major < reqMajor) return false;
+          if (minor > reqMinor) return true;
+          if (minor < reqMinor) return false;
+          return patch >= reqPatch;
+        }
+
+        if (!isVersionGE(1, 21, 30)) {
           throw new Error(
             '[compile component]: dyeable component requires format version 1.21.30 or higher',
           );
@@ -799,12 +835,19 @@ class ItemComponent {
       if (entityPlacerConfig) {
         // Check if durability component is defined (if needed for format version validation)
         const formatParts = this.#opt.format.split('.');
-        const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
+        const major = parseInt(formatParts[0]!);
+        const minor = parseInt(formatParts[1]!);
+        const patch = parseInt(formatParts[2] || '0');
 
-        if (
-          formatVersion < 1.19 ||
-          (formatVersion === 1.19 && parseInt(formatParts[2] || '0') < 80)
-        ) {
+        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+          if (major > reqMajor) return true;
+          if (major < reqMajor) return false;
+          if (minor > reqMinor) return true;
+          if (minor < reqMinor) return false;
+          return patch >= reqPatch;
+        }
+
+        if (!isVersionGE(1, 19, 80)) {
           console.warn(
             '[compile component]: entity_placer: monster spawner functionality requires format version 1.19.80 or higher',
           );
@@ -2715,6 +2758,28 @@ class ItemComponent {
           );
         }
       }
+
+      // minecraft:weapon
+      if (
+        (this.#opt.components as Record<string, unknown>)[
+          'minecraft:weapon'
+        ] !== undefined
+      ) {
+        ApplyComponents['minecraft:weapon'] = (
+          this.#opt.components as Record<string, unknown>
+        )['minecraft:weapon'];
+      }
+
+      // minecraft:knockback_resistance
+      if (
+        (this.#opt.components as Record<string, unknown>)[
+          'minecraft:knockback_resistance'
+        ] !== undefined
+      ) {
+        ApplyComponents['minecraft:knockback_resistance'] = (
+          this.#opt.components as Record<string, unknown>
+        )['minecraft:knockback_resistance'];
+      }
     }
     return result;
   }
@@ -4412,10 +4477,19 @@ class ItemComponent {
 
     // Validate format version for seed component (requires 1.10.0+)
     const formatParts = this.#opt.format.split('.');
-    const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
-    const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
+    const major = parseInt(formatParts[0]!);
+    const minor = parseInt(formatParts[1]!);
+    const patch = parseInt(formatParts[2] || '0');
 
-    if (formatVersion < 1.1 || (formatVersion === 1.1 && patchVersion < 0)) {
+    function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+      if (major > reqMajor) return true;
+      if (major < reqMajor) return false;
+      if (minor > reqMinor) return true;
+      if (minor < reqMinor) return false;
+      return patch >= reqPatch;
+    }
+
+    if (!isVersionGE(1, 10, 0)) {
       throw new Error(
         '[set error]: seed: component requires format version 1.10.0 or higher',
       );
@@ -4589,13 +4663,19 @@ class ItemComponent {
 
     // Validate format version for shooter component
     const formatParts = this.#opt.format.split('.');
-    const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
-    const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
+    const major = parseInt(formatParts[0]!);
+    const minor = parseInt(formatParts[1]!);
+    const patch = parseInt(formatParts[2] || '0');
 
-    if (
-      formatVersion < 1.16 ||
-      (formatVersion === 1.16 && patchVersion < 100)
-    ) {
+    function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+      if (major > reqMajor) return true;
+      if (major < reqMajor) return false;
+      if (minor > reqMinor) return true;
+      if (minor < reqMinor) return false;
+      return patch >= reqPatch;
+    }
+
+    if (!isVersionGE(1, 16, 100)) {
       throw new Error(
         '[set error]: shooter: component requires format version 1.16.100 or higher',
       );
@@ -4764,10 +4844,19 @@ class ItemComponent {
   public setStorageWeightModifier(config: { weight_in_storage_item: number }) {
     // Validate format version for storage_weight_modifier component
     const formatParts = this.#opt.format.split('.');
-    const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
-    const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
+    const major = parseInt(formatParts[0]!);
+    const minor = parseInt(formatParts[1]!);
+    const patch = parseInt(formatParts[2] || '0');
 
-    if (formatVersion < 1.21 || (formatVersion === 1.21 && patchVersion < 40)) {
+    function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+      if (major > reqMajor) return true;
+      if (major < reqMajor) return false;
+      if (minor > reqMinor) return true;
+      if (minor < reqMinor) return false;
+      return patch >= reqPatch;
+    }
+
+    if (!isVersionGE(1, 21, 40)) {
       throw new Error(
         '[set error]: storage_weight_modifier: component requires format version 1.21.40 or higher',
       );
@@ -4809,10 +4898,19 @@ class ItemComponent {
   public setStorageWeightLimit(config: { storage_capacity_per_slot: number }) {
     // Validate format version for storage_weight_limit component
     const formatParts = this.#opt.format.split('.');
-    const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
-    const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
+    const major = parseInt(formatParts[0]!);
+    const minor = parseInt(formatParts[1]!);
+    const patch = parseInt(formatParts[2] || '0');
 
-    if (formatVersion < 1.21 || (formatVersion === 1.21 && patchVersion < 40)) {
+    function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+      if (major > reqMajor) return true;
+      if (major < reqMajor) return false;
+      if (minor > reqMinor) return true;
+      if (minor < reqMinor) return false;
+      return patch >= reqPatch;
+    }
+
+    if (!isVersionGE(1, 21, 40)) {
       throw new Error(
         '[set error]: storage_weight_limit: component requires format version 1.21.40 or higher',
       );
@@ -4861,10 +4959,19 @@ class ItemComponent {
   }) {
     // Validate format version for storage_item component
     const formatParts = this.#opt.format.split('.');
-    const formatVersion = parseFloat(formatParts[1] + '.' + formatParts[2]);
-    const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
+    const major = parseInt(formatParts[0]!);
+    const minor = parseInt(formatParts[1]!);
+    const patch = parseInt(formatParts[2] || '0');
 
-    if (formatVersion < 1.21 || (formatVersion === 1.21 && patchVersion < 40)) {
+    function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+      if (major > reqMajor) return true;
+      if (major < reqMajor) return false;
+      if (minor > reqMinor) return true;
+      if (minor < reqMinor) return false;
+      return patch >= reqPatch;
+    }
+
+    if (!isVersionGE(1, 21, 40)) {
       throw new Error(
         '[set error]: storage_item: component requires format version 1.21.40 or higher',
       );
@@ -5257,6 +5364,26 @@ class ItemComponent {
     }
   }
 
+  public setDamage(value: number) {
+    this.#opt.components.damage = value;
+  }
+
+  public setCanDestroyInCreative(value: boolean) {
+    this.#opt.components.canDestroyInCreative = value;
+  }
+
+  public setSwingSounds(config: { sound: string } | { attack_critical_hit?: string; attack_hit?: string; attack_miss?: string }) {
+    this.#opt.components['minecraft:swing_sounds'] = config;
+  }
+
+  public setWeapon(config: {}) {
+    this.#opt.components['minecraft:weapon'] = config;
+  }
+
+  public setKnockbackResistance(config: { value?: number; protection?: number }) {
+    this.#opt.components['minecraft:knockback_resistance'] = config;
+  }
+
   public getIcon() {
     return this.#opt.components.icon;
   }
@@ -5395,6 +5522,12 @@ class ItemComponent {
   }
   public getSwingSounds() {
     return this.#opt.components['minecraft:swing_sounds'];
+  }
+  public getWeapon() {
+    return (this.#opt.components as Record<string, unknown>)['minecraft:weapon'];
+  }
+  public getKnockbackResistance() {
+    return (this.#opt.components as Record<string, unknown>)['minecraft:knockback_resistance'];
   }
 }
 export { ItemComponent };

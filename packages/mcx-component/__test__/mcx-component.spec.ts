@@ -3,6 +3,7 @@ import {
   ItemComponent,
   BlockComponent,
   EntityComponent,
+  RecipeComponent,
   ParticleTypeEnum,
   SoundEventEnum,
   EnchantableSlotEnum,
@@ -183,5 +184,142 @@ describe('compareVar', () => {
 
   it('should handle null/undefined inputs', () => {
     expect(() => compareVar(null as unknown as string, '1.0.0')).not.toThrow();
+  });
+});
+
+describe('RecipeComponent', () => {
+  it('should create shaped recipe JSON', () => {
+    const recipe = new RecipeComponent({
+      format: '1.20.0',
+      id: 'test:iron_sword',
+      type: 'shaped',
+      tags: ['crafting_table'],
+      pattern: ['X', 'X', '#'],
+      key: { X: { item: 'minecraft:iron_ingot' }, '#': { item: 'minecraft:stick' } },
+      result: { item: 'minecraft:iron_sword', count: 1 },
+    });
+    const json = recipe.toJSON();
+    expect(json.format_version).toBe('1.20.0');
+    expect(json['minecraft:recipe_shaped']).toBeDefined();
+    expect(json['minecraft:recipe_shaped'].description.identifier).toBe('test:iron_sword');
+    expect(json['minecraft:recipe_shaped'].pattern).toEqual(['X', 'X', '#']);
+  });
+
+  it('should create shapeless recipe JSON', () => {
+    const recipe = new RecipeComponent({
+      format: '1.20.0',
+      id: 'test:blaze_powder',
+      type: 'shapeless',
+      tags: ['crafting_table'],
+      ingredients: [{ item: 'minecraft:blaze_rod' }],
+      result: { item: 'minecraft:blaze_powder', count: 2 },
+    });
+    const json = recipe.toJSON();
+    expect(json['minecraft:recipe_shapeless']).toBeDefined();
+    expect(json['minecraft:recipe_shapeless'].ingredients).toHaveLength(1);
+  });
+
+  it('should create furnace recipe JSON', () => {
+    const recipe = new RecipeComponent({
+      format: '1.20.0',
+      id: 'test:smelt_ore',
+      type: 'furnace',
+      tags: ['furnace'],
+      input: { item: 'minecraft:iron_ore' },
+      output: 'minecraft:iron_ingot',
+    });
+    const json = recipe.toJSON();
+    expect(json['minecraft:recipe_furnace']).toBeDefined();
+    expect(json['minecraft:recipe_furnace'].output).toBe('minecraft:iron_ingot');
+  });
+
+  it('should create smithing_transform recipe JSON', () => {
+    const recipe = new RecipeComponent({
+      format: '1.20.0',
+      id: 'test:netherite_boots',
+      type: 'smithing_transform',
+      tags: ['smithing_table'],
+      template: 'minecraft:netherite_upgrade_smithing_template',
+      base: 'minecraft:diamond_boots',
+      addition: 'minecraft:netherite_ingot',
+      result: 'minecraft:netherite_boots',
+    });
+    const json = recipe.toJSON();
+    expect(json['minecraft:recipe_smithing_transform']).toBeDefined();
+    expect(json['minecraft:recipe_smithing_transform'].base).toBe('minecraft:diamond_boots');
+  });
+
+  it('should create smithing_trim recipe JSON', () => {
+    const recipe = new RecipeComponent({
+      format: '1.20.0',
+      id: 'test:trim',
+      type: 'smithing_trim',
+      tags: ['smithing_table'],
+      template: 'minecraft:jungle_temple_smithing_template',
+      base: 'minecraft:diamond_boots',
+      addition: 'minecraft:quartz',
+    });
+    const json = recipe.toJSON();
+    expect(json['minecraft:recipe_smithing_trim']).toBeDefined();
+  });
+
+  it('should create brewing_container recipe JSON', () => {
+    const recipe = new RecipeComponent({
+      format: '1.20.0',
+      id: 'test:brew_splash',
+      type: 'brewing_container',
+      tags: ['brewing_stand'],
+      input: 'minecraft:potion',
+      reagent: 'minecraft:gunpowder',
+      output: 'minecraft:splash_potion',
+    });
+    const json = recipe.toJSON();
+    expect(json['minecraft:recipe_brewing_container']).toBeDefined();
+  });
+
+  it('should create brewing_mix recipe JSON', () => {
+    const recipe = new RecipeComponent({
+      format: '1.20.0',
+      id: 'test:brew_strength',
+      type: 'brewing_mix',
+      tags: ['brewing_stand'],
+      input: 'minecraft:potion_type:awkward',
+      reagent: 'minecraft:blaze_powder',
+      output: 'minecraft:potion_type:strength',
+    });
+    const json = recipe.toJSON();
+    expect(json['minecraft:recipe_brewing_mix']).toBeDefined();
+  });
+
+  it('should use getters/setters', () => {
+    const recipe = new RecipeComponent({
+      format: '1.20.0',
+      id: 'test:recipe',
+      type: 'shaped',
+    });
+    expect(recipe.getFormat()).toBe('1.20.0');
+    expect(recipe.getId()).toBe('test:recipe');
+    expect(recipe.getType()).toBe('shaped');
+    recipe.setFormat('1.21.0');
+    recipe.setId('test:new_recipe');
+    recipe.setType('shapeless');
+    expect(recipe.getFormat()).toBe('1.21.0');
+    expect(recipe.getId()).toBe('test:new_recipe');
+    expect(recipe.getType()).toBe('shapeless');
+  });
+
+  it('should default format_version for smithing recipes', () => {
+    const recipe = new RecipeComponent({
+      format: '',
+      id: 'test:smith',
+      type: 'smithing_transform',
+      tags: ['smithing_table'],
+      template: 'minecraft:template',
+      base: 'minecraft:diamond_chestplate',
+      addition: 'minecraft:netherite_ingot',
+      result: 'minecraft:netherite_chestplate',
+    });
+    const json = recipe.toJSON();
+    expect(json.format_version).toBe('1.17');
   });
 });

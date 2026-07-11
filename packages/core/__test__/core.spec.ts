@@ -505,3 +505,151 @@ describe('AST - comment handling', () => {
     }
   });
 });
+
+describe('AST - position/location tracking', () => {
+  it('should have correct start positions for opening tag', () => {
+    const ast = new MCX.AST.tag('<div>Hello</div>');
+    const result = ast.parseAST();
+    const div = result[0]!;
+    expect(div.start.type).toBe('Tag');
+    expect(div.start.start.line).toBe(1);
+    expect(div.start.start.column).toBe(0);
+    expect(div.start.end.line).toBe(1);
+    expect(div.start.end.column).toBe(5);
+  });
+
+  it('should have correct end positions for closing tag', () => {
+    const ast = new MCX.AST.tag('<div>Hello</div>');
+    const result = ast.parseAST();
+    const div = result[0]!;
+    expect(div.end).not.toBeNull();
+    expect(div.end!.type).toBe('TagEnd');
+    expect(div.end!.start.line).toBe(1);
+    expect(div.end!.start.column).toBe(10);
+    expect(div.end!.end.line).toBe(1);
+    expect(div.end!.end.column).toBe(16);
+  });
+
+  it('should have correct loc start/end on ParsedTagNode', () => {
+    const ast = new MCX.AST.tag('<div>Hello</div>');
+    const result = ast.parseAST();
+    const div = result[0]!;
+    expect(div.loc.start.line).toBe(1);
+    expect(div.loc.start.column).toBeGreaterThan(0);
+    expect(div.loc.end.line).toBe(1);
+    expect(div.loc.end.column).toBeGreaterThan(div.loc.start.column);
+  });
+
+  it('should handle multi-line tag positions', () => {
+    const code = '<div>\n  Hello\n</div>';
+    const ast = new MCX.AST.tag(code);
+    const result = ast.parseAST();
+    const div = result[0]!;
+    expect(div.start.start.line).toBe(1);
+    expect(div.start.start.column).toBe(0);
+    expect(div.loc.start.line).toBe(1);
+    expect(div.loc.start.column).toBeGreaterThan(0);
+    expect(div.loc.end.line).toBe(3);
+    expect(div.end).not.toBeNull();
+    expect(div.end!.start.line).toBe(3);
+  });
+
+  it('should have correct relative positions for nested elements', () => {
+    const ast = new MCX.AST.tag('<div><span>text</span></div>');
+    const result = ast.parseAST();
+    const div = result[0]!;
+    const child = div.content[0]!;
+    if (child.type === 'TagNode') {
+      expect(child.name).toBe('span');
+      expect(child.loc.start.line).toBe(1);
+      expect(child.loc.start.column).toBeGreaterThan(div.loc.start.column);
+      expect(child.loc.end.column).toBeLessThan(div.loc.end.column);
+    } else {
+      expect(child.type).toBe('TagNode');
+    }
+  });
+
+  it('should handle content between tags', () => {
+    const ast = new MCX.AST.tag('<div>Hello</div>');
+    const result = ast.parseAST();
+    const div = result[0]!;
+    expect(div.content.length).toBeGreaterThanOrEqual(1);
+    const contentNode = div.content[0]!;
+    if (contentNode.type === 'TagContent') {
+      expect(contentNode.data).toBe('Hello');
+    } else {
+      expect(contentNode.type).toBe('TagContent');
+    }
+  });
+});
+
+describe('MCXCompileData - start data', () => {
+  it('should set Event.loc for Event @after tags', () => {
+    const result = MCX.compiler.compileMCXFn(
+      "<script> console.log('test') </script> <Event @after>PlayerJoin=test</Event>",
+    );
+    expect(result.strLoc.Event.loc.line).toBe(1);
+    expect(result.strLoc.Event.loc.column).toBeGreaterThan(0);
+  });
+
+  it('should set Event.loc for Event tick="5" tags', () => {
+    const result = MCX.compiler.compileMCXFn(
+      '<script>x</script> <Event tick="5">PlayerJoin=test</Event>',
+    );
+    expect(result.strLoc.Event.loc.line).toBe(1);
+    expect(result.strLoc.Event.loc.column).toBeGreaterThan(0);
+    expect(result.strLoc.Event.subscribe.PlayerJoin).toBe('test');
+  });
+
+  it('should track component locations', () => {
+    const result = MCX.compiler.compileMCXFn(
+      '<script>x</script> <Component><items><item id="a">a</item></items></Component>',
+    );
+    expect(result.strLoc.Component).toBeDefined();
+    const keys = Object.keys(result.strLoc.Component);
+    expect(keys.length).toBeGreaterThanOrEqual(1);
+    const compKey = keys.find(k => k.startsWith('items/'));
+    expect(compKey).toBeDefined();
+    const comp = result.strLoc.Component[compKey!]!;
+    expect(comp.type).toBe('item');
+    expect(comp.loc.line).toBe(1);
+    expect(comp.loc.column).toBeGreaterThan(0);
+  });
+
+  it('should correctly extract Event subscribe data', () => {
+    const result = MCX.compiler.compileMCXFn(
+      '<script>x</script> <Event @after>PlayerJoin=test</Event>',
+    );
+    expect(result.strLoc.Event.subscribe.PlayerJoin).toBe('test');
+    expect(result.strLoc.Event.on).toBe('after');
+    expect(result.strLoc.Event.isLoad).toBe(true);
+  });
+
+  it('should detect component type (item vs block vs entity)', () => {
+    const itemResult = MCX.compiler.compileMCXFn(
+      '<script>x</script> <Component><items><item id="a">a</item></items></Component>',
+    );
+    const itemComp = Object.values(itemResult.strLoc.Component)[0]!;
+    expect(itemComp.type).toBe('item');
+
+    const blockResult = MCX.compiler.compileMCXFn(
+      '<script>x</script> <Component><blocks><block id="b">b</block></blocks></Component>',
+    );
+    const blockComp = Object.values(blockResult.strLoc.Component)[0]!;
+    expect(blockComp.type).toBe('block');
+
+    const entityResult = MCX.compiler.compileMCXFn(
+      '<script>x</script> <Component><entities><entity id="c">c</entity></entities></Component>',
+    );
+    const entityComp = Object.values(entityResult.strLoc.Component)[0]!;
+    expect(entityComp.type).toBe('entity');
+  });
+
+  it('should preserve whitespace in script content', () => {
+    const result = MCX.compiler.compileMCXFn(
+      "<script> console.log('test') </script>",
+    );
+    expect(result.strLoc.script).toContain("console.log('test')");
+    expect(result.strLoc.script).toBe(" console.log('test') ");
+  });
+});

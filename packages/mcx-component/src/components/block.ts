@@ -652,7 +652,7 @@ class BlockComponent {
     };
     if (
       typeof this.#opt.format == 'string' &&
-      /\d+\.\d+\.\d+/.test(this.#opt.format)
+      /^\d+\.\d+\.\d+$/.test(this.#opt.format)
     ) {
       result['format_version'] = this.#opt.format;
     } else {
@@ -660,7 +660,7 @@ class BlockComponent {
     }
     if (
       typeof this.#opt.id == 'string' &&
-      /[a-zA-Z0-9_]:[a-zA-Z0-9_]/.test(this.#opt.id)
+      /^[a-zA-Z0-9_\/\.-]+:[a-zA-Z0-9_\/\.-]+$/.test(this.#opt.id)
     ) {
       result['minecraft:block'].description.identifier = this.#opt.id;
     } else {

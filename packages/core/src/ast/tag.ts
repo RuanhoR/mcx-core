@@ -20,19 +20,26 @@ import {
   type SimpleExpressionNode,
 } from '@vue/compiler-core';
 
-function createTagToken(): TagToken {
-  return {
-    data: '',
-    type: 'Tag',
-    start: { line: 0, column: 0 },
-    end: { line: 0, column: 0 },
-  };
-}
-
 function getExpressionContent(
   expr: { content?: string } | undefined,
 ): string {
   return expr?.content ?? 'true';
+}
+
+/** Convert absolute character offset in source to MCX position (line: 1-indexed, column: 0-indexed) */
+function absOffsetToMCXPos(source: string, absOffset: number): { line: number; column: number } {
+  let line = 1;
+  let col = 0;
+  const len = Math.min(absOffset, source.length);
+  for (let i = 0; i < len; i++) {
+    if (source.charCodeAt(i) === 10) {
+      line++;
+      col = 0;
+    } else {
+      col++;
+    }
+  }
+  return { line, column: col };
 }
 
 export default class McxAst {
@@ -115,12 +122,64 @@ export default class McxAst {
       }
     }
     const children = this.convertVueChildren(node.children);
+
+    const fullSource = this.text;
+    const baseOffset = node.loc.start.offset;
+    const elementSource = node.loc.source;
+
+    // Find the end of the opening tag (first unquoted >)
+    let openEnd = elementSource.length;
+    let inQuote: string | null = null;
+    for (let i = 0; i < elementSource.length; i++) {
+      const c = elementSource[i];
+      if (inQuote) {
+        if (c === '\\') { i++; continue; }
+        if (c === inQuote) inQuote = null;
+      } else if (c === '"' || c === "'") {
+        inQuote = c;
+      } else if (c === '>') {
+        openEnd = i + 1;
+        break;
+      }
+    }
+
+    // Find the start of the closing tag (last </)
+    let closeStart = -1;
+    if (!node.isSelfClosing) {
+      for (let i = elementSource.length - 2; i >= 0; i--) {
+        if (elementSource[i] === '<' && elementSource[i + 1] === '/') {
+          closeStart = i;
+          break;
+        }
+      }
+    }
+
+    const openTagStartAbs = baseOffset;
+    const openTagEndAbs = baseOffset + openEnd;
+
+    let endToken: TagEndToken | null = null;
+    if (closeStart >= 0) {
+      const closeTagStartAbs = baseOffset + closeStart;
+      const closeTagEndAbs = baseOffset + elementSource.length;
+      endToken = {
+        data: elementSource.slice(closeStart),
+        type: 'TagEnd',
+        start: absOffsetToMCXPos(fullSource, closeTagStartAbs),
+        end: absOffsetToMCXPos(fullSource, closeTagEndAbs),
+      };
+    }
+
     return {
-      start: createTagToken(),
+      start: {
+        data: elementSource.slice(0, openEnd),
+        type: 'Tag',
+        start: absOffsetToMCXPos(fullSource, openTagStartAbs),
+        end: absOffsetToMCXPos(fullSource, openTagEndAbs),
+      },
       name: node.tag,
       arr: attrs,
       content: children,
-      end: null,
+      end: endToken,
       loc: {
         start: {
           line: node.loc.start.line,

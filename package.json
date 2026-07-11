@@ -27,7 +27,7 @@
     "test": "vitest run",
     "build": "pnpm -r build",
     "check": "pnpm test && pnpm lint:packages && pnpm -r exec tsc --noEmit",
-    "prepare": "simple-git-hooks && "
+    "prepare": "simple-git-hooks"
   },
   "workspaces": [
     "packages/client",

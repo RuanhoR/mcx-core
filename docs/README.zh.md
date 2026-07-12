@@ -1,6 +1,6 @@
 # mcx-core
 
-MCX DSL的核心。  
+MCX DSL的核心。
 包:
 - client
 - types
@@ -17,7 +17,7 @@ MCX DSL的核心。
 
 ## MCX 示例
 
-以下是四种 MCX 文件类型的完整示例：Component（组件）、Event（事件）、UI（界面）和 App（应用）。
+以下是四种 MCX 文件类型的完整示例：Component（组件）、Event（事件）、Form（表单）/ Ui（界面）和 App（应用）。
 
 ### 1. 定义物品组件 (`items/custom_sword.mcx`)
 
@@ -57,15 +57,15 @@ export function onPlayerJoin(event: PlayerJoinAfterEvent) {
 </script>
 ```
 
-### 3. 构建 UI 表单 (`ui/greeting.mcx`)
+### 3. 构建旧式表单 (`ui/greeting.mcx`)
+
+使用 `<Form>` 标签构建传统 FormData 表单（ModalFormData / ActionFormData / MessageFormData）：
 
 ```xml
-<Ui>
-<form title="欢迎" iconPath="textures/ui/icon_set_1.png">
+<Form>
   <label>你好，{{ playerName }}！</label>
   <button click="handleClose">关闭</button>
-</form>
-</Ui>
+</Form>
 <script lang="ts">
 export const prop = ["playerName"];
 
@@ -75,7 +75,49 @@ export function handleClose() {
 </script>
 ```
 
-### 4. 在 App 中整合 (`app.mcx`)
+### 4. 构建 CustomForm 界面 (`ui/settings.mcx`)
+
+使用 `<Ui>` 标签构建新的 CustomForm 界面（支持 Observable 响应式绑定）：
+
+```xml
+<Ui setup>
+  <title>设置</title>
+  <input>{{ name }}</input>
+  <toggle>{{ enabled }}</toggle>
+  <button click="handleSave">保存</button>
+</Ui>
+<script>
+import { onMounted, onStartup } from "@mbler/mcx";
+
+const name = defineProp('玩家')
+const enabled = defineProp(true)
+
+onStartup(() => {
+  // 启动时执行一次
+  console.log('设置界面已加载')
+})
+
+onMounted(() => {
+  // 每次显示表单时执行
+  console.log('表单已打开')
+})
+
+function handleSave() {
+  // name.getData() 获取当前值
+}
+</script>
+```
+
+**Setup 模式**（`<Ui setup>` 或 `<Form setup>`）：
+- 使用 `defineProp` 声明 prop，自动设置默认值
+- 所有顶层变量和函数自动收集到 setup 上下文
+- 无需手动 `export` 声明
+
+**传统模式**（`<Ui>` 或 `<Form>`，无 setup）：
+- 需要手动 `export const prop = [...]` 声明 prop
+- 需要手动 `export const setup = { ... }` 导出 setup 对象
+
+### 5. 在 App 中整合 (`app.mcx`)
 
 ```xml
 <script lang="ts">
@@ -98,8 +140,12 @@ MCX是MCBE附加组件的DSL。它与官方mcbe无关。它可以让你以简单
 
 ## 功能
 - 组件: MCX可以快速生成mcbe组件JSON
-- UI: MCX可以简单地构建UI
+- 表单: `<Form>` 构建传统 FormData（ModalFormData / ActionFormData / MessageFormData）
+- 界面: `<Ui>` 构建 CustomForm（DDUI，支持 Observable 响应式绑定）
 - 应用: MCX可以让你使用这些功能
+- Setup 系统: `<Form setup>` / `<Ui setup>` 自动收集声明
+- 生命周期钩子: `onStartup`（一次性）/ `onMounted`（每次显示）
+- `defineProp` 宏: 编译期 prop 声明
 - MCX客户端可以让你运行你的应用
 - MCX编译器核心和[mbler](https://github.com/RuanhoR/mbler)可以让你构建应用
 - 支持I18n

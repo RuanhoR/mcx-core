@@ -7,7 +7,11 @@ import type {
   MessageFormData,
   MessageFormResponse,
   ModalFormResponse,
+  CustomForm,
+  DataDrivenScreenClosedReason,
 } from '@minecraft/server-ui';
+
+// ---- Old FormData types (unchanged) ----
 type UnresolvedParams = MCXUIOpt['layout'][number]['params'];
 type UnresolvedLayoutItem = Omit<MCXUIOpt['layout'][number], 'params'> & {
   params: {
@@ -58,64 +62,89 @@ interface ResolvedLayoutItem {
     useProp: string;
   };
 }
+
+type SetupRecord = Record<string, unknown>;
+
 export class ui implements typesPkg.ui {
   private _mcUI: typeof import('@minecraft/server-ui');
   private _mcxSrcFn: (
     ctx: MCXCtx & { $prop?: Record<string, unknown> },
-  ) => Record<string, unknown>;
-  private _srcResult: Record<string, unknown> = {};
+  ) => SetupRecord;
+  private _srcResult: SetupRecord = {};
+  private _startupDone = false;
+
+  // Form mode (legacy FormData)
   private _UI: MCXUIOpt['use'];
   private _prop: string[];
   private _layout: ParsedUIOption['layout'];
-  private _uiType!: 'modal' | 'action' | 'message';
+  private _uiType: 'modal' | 'action' | 'message' | null = null;
+  private _mode: 'form' | 'ui';
+
+  // Ui mode (CustomForm)
+  private _buildFn:
+    | ((player: Player, setup: SetupRecord) => CustomForm)
+    | null = null;
+
   constructor(
-    UIConfig: MCXUIOpt,
+    UIConfig: MCXUIOpt & {
+      build?: (player: Player, setup: SetupRecord) => CustomForm;
+    },
     mcxSrcFn: (
       ctx: MCXCtx & { $prop?: Record<string, unknown> },
-    ) => Record<string, unknown>,
+    ) => SetupRecord,
   ) {
     this._mcxSrcFn = mcxSrcFn;
     this._srcResult = mcxSrcFn({ $prop: {} });
-    this._UI = UIConfig.use;
-    if (typeof this._srcResult !== 'object')
-      throw new Error('[mcx runtime]: can;t load mcx setup');
-    this._prop = (this._srcResult.prop as string[] | undefined) || [];
-    if (!Array.isArray(this._prop))
-      throw new Error("[mcx runtime]: can't load prop: invalid prop");
+    this._mcUI = UIConfig.UI;
 
     if (!UIConfig.UI) {
       throw new Error('[mcx runtime]: UI module is required');
     }
-    this._mcUI = UIConfig.UI;
 
-    this._layout = UIConfig.layout.map(
-      (i): ParsedUIOption['layout'][number] => {
-        if (
-          i.type == 'button' &&
-          i.params.click &&
-          typeof i.params.click === 'string'
-        ) {
-          i.params.click = this._srcResult[i.params.click] as
-            | string
-            | { useProp: string };
-        }
-        if (typeof i.for === 'string') {
-          const match = i.for.match(/^(\w+)\s+in\s+(\w+)$/);
-          if (match) {
-            i.for = { variable: match[1]!, useProp: match[2]! };
-          } else {
-            throw new Error(
-              `[mcx runtime]: invalid for syntax "${i.for}", expected "variable in propName"`,
-            );
+    // Detect mode: build function = Ui (CustomForm), layout = Form (legacy)
+    if (UIConfig.build) {
+      this._mode = 'ui';
+      this._buildFn = UIConfig.build;
+    } else {
+      this._mode = 'form';
+      this._UI = UIConfig.use;
+      if (typeof this._srcResult !== 'object')
+        throw new Error('[mcx runtime]: cannot load mcx setup');
+      this._prop = (this._srcResult.prop as string[] | undefined) || [];
+      if (!Array.isArray(this._prop))
+        throw new Error("[mcx runtime]: can't load prop: invalid prop");
+
+      this._layout = (UIConfig.layout || []).map(
+        (i): ParsedUIOption['layout'][number] => {
+          if (
+            i.type == 'button' &&
+            i.params.click &&
+            typeof i.params.click === 'string'
+          ) {
+            i.params.click = this._srcResult[i.params.click] as
+              | string
+              | { useProp: string };
           }
-        }
-        if (typeof i.if === 'string') {
-          i.if = { useProp: i.if };
-        }
-        return i as unknown as ParsedUIOption['layout'][number];
-      },
-    );
+          if (typeof i.for === 'string') {
+            const match = i.for.match(/^(\w+)\s+in\s+(\w+)$/);
+            if (match) {
+              i.for = { variable: match[1]!, useProp: match[2]! };
+            } else {
+              throw new Error(
+                `[mcx runtime]: invalid for syntax "${i.for}", expected "variable in propName"`,
+              );
+            }
+          }
+          if (typeof i.if === 'string') {
+            i.if = { useProp: i.if };
+          }
+          return i as unknown as ParsedUIOption['layout'][number];
+        },
+      );
+    }
   }
+
+  // ---- Form mode (legacy) ----
   private _generateUI(layout: ResolvedLayoutItem[]) {
     const ui = new this._UI();
 
@@ -219,7 +248,11 @@ export class ui implements typesPkg.ui {
     }
     return [ui, clickEvent] as const;
   }
-  async show(player: Player, prop: Record<string, unknown>) {
+
+  private async _showForm(
+    player: Player,
+    prop: Record<string, unknown>,
+  ): Promise<void> {
     const srcResult = this._mcxSrcFn({ $prop: prop });
 
     const clickHandlers: Map<number, Function> = new Map();
@@ -244,7 +277,11 @@ export class ui implements typesPkg.ui {
     // expand for-loop items
     const expandedLayout: UnresolvedLayoutItem[] = [];
     for (const item of cLayout) {
-      if (item.for && typeof item.for !== 'string' && typeof item.for.useProp === 'string') {
+      if (
+        item.for &&
+        typeof item.for !== 'string' &&
+        typeof item.for.useProp === 'string'
+      ) {
         const arr = prop[item.for.useProp];
         if (!Array.isArray(arr)) {
           throw new Error(
@@ -255,7 +292,8 @@ export class ui implements typesPkg.ui {
         for (const element of arr) {
           const copy = JSON.parse(JSON.stringify(item)) as UnresolvedLayoutItem;
           if (typeof item.params.click === 'function') {
-            (copy.params as Record<string, unknown>).click = item.params.click;
+            (copy.params as Record<string, unknown>).click =
+              item.params.click;
           }
           if (
             typeof copy.content === 'object' &&
@@ -292,7 +330,6 @@ export class ui implements typesPkg.ui {
             }
           }
           delete copy.for;
-          // resolve if per copy
           if (
             copy.if &&
             typeof copy.if !== 'string' &&
@@ -374,8 +411,8 @@ export class ui implements typesPkg.ui {
     const _temp = this._generateUI(
       filteredLayout as unknown as ResolvedLayoutItem[],
     );
-    const ui = _temp[0];
-    const promise = ui.show(player);
+    const formUi = _temp[0];
+    const promise = formUi.show(player);
     const formResponse = await promise;
     if (formResponse.canceled) return;
 
@@ -396,4 +433,53 @@ export class ui implements typesPkg.ui {
       if (handler) handler(formResponse, player);
     }
   }
+
+  private async _showCustomForm(
+    player: Player,
+    prop: Record<string, unknown>,
+  ): Promise<DataDrivenScreenClosedReason | void> {
+    const setup = this._mcxSrcFn({ $prop: prop });
+
+    // onStartup — once
+    if (!this._startupDone) {
+      const startupFn = setup.__mcx_startup as (() => void) | undefined;
+      if (typeof startupFn === 'function') {
+        startupFn();
+      }
+      this._startupDone = true;
+    }
+
+    // onMounted — every show
+    const mountedFn = setup.__mcx_mounted as (() => void) | undefined;
+    if (typeof mountedFn === 'function') {
+      mountedFn();
+    }
+
+    if (!this._buildFn) {
+      throw new Error('[mcx runtime]: CustomForm build function not found');
+    }
+
+    const form = this._buildFn(player, setup);
+    return form.show();
+  }
+
+  async show(
+    player: Player,
+    prop?: Record<string, unknown>,
+  ): Promise<DataDrivenScreenClosedReason | void> {
+    const resolvedProp = prop || {};
+
+    if (this._mode === 'form') {
+      return this._showForm(player, resolvedProp);
+    }
+    return this._showCustomForm(player, resolvedProp);
+  }
+}
+
+export function showForm(
+  formMcx: typesPkg.MCXFile<'ui'>,
+  player: Player,
+  prop?: Record<string, unknown>,
+) {
+  return formMcx.app.ui.show(player, prop);
 }

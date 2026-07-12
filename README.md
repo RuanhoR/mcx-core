@@ -34,7 +34,11 @@ The pipeline: **`.mcx` file → parser → AST → transform (Babel) → compile
 ## Features
 
 - **Component MCX** — Generate MCBE component JSON (items, blocks, entities) fast and declaratively
-- **UI MCX** — Build in-game UI forms with a simple syntax
+- **Form MCX** (`<Form>`) — Build in-game forms using traditional FormData (ModalFormData / ActionFormData / MessageFormData)
+- **UI MCX** (`<Ui>`) — Build in-game CustomForm UIs with Observable reactive binding (DDUI)
+- **Setup system** — `<Form setup>` / `<Ui setup>` auto-collect declarations, no manual `export` needed
+- **`defineProp` macro** — Compile-time prop declarations with defaults
+- **Lifecycle hooks** — `onStartup` (once) and `onMounted` (per show) for setup logic
 - **Event MCX** — Subscribe to and handle game events cleanly
 - **App MCX** — Tie components, UI, and events together into a runnable app
 - **MCX Client** — Runtime framework (`createApp`, `Event`, `ui`, `Utils`) that runs your app in-game
@@ -115,17 +119,50 @@ export function onPlayerJoin(event: PlayerJoinAfterEvent) {
 </script>
 ```
 
-### 3. Build a UI Form (`ui/greeting.mcx`)
+### 3. Build a Legacy Form (`ui/greeting.mcx`)
+
+Use `<Form>` for traditional FormData (ModalFormData / ActionFormData / MessageFormData):
 
 ```vue
-<Ui>
+<Form>
   <label>{{ playerName }}!</label>
   <label>Hello</label>
   <button click="onClick">Close</button>
-</Ui>
+</Form>
 <script lang="ts">
 export function onClick() {
   // close the form
+}
+</script>
+```
+
+### 3b. Build a CustomForm (`ui/settings.mcx`)
+
+Use `<Ui>` for new CustomForm with Observable reactive binding:
+
+```vue
+<Ui setup>
+  <title>Settings</title>
+  <input>{{ name }}</input>
+  <toggle>{{ enabled }}</toggle>
+  <button click="handleSave">Save</button>
+</Ui>
+<script>
+import { onMounted, onStartup } from "@mbler/mcx";
+
+const name = defineProp('Player')
+const enabled = defineProp(true)
+
+onStartup(() => {
+  // runs once on first show
+})
+
+onMounted(() => {
+  // runs every time form is shown
+})
+
+function handleSave() {
+  // name.getData() gets current value
 }
 </script>
 ```

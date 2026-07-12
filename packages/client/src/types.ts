@@ -2,9 +2,14 @@ import {
   ActionFormData,
   MessageFormData,
   ModalFormData,
+  CustomForm,
 } from '@minecraft/server-ui';
+import type { Player } from '@minecraft/server';
+
+type SetupRecord = Record<string, unknown>;
+
 export interface MCXUIOpt {
-  layout: {
+  layout?: {
     type:
       | 'input'
       | 'dropdown'
@@ -40,6 +45,7 @@ export interface MCXUIOpt {
       useProp: string;
     };
   }[];
-  use: typeof ModalFormData | typeof MessageFormData | typeof ActionFormData;
+  build?: (player: Player, setup: SetupRecord) => CustomForm;
+  use?: typeof ModalFormData | typeof MessageFormData | typeof ActionFormData;
   UI: typeof import('@minecraft/server-ui');
 }

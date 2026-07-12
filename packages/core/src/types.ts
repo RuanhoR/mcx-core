@@ -74,7 +74,7 @@ export interface ParseReadFileOpt {
   want: 'string' | 'object';
 }
 export type ReadFileOpt = Partial<ParseReadFileOpt>;
-export type mcxType = 'component' | 'event' | 'app' | 'ui';
+export type mcxType = 'component' | 'event' | 'app' | 'ui' | 'form';
 export type {
   Token,
   ContentToken,

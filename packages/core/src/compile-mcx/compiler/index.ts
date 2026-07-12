@@ -302,6 +302,7 @@ class CompileMCX {
     },
     Component: {},
     UI: null,
+    Form: null,
   };
   public getCompileData(): CompileData.MCXCompileData {
     return this.CompileData;
@@ -353,12 +354,14 @@ class CompileMCX {
     const temp: {
       script: string;
       ui: ParsedTagNode | null;
+      form: ParsedTagNode | null;
       Event: ParsedTagNode | null;
       Component: Record<MCXstructureLocComponentType, ParsedTagNode>;
     } = {
       script: '',
       Event: null,
       ui: null,
+      form: null,
       Component: {} as Record<MCXstructureLocComponentType, ParsedTagNode>,
     };
     for (const node of this.mcxCode || []) {
@@ -409,6 +412,13 @@ class CompileMCX {
             node,
           );
         temp.ui = node;
+      } else if (node.name == 'Form') {
+        if (component || temp.Event || temp.form || temp.ui)
+          throw makeError(
+            "[compile error]: Form node can't use with component, event, Ui, or other Form node",
+            node,
+          );
+        temp.form = node;
       }
     }
     if (!temp.script) throw makeError('[compile error]: mcx must has a script');
@@ -448,6 +458,9 @@ class CompileMCX {
     }
     if (temp.ui) {
       this.tempLoc.UI = temp.ui;
+    }
+    if (temp.form) {
+      this.tempLoc.Form = temp.form;
     }
   }
   // input: tag node，handler child node（如 items entities）

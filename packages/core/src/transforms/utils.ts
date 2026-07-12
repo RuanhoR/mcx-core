@@ -241,6 +241,153 @@ function _enableWithData<T>(): ((data: T) => void) & {
   return fn;
 }
 // export
+function processDefineProp(
+  code: JsCompileData,
+  mode: 'form' | 'ui',
+  impBody: t.ImportDeclaration[],
+): void {
+  const obsMap: Record<string, string> = {};
+
+  for (const stmt of code.node.body) {
+    if (t.isVariableDeclaration(stmt)) {
+      for (const decl of stmt.declarations) {
+        if (
+          t.isCallExpression(decl.init) &&
+          t.isIdentifier(decl.init.callee) &&
+          decl.init.callee.name === 'defineProp' &&
+          t.isIdentifier(decl.id)
+        ) {
+          const varName = decl.id.name;
+          // args: defineProp(defaultValue) or defineProp(name, defaultValue)
+          const defaultVal = decl.init.arguments[1] || decl.init.arguments[0];
+          let defaultExpr: t.Expression = t.nullLiteral();
+          if (defaultVal && t.isExpression(defaultVal)) {
+            defaultExpr = defaultVal as t.Expression;
+          }
+
+          // Build: __mcx__ctx.$prop.varName ?? defaultValue
+          const propAccess = t.logicalExpression(
+            '??',
+            t.memberExpression(
+              t.memberExpression(
+                t.identifier('__mcx__ctx'),
+                t.identifier('$prop'),
+              ),
+              t.identifier(varName),
+            ),
+            defaultExpr,
+          );
+
+          if (mode === 'ui') {
+            // Wrap in Observable constructor for CustomForm
+            const obsType = inferObservableType(defaultExpr);
+            if (obsType) {
+              obsMap[obsType] = obsType;
+              decl.init = t.newExpression(t.identifier(obsType), [propAccess]);
+            } else {
+              decl.init = propAccess;
+            }
+          } else {
+            decl.init = propAccess;
+          }
+        }
+      }
+    }
+  }
+
+  if (mode === 'ui' && Object.keys(obsMap).length > 0) {
+    impBody.push(
+      t.importDeclaration(
+        Object.values(obsMap).map(name =>
+          t.importSpecifier(t.identifier(name), t.identifier(name)),
+        ),
+        t.stringLiteral('@minecraft/server-ui'),
+      ),
+    );
+  }
+}
+
+function inferObservableType(expr: t.Expression): string | null {
+  if (t.isStringLiteral(expr)) return 'ObservableString';
+  if (t.isBooleanLiteral(expr)) return 'ObservableBoolean';
+  if (t.isNumericLiteral(expr)) return 'ObservableNumber';
+  if (t.isNullLiteral(expr)) return 'ObservableString';
+  if (t.isIdentifier(expr) && expr.name === 'undefined') return 'ObservableString';
+  return null;
+}
+
+function collectSetupDeclarations(
+  code: JsCompileData,
+  existingReturnMembers: Set<string>,
+): t.ObjectProperty[] {
+  const result: t.ObjectProperty[] = [];
+  const seen = new Set(existingReturnMembers);
+
+  for (const stmt of code.node.body) {
+    const ids = extractIdList(stmt);
+    for (const id of ids) {
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        result.push(
+          t.objectProperty(t.identifier(id), t.identifier(id)),
+        );
+      }
+    }
+  }
+  return result;
+}
+
+function processHooks(
+  code: JsCompileData,
+): { startup: t.Expression | null; mounted: t.Expression | null } {
+  let startup: t.Expression | null = null;
+  let mounted: t.Expression | null = null;
+
+  const toRemove: number[] = [];
+
+  for (let i = 0; i < code.node.body.length; i++) {
+    const stmt = code.node.body[i];
+    if (!stmt) continue;
+
+    if (t.isExpressionStatement(stmt) && t.isCallExpression(stmt.expression)) {
+      const call = stmt.expression;
+      if (t.isIdentifier(call.callee)) {
+        const name = call.callee.name;
+        if (name === 'onStartup' || name === 'onMounted') {
+          if (call.arguments.length > 0) {
+            const cb = call.arguments[0];
+            if (t.isExpression(cb)) {
+              if (name === 'onStartup') startup = cb as t.Expression;
+              else mounted = cb as t.Expression;
+            }
+          }
+          toRemove.push(i);
+        }
+      }
+    }
+  }
+
+  for (const idx of toRemove.reverse()) {
+    code.node.body.splice(idx, 1);
+  }
+
+  // Clean up imports of onStartup/onMounted from BuildCache
+  const hookNames = new Set(['onStartup', 'onMounted']);
+  for (const imp of code.BuildCache.import) {
+    if (imp.source === '@mbler/mcx') {
+      imp.imported = imp.imported.filter(
+        item => !hookNames.has(item.import || item.as),
+      );
+    }
+  }
+  code.BuildCache.import = code.BuildCache.import.filter(
+    imp => imp.source !== '@mbler/mcx' || imp.imported.length > 0,
+  );
+
+  return { startup, mounted };
+}
+
+// export
 export {
   extractIdList,
   extractVarDefIdList,
@@ -248,4 +395,7 @@ export {
   _enable,
   generateMain,
   _enableWithData,
+  processDefineProp,
+  collectSetupDeclarations,
+  processHooks,
 };

@@ -197,7 +197,7 @@ describe('transform', () => {
   });
 });
 
-describe('UI transform', () => {
+describe('Form transform (legacy FormData)', () => {
   const createCtx = (
     overrides: Partial<TransformPluginContext> = {},
   ): TransformPluginContext =>
@@ -217,17 +217,17 @@ describe('UI transform', () => {
 
   const outdirs = { dist: '', behavior: '', resources: '' };
 
-  it('should compile basic Ui structure', () => {
+  it('should compile basic Form structure', () => {
     const cd = MCX.compiler.compileMCXFn(
-      '<script>export const prop = ["name"]; export function handler() {}</script><Ui><input placeholderText="input name">{{ name }}</input><title>Form</title></Ui>',
+      '<script>export const prop = ["name"]; export function handler() {}</script><Form><input placeholderText="input name">{{ name }}</input><title>Form</title></Form>',
     );
-    expect(cd.strLoc.UI).toBeDefined();
-    expect(cd.strLoc.UI!.name).toBe('Ui');
+    expect(cd.strLoc.Form).toBeDefined();
+    expect(cd.strLoc.Form!.name).toBe('Form');
   });
 
-  it('should generate {{ }} content as { useProp } in output', async () => {
+  it('should generate {{ }} content as { useProp } in output for Form', async () => {
     const cd = MCX.compiler.compileMCXFn(
-      '<script>export const prop = ["name"]; export function handler() {}</script><Ui><input placeholderText="input name">{{ name }}</input></Ui>',
+      '<script>export const prop = ["name"]; export function handler() {}</script><Form><input placeholderText="input name">{{ name }}</input></Form>',
     );
     const code = await MCX.transform(
       cd,
@@ -241,9 +241,9 @@ describe('UI transform', () => {
     expect(code).toContain('"name"');
   });
 
-  it('should compile :param syntax into { useProp } in output', async () => {
+  it('should compile :param syntax into { useProp } in output for Form', async () => {
     const cd = MCX.compiler.compileMCXFn(
-      '<script>export const prop = ["name"]; export function handler() {}</script><Ui><input :default="name" placeholderText="Name">{{ name }}</input></Ui>',
+      '<script>export const prop = ["name"]; export function handler() {}</script><Form><input :default="name" placeholderText="Name">{{ name }}</input></Form>',
     );
     const code = await MCX.transform(
       cd,
@@ -260,7 +260,7 @@ describe('UI transform', () => {
 
   it('should pass $prop via ctx at runtime', async () => {
     const cd = MCX.compiler.compileMCXFn(
-      '<script>export const prop = ["name"]</script><Ui><input placeholderText="Name">{{ name }}</input></Ui>',
+      '<script>export const prop = ["name"]</script><Form><input placeholderText="Name">{{ name }}</input></Form>',
     );
     const code = await MCX.transform(
       cd,
@@ -273,9 +273,9 @@ describe('UI transform', () => {
     expect(code).toContain('__mcx__ctx');
   });
 
-  it('should handle Ui without :param or {{ }}', async () => {
+  it('should handle Form without :param or {{ }}', async () => {
     const cd = MCX.compiler.compileMCXFn(
-      '<script>export function handler() {}</script><Ui><button click="handler">Click</button></Ui>',
+      '<script>export function handler() {}</script><Form><button click="handler">Click</button></Form>',
     );
     const code = await MCX.transform(
       cd,
@@ -288,9 +288,9 @@ describe('UI transform', () => {
     expect(code).toContain('Click');
   });
 
-  it('should compile for attribute into layout', async () => {
+  it('should compile for attribute into layout for Form', async () => {
     const cd = MCX.compiler.compileMCXFn(
-      '<script>export const prop = ["items"]; export function handler() {}</script><Ui><button for="v in items" click="handler">{{ v.label }}</button></Ui>',
+      '<script>export const prop = ["items"]; export function handler() {}</script><Form><button for="v in items" click="handler">{{ v.label }}</button></Form>',
     );
     const code = await MCX.transform(
       cd,
@@ -307,9 +307,9 @@ describe('UI transform', () => {
     expect(code).toContain('"items"');
   });
 
-  it('should reject invalid for syntax', async () => {
+  it('should reject invalid for syntax in Form', async () => {
     const cd = MCX.compiler.compileMCXFn(
-      '<script>export const prop = ["items"]</script><Ui><button for="bad syntax">test</button></Ui>',
+      '<script>export const prop = ["items"]</script><Form><button for="bad syntax">test</button></Form>',
     );
     await expect(
       MCX.transform(
@@ -321,6 +321,83 @@ describe('UI transform', () => {
         outdirs,
       ),
     ).rejects.toThrow();
+  });
+});
+
+describe('Ui transform (CustomForm)', () => {
+  const createCtx = (
+    overrides: Partial<TransformPluginContext> = {},
+  ): TransformPluginContext =>
+    ({
+      error: (msg: unknown) => {
+        throw new Error(String(msg));
+      },
+      warn: () => {},
+      debug: () => {},
+      info: () => {},
+      getCombinedSourcemap: () =>
+        ({ mappings: '' }) as ReturnType<
+          TransformPluginContext['getCombinedSourcemap']
+        >,
+      ...overrides,
+    }) as TransformPluginContext;
+
+  const outdirs = { dist: '', behavior: '', resources: '' };
+
+  it('should compile basic Ui to CustomForm', () => {
+    const cd = MCX.compiler.compileMCXFn(
+      '<script>export const prop = ["name"]</script><Ui><title>Form</title><input>{{ name }}</input></Ui>',
+    );
+    expect(cd.strLoc.UI).toBeDefined();
+    expect(cd.strLoc.UI!.name).toBe('Ui');
+  });
+
+  it('should generate build function with CustomForm', async () => {
+    const cd = MCX.compiler.compileMCXFn(
+      '<script>export const prop = ["name"]</script><Ui><title>Form</title><input>{{ name }}</input></Ui>',
+    );
+    const code = await MCX.transform(
+      cd,
+      new Map(),
+      '/root/test.mcx',
+      createCtx(),
+      { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
+      outdirs,
+    );
+    expect(code).toContain('CustomForm');
+    expect(code).toContain('build');
+  });
+
+  it('should resolve {{ }} to setup context in Ui', async () => {
+    const cd = MCX.compiler.compileMCXFn(
+      '<script>export const prop = ["name"]</script><Ui><title>Settings</title><input>{{ name }}</input></Ui>',
+    );
+    const code = await MCX.transform(
+      cd,
+      new Map(),
+      '/root/test.mcx',
+      createCtx(),
+      { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
+      outdirs,
+    );
+    expect(code).toContain('__s.name');
+    expect(code).toContain('"Settings"');
+  });
+
+  it('should generate button with click handler in Ui', async () => {
+    const cd = MCX.compiler.compileMCXFn(
+      '<script>export function handler() {}</script><Ui><button click="handler">Click</button></Ui>',
+    );
+    const code = await MCX.transform(
+      cd,
+      new Map(),
+      '/root/test.mcx',
+      createCtx(),
+      { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
+      outdirs,
+    );
+    expect(code).toContain('Click');
+    expect(code).toContain('__s.handler');
   });
 });
 

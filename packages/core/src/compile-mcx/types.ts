@@ -57,6 +57,7 @@ interface MCXstructureLoc {
     }
   >;
   UI: ParsedTagNode | null;
+  Form: ParsedTagNode | null;
 }
 export type {
   BuildCache,

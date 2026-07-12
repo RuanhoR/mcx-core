@@ -15,13 +15,4 @@ export {
   rollupPlugin,
   rolldownPlugin,
 };
-export {
-  ItemComponent,
-  BlockComponent,
-  EntityComponent,
-  PNGImageComponent,
-  JPGImageComponent,
-  SVGImageComponent,
-  GIFImageComponent,
-} from '@mbler/mcx-component';
 export * as ComponentType from './mcx-component/types';

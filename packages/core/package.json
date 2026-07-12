@@ -20,8 +20,8 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./client": {
-      "types": "./client.d.ts"
+    "./package.json": {
+      "require": "./package.json"
     }
   },
   "repository": {
@@ -33,7 +33,6 @@
     "@babel/generator": "7.28.5",
     "@babel/parser": "7.28.5",
     "@babel/types": "7.28.6",
-    "@mbler/mcx-component": "workspace:*",
     "@mbler/mcx-types": "workspace:*",
     "@volar/language-core": "^2.4.28",
     "@vue/compiler-core": "^3.5.39",

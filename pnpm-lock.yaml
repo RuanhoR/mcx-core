@@ -86,9 +86,6 @@ importers:
       '@babel/types':
         specifier: 7.28.6
         version: 7.28.6
-      '@mbler/mcx-component':
-        specifier: workspace:*
-        version: link:../mcx-component
       '@mbler/mcx-types':
         specifier: workspace:*
         version: link:../types

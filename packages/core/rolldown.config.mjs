@@ -11,6 +11,7 @@ const external = [
   'rollup',
   'rolldown',
   'typescript',
+  /@vue\/*/
 ];
 
 export default defineConfig({
@@ -19,7 +20,8 @@ export default defineConfig({
     dir: "./dist",
     entryFileNames: "[name].js",
     format: "esm",
-    sourcemap: true
+    sourcemap: true,
+    minify: process.env.BUILD_MODEL == "release"
   },
   external,
   platform: "node",

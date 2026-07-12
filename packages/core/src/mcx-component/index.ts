@@ -2,7 +2,6 @@ import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { MCXCompileData } from '../compile-mcx/compiler/compileData';
 import { execESMMethod, RunScript } from './vm';
 import * as path from 'node:path';
-import lib from '@mbler/mcx-component';
 import { MCXstructureLocComponentType } from '../compile-mcx/types';
 import { transformCtx } from '../types';
 import * as t from '@babel/types';
@@ -10,7 +9,7 @@ import type { BaseJson, FilePoint } from './types';
 import { existsSync, readFileSync } from 'node:fs';
 import { parse } from '@babel/parser';
 import { styleText } from 'node:util';
-
+import type lib from "@mbler/mcx-component"
 /** Accumulated bind data (e.g. item_texture entries) across all components in a build. */
 let cachedOption: Record<string, string[] | [string, string][]> = {};
 
@@ -535,14 +534,4 @@ export async function compileComponent(
     await writeFile(filePoint, JSON.stringify(json, null, 2));
   }
 }
-
-export * from './vm';
-export {
-  ItemComponent,
-  EntityComponent,
-  BlockComponent,
-  PNGImageComponent,
-  SVGImageComponent,
-  GIFImageComponent,
-  JPGImageComponent,
-} from '@mbler/mcx-component';
+export * from "./vm"

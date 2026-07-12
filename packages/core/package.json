@@ -41,6 +41,7 @@
     "typescript": "5.9.3"
   },
   "devDependencies": {
+    "@mbler/mcx-component": "workspace:*",
     "rolldown": "1.0.0-rc.18",
     "rolldown-plugin-dts": "0.25.2",
     "rollup": "4.59.0"

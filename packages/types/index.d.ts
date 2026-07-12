@@ -62,7 +62,7 @@ declare class ui {
     UIConfig: MCXUIOpt,
     mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, any> }) => any,
   );
-  show(player: Player, prop: Record<string, any>): Promise<void>;
+  show(player: Player, prop?: Record<string, unknown>): Promise<void>;
 }
 declare class Event {
   constructor(opt: EventOpt);

@@ -12,8 +12,9 @@ import type {
 } from '@minecraft/server-ui';
 
 // ---- Old FormData types (unchanged) ----
-type UnresolvedParams = MCXUIOpt['layout'][number]['params'];
-type UnresolvedLayoutItem = Omit<MCXUIOpt['layout'][number], 'params'> & {
+type LayoutItem = NonNullable<MCXUIOpt['layout']>[number];
+type UnresolvedParams = LayoutItem['params'];
+type UnresolvedLayoutItem = Omit<LayoutItem, 'params'> & {
   params: {
     [K in keyof UnresolvedParams]: UnresolvedParams[K];
   };
@@ -34,7 +35,7 @@ interface ParsedUIOption extends Omit<MCXUIOpt, 'layout'> {
       | {
           useProp: string;
         };
-    type: MCXUIOpt['layout'][number]['type'];
+    type: LayoutItem['type'];
     for?:
       | string
       | {
@@ -55,7 +56,7 @@ interface ResolvedParams {
   ) => void;
 }
 interface ResolvedLayoutItem {
-  type: MCXUIOpt['layout'][number]['type'];
+  type: LayoutItem['type'];
   params: ResolvedParams;
   content: string;
   for?:
@@ -83,8 +84,8 @@ export class ui implements typesPkg.ui {
 
   // Form mode (legacy FormData)
   private _UI: MCXUIOpt['use'];
-  private _prop: string[];
-  private _layout: ParsedUIOption['layout'];
+  private _prop!: string[];
+  private _layout!: ParsedUIOption['layout'];
   private _uiType: 'modal' | 'action' | 'message' | null = null;
   private _mode: 'form' | 'ui';
 
@@ -154,7 +155,7 @@ export class ui implements typesPkg.ui {
 
   // ---- Form mode (legacy) ----
   private _generateUI(layout: ResolvedLayoutItem[]) {
-    const ui = new this._UI();
+    const ui = new this._UI!();
 
     if (!this._uiType) {
       if (ui instanceof this._mcUI.ModalFormData) {
@@ -319,7 +320,7 @@ export class ui implements typesPkg.ui {
           }
           for (const paramKey of Object.keys(copy.params)) {
             const paramValue =
-              copy.params[paramKey as keyof typeof copy.params];
+              copy.params[paramKey as string & keyof typeof copy.params];
             if (
               typeof paramValue === 'object' &&
               paramValue &&
@@ -376,7 +377,7 @@ export class ui implements typesPkg.ui {
       }
       for (const paramKey of Object.keys(layout.params)) {
         const paramValue =
-          layout.params[paramKey as keyof typeof layout.params];
+          layout.params[paramKey as string & keyof typeof layout.params];
         if (
           typeof paramValue === 'object' &&
           paramValue &&
@@ -473,13 +474,14 @@ export class ui implements typesPkg.ui {
   async show(
     player: Player,
     prop?: Record<string, unknown>,
-  ): Promise<DataDrivenScreenClosedReason | void> {
+  ): Promise<void> {
     const resolvedProp = prop || {};
 
     if (this._mode === 'form') {
-      return this._showForm(player, resolvedProp);
+      await this._showForm(player, resolvedProp);
+    } else {
+      await this._showCustomForm(player, resolvedProp);
     }
-    return this._showCustomForm(player, resolvedProp);
   }
 }
 

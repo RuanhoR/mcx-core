@@ -196,7 +196,7 @@ class Command {
 
     if (param.type === 'enum' && param.options && param.options.length > 0) {
       this.enums.push({ name, values: param.options });
-      result.enumName = name;
+      (result as CustomCommandParameter & { enumName?: string }).enumName = name;
     }
 
     return result;

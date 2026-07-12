@@ -76,7 +76,7 @@ Below is a complete example showcasing all four MCX file types — Component, Ev
 
 ### 1. Define an Item Component (`items/custom_sword.mcx`)
 
-```xml
+```vue
 <Component>
   <items>
     <item id="sword.json">sword</item>
@@ -88,72 +88,74 @@ import { ItemComponent } from "@mbler/mcx-component";
 export const sword = new ItemComponent({
   id: "demo:custom_sword",
   name: "Custom Sword",
-  components: {
-    "minecraft:damage": 7,
-    "minecraft:max_stack_size": 1,
-    "minecraft:hand_equipped": true,
-  },
+  components: {},
 });
+sword.setDam
 </script>
 ```
 
 ### 2. Subscribe to a Game Event (`events/player_join.mcx`)
 
-```xml
+```vue
 <Event @after>
 playerJoin = onPlayerJoin
 </Event>
 <script lang="ts">
 import { world } from "@minecraft/server";
-
+import Form from "../ui/greeting.mcx"
 export function onPlayerJoin(event: PlayerJoinAfterEvent) {
-  event.player.sendMessage("Welcome to the server!");
+  const player = world.getPlayers({
+    name: event.playerName
+  });
+  player.sendMessage("Welcome to the server!");
+  Form.show(player, {
+    playerName: event.playerName
+  })
 }
 </script>
 ```
 
 ### 3. Build a UI Form (`ui/greeting.mcx`)
 
-```xml
+```vue
 <Ui>
-<form title="Welcome" iconPath="textures/ui/icon_set_1.png">
-  <label>Hello, {{ playerName }}!</label>
-  <button click="handleClose">Close</button>
-</form>
+  <label>{{ playerName }}!</label>
+  <label>Hello</label>
+  <button click="onClick">Close</button>
 </Ui>
 <script lang="ts">
-export const prop = ["playerName"];
-
-export function handleClose() {
+export function onClick() {
   // close the form
 }
 </script>
 ```
 
-### 4. Wire Everything Together in an App (`app.mcx`)
+### 4. Auto subscribe event in App mcx (`app.mcx`)
 
-```xml
+```vue
 <script lang="ts">
-import sword from "./items/custom_sword.mcx";
-import "./events/player_join.mcx";
+import event from "./events/player_join.mcx";
+event.subscribe();
+// also can use: event.subscribe("playerJoin")
+</script>
+```
+### 5. CreateApp in index.ts (`index.ts`)
+```typescript
+import app from "./app.mcx";
 import { createApp } from "@mbler/mcx";
 import { world } from "@minecraft/server";
 
-createApp({}).mount(world);
-</script>
+createApp(app).mount(world);
 ```
 
-Each `.mcx` file is compiled into MCBE-compatible JSON and TypeScript/JavaScript by the MCX compiler pipeline.
-
+### More Usage See [Bedwars Addon](https://github.com/RuanhoR/mcbe-bedwars-addon)
 ## Quick Start
 
 ### Create a new project
 
 ```bash
 # Using the create-mbler CLI
-pnpm create mbler my-addon
-# or
-npx create-mbler my-addon
+pnpm create mbler
 ```
 
 ### Manual setup

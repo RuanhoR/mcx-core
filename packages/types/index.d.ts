@@ -58,7 +58,10 @@ interface MCXUIOpt {
   UI: typeof serverUI;
 }
 declare class ui {
-  constructor(UIConfig: MCXUIOpt, mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, any> }) => any);
+  constructor(
+    UIConfig: MCXUIOpt,
+    mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, any> }) => any,
+  );
   show(player: Player, prop: Record<string, any>): Promise<void>;
 }
 declare class Event {
@@ -149,196 +152,682 @@ type JSONValue<T> = { value: T };
 // --- Component Types ---
 
 type ParticleType =
-  | 'balloongas' | 'bleach' | 'blockforcefield' | 'blueflame' | 'breezewindexplosion'
-  | 'bubble' | 'bubblecolumndown' | 'bubblecolumnup' | 'bubblemanual'
-  | 'campfiresmoke' | 'campfiresmoketall' | 'candleflame' | 'carrotboost'
-  | 'coloredflame' | 'conduit' | 'creakingcrumble' | 'crit' | 'dragonbreath'
-  | 'dragonbreathfire' | 'dragonbreathtrail' | 'dragondestroyblock' | 'driphoney'
-  | 'driplava' | 'dripwater' | 'dustplume' | 'electricspark' | 'enchantingtable'
-  | 'endrod' | 'evaporation' | 'explode' | 'eyeblossomclose' | 'eyeblossomopen'
-  | 'fallingborderdust' | 'fallingdust' | 'fireworks' | 'fireworksoverlay'
-  | 'fireworksstarter' | 'flame' | 'food' | 'greenflame' | 'heart'
-  | 'hugeexplosion' | 'iconcrack' | 'ink' | 'largeexplode' | 'largesmoke'
-  | 'lava' | 'mobappearance' | 'mobflame' | 'mobspell' | 'mobspellambient'
-  | 'mobspellinstantaneous' | 'myceliumdust' | 'none' | 'note' | 'obsidiantear'
-  | 'paleoakleaves' | 'pausemobgrowth' | 'portal' | 'portalreverse' | 'rainsplash'
-  | 'reddust' | 'resetmobgrowth' | 'risingborderdust' | 'sculksoul' | 'shriek'
-  | 'shulkerbullet' | 'slime' | 'smoke' | 'sneeze' | 'snowballpoof' | 'snowflake'
-  | 'sonicexplosion' | 'soul' | 'sparkler' | 'spit' | 'stalactitedriplava'
-  | 'stalactitedripwater' | 'terrain' | 'totem' | 'townaura' | 'trackingemitter'
-  | 'vaultconnection' | 'villagerangry' | 'villagerhappy' | 'watersplash'
-  | 'watersplashmanual' | 'waterwake' | 'wax' | 'whitesmoke' | 'windexplosion'
-  | 'witchspell' | 'wolfarmorcrack';
+  | 'balloongas'
+  | 'bleach'
+  | 'blockforcefield'
+  | 'blueflame'
+  | 'breezewindexplosion'
+  | 'bubble'
+  | 'bubblecolumndown'
+  | 'bubblecolumnup'
+  | 'bubblemanual'
+  | 'campfiresmoke'
+  | 'campfiresmoketall'
+  | 'candleflame'
+  | 'carrotboost'
+  | 'coloredflame'
+  | 'conduit'
+  | 'creakingcrumble'
+  | 'crit'
+  | 'dragonbreath'
+  | 'dragonbreathfire'
+  | 'dragonbreathtrail'
+  | 'dragondestroyblock'
+  | 'driphoney'
+  | 'driplava'
+  | 'dripwater'
+  | 'dustplume'
+  | 'electricspark'
+  | 'enchantingtable'
+  | 'endrod'
+  | 'evaporation'
+  | 'explode'
+  | 'eyeblossomclose'
+  | 'eyeblossomopen'
+  | 'fallingborderdust'
+  | 'fallingdust'
+  | 'fireworks'
+  | 'fireworksoverlay'
+  | 'fireworksstarter'
+  | 'flame'
+  | 'food'
+  | 'greenflame'
+  | 'heart'
+  | 'hugeexplosion'
+  | 'iconcrack'
+  | 'ink'
+  | 'largeexplode'
+  | 'largesmoke'
+  | 'lava'
+  | 'mobappearance'
+  | 'mobflame'
+  | 'mobspell'
+  | 'mobspellambient'
+  | 'mobspellinstantaneous'
+  | 'myceliumdust'
+  | 'none'
+  | 'note'
+  | 'obsidiantear'
+  | 'paleoakleaves'
+  | 'pausemobgrowth'
+  | 'portal'
+  | 'portalreverse'
+  | 'rainsplash'
+  | 'reddust'
+  | 'resetmobgrowth'
+  | 'risingborderdust'
+  | 'sculksoul'
+  | 'shriek'
+  | 'shulkerbullet'
+  | 'slime'
+  | 'smoke'
+  | 'sneeze'
+  | 'snowballpoof'
+  | 'snowflake'
+  | 'sonicexplosion'
+  | 'soul'
+  | 'sparkler'
+  | 'spit'
+  | 'stalactitedriplava'
+  | 'stalactitedripwater'
+  | 'terrain'
+  | 'totem'
+  | 'townaura'
+  | 'trackingemitter'
+  | 'vaultconnection'
+  | 'villagerangry'
+  | 'villagerhappy'
+  | 'watersplash'
+  | 'watersplashmanual'
+  | 'waterwake'
+  | 'wax'
+  | 'whitesmoke'
+  | 'windexplosion'
+  | 'witchspell'
+  | 'wolfarmorcrack';
 
 type SoundEvent =
-  | 'activate' | 'add.chest' | 'admire' | 'agitated' | 'ambient'
-  | 'ambient.aggressive' | 'ambient.baby' | 'ambient.basalt_deltas.additions'
-  | 'ambient.basalt_deltas.loop' | 'ambient.basalt_deltas.mood' | 'ambient.candle'
-  | 'ambient.cave' | 'ambient.crimson_forest.additions'
-  | 'ambient.crimson_forest.loop' | 'ambient.crimson_forest.mood'
-  | 'ambient.in.air' | 'ambient.in.raid' | 'ambient.in.water'
-  | 'ambient.nether_wastes.additions' | 'ambient.nether_wastes.loop'
-  | 'ambient.nether_wastes.mood' | 'ambient.pollinate' | 'ambient.screamer'
-  | 'ambient.soulsand_valley.additions' | 'ambient.soulsand_valley.loop'
-  | 'ambient.soulsand_valley.mood' | 'ambient.tame' | 'ambient.underwater.enter'
-  | 'ambient.underwater.exit' | 'ambient.warped_forest.additions'
-  | 'ambient.warped_forest.loop' | 'ambient.warped_forest.mood'
-  | 'ambient.weather.the_end_light_flash' | 'ambient.worried' | 'angry'
-  | 'apply_effect.bad_omen' | 'apply_effect.raid_omen' | 'apply_effect.trial_omen'
-  | 'armor' | 'armor.break_wolf' | 'armor.crack_wolf' | 'armor.equip_chain'
-  | 'armor.equip_copper' | 'armor.equip_diamond' | 'armor.equip_elytra'
-  | 'armor.equip_generic' | 'armor.equip_gold' | 'armor.equip_iron'
-  | 'armor.equip_leather' | 'armor.equip_netherite' | 'armor.equip_wolf'
-  | 'armor.repair_wolf' | 'armor.unequip_generic' | 'armor.unequip_wolf'
-  | 'attach' | 'attack' | 'attack.critical' | 'attack.nodamage' | 'attack.strong'
-  | 'balloonpop' | 'beacon.activate' | 'beacon.ambient' | 'beacon.deactivate'
-  | 'beacon.power' | 'blast' | 'block.bamboo_sapling.place' | 'block.barrel.close'
-  | 'block.barrel.open' | 'block.beehive.drip' | 'block.beehive.enter'
-  | 'block.beehive.exit' | 'block.beehive.shear' | 'block.beehive.work'
-  | 'block.bell.hit' | 'block.blastfurnace.fire_crackle' | 'block.campfire.crackle'
-  | 'block.cartography_table.use' | 'block.click' | 'block.click.fail'
-  | 'block.composter.empty' | 'block.composter.fill' | 'block.composter.fill_success'
-  | 'block.composter.ready' | 'block.copper_bulb.turn_off'
-  | 'block.copper_bulb.turn_on' | 'block.creaking_heart.trail'
-  | 'block.decorated_pot.insert' | 'block.decorated_pot.insert_fail'
-  | 'block.enchanting_table.use' | 'block.end_portal.spawn'
-  | 'block.end_portal_frame.fill' | 'block.fletching_table.use'
-  | 'block.frog_spawn.break' | 'block.frog_spawn.hatch' | 'block.furnace.lit'
-  | 'block.grindstone.use' | 'block.loom.use' | 'block.scaffolding.climb'
-  | 'block.sculk.spread' | 'block.sculk_catalyst.bloom'
-  | 'block.sculk_sensor.place' | 'block.sculk_shrieker.place'
-  | 'block.sculk_shrieker.shriek' | 'block.sign.waxed_interact_fail'
-  | 'block.smithing_table.use' | 'block.smoker.smoke' | 'block.sniffer_egg.crack'
-  | 'block.sniffer_egg.hatch' | 'block.stonecutter.use'
-  | 'block.sweet_berry_bush.hurt' | 'block.sweet_berry_bush.pick'
-  | 'block.turtle_egg.attack' | 'block.turtle_egg.break' | 'block.turtle_egg.crack'
-  | 'block.turtle_egg.hatch' | 'boost' | 'born' | 'bottle.dragonbreath'
-  | 'bottle.empty' | 'bottle.fill' | 'bow' | 'bow.hit' | 'break' | 'break.block'
-  | 'break_pot' | 'breathe' | 'breeze_wind_charge.burst' | 'brush'
-  | 'brush_completed' | 'bubble.down' | 'bubble.downinside' | 'bubble.pop'
-  | 'bubble.up' | 'bubble.upinside' | 'bucket.empty.fish' | 'bucket.empty.lava'
-  | 'bucket.empty.powder_snow' | 'bucket.empty.water' | 'bucket.fill.fish'
-  | 'bucket.fill.lava' | 'bucket.fill.powder_snow' | 'bucket.fill.water'
-  | 'bullet.hit' | 'bundle.drop_contents' | 'bundle.insert' | 'bundle.insert_fail'
-  | 'bundle.remove_one' | 'burp' | 'button.click_off' | 'button.click_on'
-  | 'cake.add_candle' | 'camera.take_picture' | 'cant_breed' | 'cast.spell'
-  | 'cauldron_drip.lava.pointed_dripstone' | 'cauldron_drip.water.pointed_dripstone'
-  | 'celebrate' | 'charge' | 'charge.sculk' | 'chest.closed' | 'chest.open'
-  | 'chime.amethyst_block' | 'chorusdeath' | 'chorusgrow' | 'close' | 'close_long'
-  | 'conduit.activate' | 'conduit.ambient' | 'conduit.attack' | 'conduit.deactivate'
-  | 'conduit.short' | 'convert_mooshroom' | 'convert_to_drowned' | 'convert_to_frog'
-  | 'convert_to_stray' | 'converted_to_zombified' | 'copper.wax.off'
-  | 'copper.wax.on' | 'crafter.craft' | 'crafter.disable_slot' | 'crafter.fail'
-  | 'creaking_heart_spawn' | 'crossbow.loading.end' | 'crossbow.loading.middle'
-  | 'crossbow.loading.start' | 'crossbow.quick_charge.end'
-  | 'crossbow.quick_charge.middle' | 'crossbow.quick_charge.start'
-  | 'crossbow.shoot' | 'dash_ready' | 'deactivate' | 'death' | 'death.baby'
-  | 'death.in.water' | 'death.mid.volume' | 'death.min.volume' | 'death.screamer'
-  | 'death.to.zombie' | 'default' | 'deny' | 'detach' | 'disappeared'
-  | 'door.close' | 'door.open' | 'drink' | 'drink.honey' | 'drink.milk'
-  | 'drip.lava.pointed_dripstone' | 'drip.water.pointed_dripstone' | 'drop.slot'
-  | 'eat' | 'elderguardian.curse' | 'elemconstruct.open' | 'enderchest.closed'
-  | 'enderchest.open' | 'explode' | 'extinguish.candle' | 'extinguish.fire'
-  | 'fall' | 'fall.big' | 'fall.small' | 'fang' | 'fence_gate.close'
-  | 'fence_gate.open' | 'fire' | 'fizz' | 'flap' | 'flop' | 'fly' | 'freeze'
-  | 'fuse' | 'gallop' | 'glass' | 'glow_squid.ink_squirt' | 'glowstick.use'
-  | 'growl' | 'haggle' | 'haggle.idle' | 'haggle.no' | 'haggle.yes' | 'heartbeat'
-  | 'heavy.step' | 'hit' | 'horn_break' | 'horn_call0' | 'horn_call1'
-  | 'horn_call2' | 'horn_call3' | 'horn_call4' | 'horn_call5' | 'horn_call6'
-  | 'horn_call7' | 'hurt' | 'hurt.baby' | 'hurt.in.water' | 'hurt.reduced'
-  | 'hurt.screamer' | 'icebomb.hit' | 'ignite' | 'imitate.blaze' | 'imitate.bogged'
-  | 'imitate.breeze' | 'imitate.camel_husk' | 'imitate.cave_spider'
-  | 'imitate.creaking' | 'imitate.creeper' | 'imitate.drowned'
-  | 'imitate.elder_guardian' | 'imitate.ender_dragon' | 'imitate.enderman'
-  | 'imitate.endermite' | 'imitate.evocation_illager' | 'imitate.ghast'
-  | 'imitate.guardian' | 'imitate.happy_ghast' | 'imitate.husk'
-  | 'imitate.magma_cube' | 'imitate.parched' | 'imitate.phantom'
-  | 'imitate.pillager' | 'imitate.polar_bear' | 'imitate.ravager'
-  | 'imitate.shulker' | 'imitate.silverfish' | 'imitate.skeleton' | 'imitate.slime'
-  | 'imitate.spider' | 'imitate.stray' | 'imitate.vex'
-  | 'imitate.vindication_illager' | 'imitate.warden' | 'imitate.witch'
-  | 'imitate.wither' | 'imitate.wither_skeleton' | 'imitate.wolf' | 'imitate.zoglin'
-  | 'imitate.zombie' | 'imitate.zombie_pigman' | 'imitate.zombie_villager'
-  | 'insert' | 'insert_enchanted' | 'irongolem.crack' | 'irongolem.repair'
-  | 'item.book.put' | 'item.copper_spear.attack_hit'
-  | 'item.copper_spear.attack_miss' | 'item.copper_spear.use'
-  | 'item.diamond_spear.attack_hit' | 'item.diamond_spear.attack_miss'
-  | 'item.diamond_spear.use' | 'item.enchant.lunge1' | 'item.enchant.lunge2'
-  | 'item.enchant.lunge3' | 'item.fizz' | 'item.golden_spear.attack_hit'
-  | 'item.golden_spear.attack_miss' | 'item.golden_spear.use'
-  | 'item.iron_spear.attack_hit' | 'item.iron_spear.attack_miss'
-  | 'item.iron_spear.use' | 'item.netherite_spear.attack_hit'
-  | 'item.netherite_spear.attack_miss' | 'item.netherite_spear.use'
-  | 'item.shield.block' | 'item.spear.attack_hit' | 'item.spear.attack_miss'
-  | 'item.spear.use' | 'item.spyglass.stop_using' | 'item.spyglass.use'
-  | 'item.stone_spear.attack_hit' | 'item.stone_spear.attack_miss'
-  | 'item.stone_spear.use' | 'item.trident.hit' | 'item.trident.hit_ground'
-  | 'item.trident.return' | 'item.trident.riptide_1' | 'item.trident.riptide_2'
-  | 'item.trident.riptide_3' | 'item.trident.throw' | 'item.trident.thunder'
-  | 'item.use.on' | 'item.wooden_spear.attack_hit'
-  | 'item.wooden_spear.attack_miss' | 'item.wooden_spear.use' | 'item_given'
-  | 'item_taken' | 'item_thrown' | 'jump' | 'jump.prevent' | 'jump_to_block'
-  | 'land' | 'large.blast' | 'launch' | 'lava' | 'lava.pop' | 'lay_egg'
-  | 'lay_spawn' | 'lead.break' | 'lead.leash' | 'lead.unleash'
-  | 'leashknot.break' | 'leashknot.place' | 'levelup' | 'listening'
-  | 'listening_angry' | 'lodestone_compass.link_compass_to_lodestone'
-  | 'lt.reaction.bleach' | 'lt.reaction.epaste' | 'lt.reaction.epaste2'
-  | 'lt.reaction.fertilizer' | 'lt.reaction.fire' | 'lt.reaction.fireball'
-  | 'lt.reaction.icebomb' | 'lt.reaction.mgsalt' | 'lt.reaction.miscexplosion'
-  | 'lt.reaction.miscfire' | 'lt.reaction.miscmystical'
-  | 'lt.reaction.miscmystical2' | 'lt.reaction.product' | 'mace.heavy_smash_ground'
-  | 'mace.smash_air' | 'mace.smash_ground' | 'mad' | 'milk' | 'milk.screamer'
-  | 'milk_suspiciously' | 'mob.armadillo.brush' | 'mob.armadillo.scute_drop'
-  | 'mob.armor_stand.place' | 'mob.hoglin.converted_to_zombified'
-  | 'mob.husk.convert_to_zombie' | 'mob.pig.death' | 'mob.player.hurt_drown'
-  | 'mob.player.hurt_freeze' | 'mob.player.hurt_on_fire' | 'mob.warning'
-  | 'mob.warning.baby' | 'multi_swap' | 'nearby_close' | 'nearby_closer'
-  | 'nearby_closest' | 'note' | 'note.bass' | 'ominous_bottle.end_use'
-  | 'ominous_item_spawner.about_to_spawn_item' | 'ominous_item_spawner.spawn_item'
-  | 'ominous_item_spawner.spawn_item_begin' | 'open' | 'open_long' | 'panic'
-  | 'pant' | 'particle.soul_escape.loud' | 'particle.soul_escape.quiet'
-  | 'pause_growth' | 'pick_berries.cave_vines' | 'pickup' | 'pickup_enchanted'
-  | 'piston.in' | 'piston.out' | 'place' | 'place_in_water' | 'place_item' | 'plop'
-  | 'pop' | 'portal' | 'portal.travel' | 'potion.brewed' | 'power.off'
-  | 'power.off.sculk_sensor' | 'power.on' | 'power.on.sculk_sensor' | 'pre_ram'
-  | 'pre_ram.screamer' | 'prepare.attack' | 'prepare.summon' | 'prepare.wololo'
-  | 'presneeze' | 'pressure_plate.click_off' | 'pressure_plate.click_on'
-  | 'pumpkin.carve' | 'purr' | 'purreow' | 'raid.horn' | 'ram_impact'
-  | 'ram_impact.screamer' | 'random.anvil_use' | 'reappeared' | 'record.11'
-  | 'record.13' | 'record.5' | 'record.blocks' | 'record.cat' | 'record.chirp'
-  | 'record.far' | 'record.creator' | 'record.creator_music_box'
-  | 'record.lava_chicken' | 'record.mall' | 'record.mellohi' | 'record.otherside'
-  | 'record.pigstep' | 'record.precipice' | 'record.relic' | 'record.stal'
-  | 'record.strad' | 'record.tears' | 'record.wait' | 'record.ward' | 'reflect'
-  | 'remedy' | 'reset_growth' | 'respawn_anchor.ambient' | 'respawn_anchor.charge'
-  | 'respawn_anchor.deplete' | 'respawn_anchor.set_spawn' | 'retreat' | 'roar'
-  | 'saddle' | 'saddle_in_water' | 'scared' | 'scrape' | 'screech' | 'shake'
-  | 'shatter_pot' | 'shear' | 'shoot' | 'shulker.close' | 'shulker.open'
-  | 'shulkerbox.closed' | 'shulkerbox.open' | 'single_swap' | 'sleep'
-  | 'smithing_table.use' | 'sneeze' | 'sonic_boom' | 'sonic_charge'
-  | 'sparkler.active' | 'sparkler.use' | 'spawn' | 'splash' | 'sponge.absorb'
-  | 'squid.ink_squirt' | 'squish.big' | 'squish.small' | 'stare' | 'state_change'
-  | 'step' | 'step.baby' | 'step_lava' | 'step_sand' | 'stun' | 'swim' | 'swoop'
-  | 'takeoff' | 'teleport' | 'tempt' | 'thorns' | 'throw' | 'thunder'
-  | 'tilt_down.big_dripleaf' | 'tilt_up.big_dripleaf' | 'tongue'
-  | 'trapdoor.close' | 'trapdoor.open' | 'trial_spawner.ambient'
-  | 'trial_spawner.ambient_ominous' | 'trial_spawner.charge_activate'
-  | 'trial_spawner.close_shutter' | 'trial_spawner.detect_player'
-  | 'trial_spawner.eject_item' | 'trial_spawner.open_shutter'
-  | 'trial_spawner.spawn_mob' | 'tripod' | 'twinkle'
-  | 'ui.cartography_table.take_result' | 'ui.loom.take_result'
-  | 'ui.stonecutter.take_result' | 'undefined' | 'unfect' | 'unfreeze'
-  | 'unsaddle' | 'vault.activate' | 'vault.ambient' | 'vault.close_shutter'
-  | 'vault.deactivate' | 'vault.eject_item' | 'vault.insert_item'
-  | 'vault.insert_item_fail' | 'vault.open_shutter'
-  | 'vault.reject_rewarded_player' | 'warn' | 'water' | 'whine'
+  | 'activate'
+  | 'add.chest'
+  | 'admire'
+  | 'agitated'
+  | 'ambient'
+  | 'ambient.aggressive'
+  | 'ambient.baby'
+  | 'ambient.basalt_deltas.additions'
+  | 'ambient.basalt_deltas.loop'
+  | 'ambient.basalt_deltas.mood'
+  | 'ambient.candle'
+  | 'ambient.cave'
+  | 'ambient.crimson_forest.additions'
+  | 'ambient.crimson_forest.loop'
+  | 'ambient.crimson_forest.mood'
+  | 'ambient.in.air'
+  | 'ambient.in.raid'
+  | 'ambient.in.water'
+  | 'ambient.nether_wastes.additions'
+  | 'ambient.nether_wastes.loop'
+  | 'ambient.nether_wastes.mood'
+  | 'ambient.pollinate'
+  | 'ambient.screamer'
+  | 'ambient.soulsand_valley.additions'
+  | 'ambient.soulsand_valley.loop'
+  | 'ambient.soulsand_valley.mood'
+  | 'ambient.tame'
+  | 'ambient.underwater.enter'
+  | 'ambient.underwater.exit'
+  | 'ambient.warped_forest.additions'
+  | 'ambient.warped_forest.loop'
+  | 'ambient.warped_forest.mood'
+  | 'ambient.weather.the_end_light_flash'
+  | 'ambient.worried'
+  | 'angry'
+  | 'apply_effect.bad_omen'
+  | 'apply_effect.raid_omen'
+  | 'apply_effect.trial_omen'
+  | 'armor'
+  | 'armor.break_wolf'
+  | 'armor.crack_wolf'
+  | 'armor.equip_chain'
+  | 'armor.equip_copper'
+  | 'armor.equip_diamond'
+  | 'armor.equip_elytra'
+  | 'armor.equip_generic'
+  | 'armor.equip_gold'
+  | 'armor.equip_iron'
+  | 'armor.equip_leather'
+  | 'armor.equip_netherite'
+  | 'armor.equip_wolf'
+  | 'armor.repair_wolf'
+  | 'armor.unequip_generic'
+  | 'armor.unequip_wolf'
+  | 'attach'
+  | 'attack'
+  | 'attack.critical'
+  | 'attack.nodamage'
+  | 'attack.strong'
+  | 'balloonpop'
+  | 'beacon.activate'
+  | 'beacon.ambient'
+  | 'beacon.deactivate'
+  | 'beacon.power'
+  | 'blast'
+  | 'block.bamboo_sapling.place'
+  | 'block.barrel.close'
+  | 'block.barrel.open'
+  | 'block.beehive.drip'
+  | 'block.beehive.enter'
+  | 'block.beehive.exit'
+  | 'block.beehive.shear'
+  | 'block.beehive.work'
+  | 'block.bell.hit'
+  | 'block.blastfurnace.fire_crackle'
+  | 'block.campfire.crackle'
+  | 'block.cartography_table.use'
+  | 'block.click'
+  | 'block.click.fail'
+  | 'block.composter.empty'
+  | 'block.composter.fill'
+  | 'block.composter.fill_success'
+  | 'block.composter.ready'
+  | 'block.copper_bulb.turn_off'
+  | 'block.copper_bulb.turn_on'
+  | 'block.creaking_heart.trail'
+  | 'block.decorated_pot.insert'
+  | 'block.decorated_pot.insert_fail'
+  | 'block.enchanting_table.use'
+  | 'block.end_portal.spawn'
+  | 'block.end_portal_frame.fill'
+  | 'block.fletching_table.use'
+  | 'block.frog_spawn.break'
+  | 'block.frog_spawn.hatch'
+  | 'block.furnace.lit'
+  | 'block.grindstone.use'
+  | 'block.loom.use'
+  | 'block.scaffolding.climb'
+  | 'block.sculk.spread'
+  | 'block.sculk_catalyst.bloom'
+  | 'block.sculk_sensor.place'
+  | 'block.sculk_shrieker.place'
+  | 'block.sculk_shrieker.shriek'
+  | 'block.sign.waxed_interact_fail'
+  | 'block.smithing_table.use'
+  | 'block.smoker.smoke'
+  | 'block.sniffer_egg.crack'
+  | 'block.sniffer_egg.hatch'
+  | 'block.stonecutter.use'
+  | 'block.sweet_berry_bush.hurt'
+  | 'block.sweet_berry_bush.pick'
+  | 'block.turtle_egg.attack'
+  | 'block.turtle_egg.break'
+  | 'block.turtle_egg.crack'
+  | 'block.turtle_egg.hatch'
+  | 'boost'
+  | 'born'
+  | 'bottle.dragonbreath'
+  | 'bottle.empty'
+  | 'bottle.fill'
+  | 'bow'
+  | 'bow.hit'
+  | 'break'
+  | 'break.block'
+  | 'break_pot'
+  | 'breathe'
+  | 'breeze_wind_charge.burst'
+  | 'brush'
+  | 'brush_completed'
+  | 'bubble.down'
+  | 'bubble.downinside'
+  | 'bubble.pop'
+  | 'bubble.up'
+  | 'bubble.upinside'
+  | 'bucket.empty.fish'
+  | 'bucket.empty.lava'
+  | 'bucket.empty.powder_snow'
+  | 'bucket.empty.water'
+  | 'bucket.fill.fish'
+  | 'bucket.fill.lava'
+  | 'bucket.fill.powder_snow'
+  | 'bucket.fill.water'
+  | 'bullet.hit'
+  | 'bundle.drop_contents'
+  | 'bundle.insert'
+  | 'bundle.insert_fail'
+  | 'bundle.remove_one'
+  | 'burp'
+  | 'button.click_off'
+  | 'button.click_on'
+  | 'cake.add_candle'
+  | 'camera.take_picture'
+  | 'cant_breed'
+  | 'cast.spell'
+  | 'cauldron_drip.lava.pointed_dripstone'
+  | 'cauldron_drip.water.pointed_dripstone'
+  | 'celebrate'
+  | 'charge'
+  | 'charge.sculk'
+  | 'chest.closed'
+  | 'chest.open'
+  | 'chime.amethyst_block'
+  | 'chorusdeath'
+  | 'chorusgrow'
+  | 'close'
+  | 'close_long'
+  | 'conduit.activate'
+  | 'conduit.ambient'
+  | 'conduit.attack'
+  | 'conduit.deactivate'
+  | 'conduit.short'
+  | 'convert_mooshroom'
+  | 'convert_to_drowned'
+  | 'convert_to_frog'
+  | 'convert_to_stray'
+  | 'converted_to_zombified'
+  | 'copper.wax.off'
+  | 'copper.wax.on'
+  | 'crafter.craft'
+  | 'crafter.disable_slot'
+  | 'crafter.fail'
+  | 'creaking_heart_spawn'
+  | 'crossbow.loading.end'
+  | 'crossbow.loading.middle'
+  | 'crossbow.loading.start'
+  | 'crossbow.quick_charge.end'
+  | 'crossbow.quick_charge.middle'
+  | 'crossbow.quick_charge.start'
+  | 'crossbow.shoot'
+  | 'dash_ready'
+  | 'deactivate'
+  | 'death'
+  | 'death.baby'
+  | 'death.in.water'
+  | 'death.mid.volume'
+  | 'death.min.volume'
+  | 'death.screamer'
+  | 'death.to.zombie'
+  | 'default'
+  | 'deny'
+  | 'detach'
+  | 'disappeared'
+  | 'door.close'
+  | 'door.open'
+  | 'drink'
+  | 'drink.honey'
+  | 'drink.milk'
+  | 'drip.lava.pointed_dripstone'
+  | 'drip.water.pointed_dripstone'
+  | 'drop.slot'
+  | 'eat'
+  | 'elderguardian.curse'
+  | 'elemconstruct.open'
+  | 'enderchest.closed'
+  | 'enderchest.open'
+  | 'explode'
+  | 'extinguish.candle'
+  | 'extinguish.fire'
+  | 'fall'
+  | 'fall.big'
+  | 'fall.small'
+  | 'fang'
+  | 'fence_gate.close'
+  | 'fence_gate.open'
+  | 'fire'
+  | 'fizz'
+  | 'flap'
+  | 'flop'
+  | 'fly'
+  | 'freeze'
+  | 'fuse'
+  | 'gallop'
+  | 'glass'
+  | 'glow_squid.ink_squirt'
+  | 'glowstick.use'
+  | 'growl'
+  | 'haggle'
+  | 'haggle.idle'
+  | 'haggle.no'
+  | 'haggle.yes'
+  | 'heartbeat'
+  | 'heavy.step'
+  | 'hit'
+  | 'horn_break'
+  | 'horn_call0'
+  | 'horn_call1'
+  | 'horn_call2'
+  | 'horn_call3'
+  | 'horn_call4'
+  | 'horn_call5'
+  | 'horn_call6'
+  | 'horn_call7'
+  | 'hurt'
+  | 'hurt.baby'
+  | 'hurt.in.water'
+  | 'hurt.reduced'
+  | 'hurt.screamer'
+  | 'icebomb.hit'
+  | 'ignite'
+  | 'imitate.blaze'
+  | 'imitate.bogged'
+  | 'imitate.breeze'
+  | 'imitate.camel_husk'
+  | 'imitate.cave_spider'
+  | 'imitate.creaking'
+  | 'imitate.creeper'
+  | 'imitate.drowned'
+  | 'imitate.elder_guardian'
+  | 'imitate.ender_dragon'
+  | 'imitate.enderman'
+  | 'imitate.endermite'
+  | 'imitate.evocation_illager'
+  | 'imitate.ghast'
+  | 'imitate.guardian'
+  | 'imitate.happy_ghast'
+  | 'imitate.husk'
+  | 'imitate.magma_cube'
+  | 'imitate.parched'
+  | 'imitate.phantom'
+  | 'imitate.pillager'
+  | 'imitate.polar_bear'
+  | 'imitate.ravager'
+  | 'imitate.shulker'
+  | 'imitate.silverfish'
+  | 'imitate.skeleton'
+  | 'imitate.slime'
+  | 'imitate.spider'
+  | 'imitate.stray'
+  | 'imitate.vex'
+  | 'imitate.vindication_illager'
+  | 'imitate.warden'
+  | 'imitate.witch'
+  | 'imitate.wither'
+  | 'imitate.wither_skeleton'
+  | 'imitate.wolf'
+  | 'imitate.zoglin'
+  | 'imitate.zombie'
+  | 'imitate.zombie_pigman'
+  | 'imitate.zombie_villager'
+  | 'insert'
+  | 'insert_enchanted'
+  | 'irongolem.crack'
+  | 'irongolem.repair'
+  | 'item.book.put'
+  | 'item.copper_spear.attack_hit'
+  | 'item.copper_spear.attack_miss'
+  | 'item.copper_spear.use'
+  | 'item.diamond_spear.attack_hit'
+  | 'item.diamond_spear.attack_miss'
+  | 'item.diamond_spear.use'
+  | 'item.enchant.lunge1'
+  | 'item.enchant.lunge2'
+  | 'item.enchant.lunge3'
+  | 'item.fizz'
+  | 'item.golden_spear.attack_hit'
+  | 'item.golden_spear.attack_miss'
+  | 'item.golden_spear.use'
+  | 'item.iron_spear.attack_hit'
+  | 'item.iron_spear.attack_miss'
+  | 'item.iron_spear.use'
+  | 'item.netherite_spear.attack_hit'
+  | 'item.netherite_spear.attack_miss'
+  | 'item.netherite_spear.use'
+  | 'item.shield.block'
+  | 'item.spear.attack_hit'
+  | 'item.spear.attack_miss'
+  | 'item.spear.use'
+  | 'item.spyglass.stop_using'
+  | 'item.spyglass.use'
+  | 'item.stone_spear.attack_hit'
+  | 'item.stone_spear.attack_miss'
+  | 'item.stone_spear.use'
+  | 'item.trident.hit'
+  | 'item.trident.hit_ground'
+  | 'item.trident.return'
+  | 'item.trident.riptide_1'
+  | 'item.trident.riptide_2'
+  | 'item.trident.riptide_3'
+  | 'item.trident.throw'
+  | 'item.trident.thunder'
+  | 'item.use.on'
+  | 'item.wooden_spear.attack_hit'
+  | 'item.wooden_spear.attack_miss'
+  | 'item.wooden_spear.use'
+  | 'item_given'
+  | 'item_taken'
+  | 'item_thrown'
+  | 'jump'
+  | 'jump.prevent'
+  | 'jump_to_block'
+  | 'land'
+  | 'large.blast'
+  | 'launch'
+  | 'lava'
+  | 'lava.pop'
+  | 'lay_egg'
+  | 'lay_spawn'
+  | 'lead.break'
+  | 'lead.leash'
+  | 'lead.unleash'
+  | 'leashknot.break'
+  | 'leashknot.place'
+  | 'levelup'
+  | 'listening'
+  | 'listening_angry'
+  | 'lodestone_compass.link_compass_to_lodestone'
+  | 'lt.reaction.bleach'
+  | 'lt.reaction.epaste'
+  | 'lt.reaction.epaste2'
+  | 'lt.reaction.fertilizer'
+  | 'lt.reaction.fire'
+  | 'lt.reaction.fireball'
+  | 'lt.reaction.icebomb'
+  | 'lt.reaction.mgsalt'
+  | 'lt.reaction.miscexplosion'
+  | 'lt.reaction.miscfire'
+  | 'lt.reaction.miscmystical'
+  | 'lt.reaction.miscmystical2'
+  | 'lt.reaction.product'
+  | 'mace.heavy_smash_ground'
+  | 'mace.smash_air'
+  | 'mace.smash_ground'
+  | 'mad'
+  | 'milk'
+  | 'milk.screamer'
+  | 'milk_suspiciously'
+  | 'mob.armadillo.brush'
+  | 'mob.armadillo.scute_drop'
+  | 'mob.armor_stand.place'
+  | 'mob.hoglin.converted_to_zombified'
+  | 'mob.husk.convert_to_zombie'
+  | 'mob.pig.death'
+  | 'mob.player.hurt_drown'
+  | 'mob.player.hurt_freeze'
+  | 'mob.player.hurt_on_fire'
+  | 'mob.warning'
+  | 'mob.warning.baby'
+  | 'multi_swap'
+  | 'nearby_close'
+  | 'nearby_closer'
+  | 'nearby_closest'
+  | 'note'
+  | 'note.bass'
+  | 'ominous_bottle.end_use'
+  | 'ominous_item_spawner.about_to_spawn_item'
+  | 'ominous_item_spawner.spawn_item'
+  | 'ominous_item_spawner.spawn_item_begin'
+  | 'open'
+  | 'open_long'
+  | 'panic'
+  | 'pant'
+  | 'particle.soul_escape.loud'
+  | 'particle.soul_escape.quiet'
+  | 'pause_growth'
+  | 'pick_berries.cave_vines'
+  | 'pickup'
+  | 'pickup_enchanted'
+  | 'piston.in'
+  | 'piston.out'
+  | 'place'
+  | 'place_in_water'
+  | 'place_item'
+  | 'plop'
+  | 'pop'
+  | 'portal'
+  | 'portal.travel'
+  | 'potion.brewed'
+  | 'power.off'
+  | 'power.off.sculk_sensor'
+  | 'power.on'
+  | 'power.on.sculk_sensor'
+  | 'pre_ram'
+  | 'pre_ram.screamer'
+  | 'prepare.attack'
+  | 'prepare.summon'
+  | 'prepare.wololo'
+  | 'presneeze'
+  | 'pressure_plate.click_off'
+  | 'pressure_plate.click_on'
+  | 'pumpkin.carve'
+  | 'purr'
+  | 'purreow'
+  | 'raid.horn'
+  | 'ram_impact'
+  | 'ram_impact.screamer'
+  | 'random.anvil_use'
+  | 'reappeared'
+  | 'record.11'
+  | 'record.13'
+  | 'record.5'
+  | 'record.blocks'
+  | 'record.cat'
+  | 'record.chirp'
+  | 'record.far'
+  | 'record.creator'
+  | 'record.creator_music_box'
+  | 'record.lava_chicken'
+  | 'record.mall'
+  | 'record.mellohi'
+  | 'record.otherside'
+  | 'record.pigstep'
+  | 'record.precipice'
+  | 'record.relic'
+  | 'record.stal'
+  | 'record.strad'
+  | 'record.tears'
+  | 'record.wait'
+  | 'record.ward'
+  | 'reflect'
+  | 'remedy'
+  | 'reset_growth'
+  | 'respawn_anchor.ambient'
+  | 'respawn_anchor.charge'
+  | 'respawn_anchor.deplete'
+  | 'respawn_anchor.set_spawn'
+  | 'retreat'
+  | 'roar'
+  | 'saddle'
+  | 'saddle_in_water'
+  | 'scared'
+  | 'scrape'
+  | 'screech'
+  | 'shake'
+  | 'shatter_pot'
+  | 'shear'
+  | 'shoot'
+  | 'shulker.close'
+  | 'shulker.open'
+  | 'shulkerbox.closed'
+  | 'shulkerbox.open'
+  | 'single_swap'
+  | 'sleep'
+  | 'smithing_table.use'
+  | 'sneeze'
+  | 'sonic_boom'
+  | 'sonic_charge'
+  | 'sparkler.active'
+  | 'sparkler.use'
+  | 'spawn'
+  | 'splash'
+  | 'sponge.absorb'
+  | 'squid.ink_squirt'
+  | 'squish.big'
+  | 'squish.small'
+  | 'stare'
+  | 'state_change'
+  | 'step'
+  | 'step.baby'
+  | 'step_lava'
+  | 'step_sand'
+  | 'stun'
+  | 'swim'
+  | 'swoop'
+  | 'takeoff'
+  | 'teleport'
+  | 'tempt'
+  | 'thorns'
+  | 'throw'
+  | 'thunder'
+  | 'tilt_down.big_dripleaf'
+  | 'tilt_up.big_dripleaf'
+  | 'tongue'
+  | 'trapdoor.close'
+  | 'trapdoor.open'
+  | 'trial_spawner.ambient'
+  | 'trial_spawner.ambient_ominous'
+  | 'trial_spawner.charge_activate'
+  | 'trial_spawner.close_shutter'
+  | 'trial_spawner.detect_player'
+  | 'trial_spawner.eject_item'
+  | 'trial_spawner.open_shutter'
+  | 'trial_spawner.spawn_mob'
+  | 'tripod'
+  | 'twinkle'
+  | 'ui.cartography_table.take_result'
+  | 'ui.loom.take_result'
+  | 'ui.stonecutter.take_result'
+  | 'undefined'
+  | 'unfect'
+  | 'unfreeze'
+  | 'unsaddle'
+  | 'vault.activate'
+  | 'vault.ambient'
+  | 'vault.close_shutter'
+  | 'vault.deactivate'
+  | 'vault.eject_item'
+  | 'vault.insert_item'
+  | 'vault.insert_item_fail'
+  | 'vault.open_shutter'
+  | 'vault.reject_rewarded_player'
+  | 'warn'
+  | 'water'
+  | 'whine'
   | 'wind_charge.burst';
 
-type EnchantableSlot = 'none' | 'all' | 'g_armor' | 'armor_head' | 'armor_torso'
-  | 'armor_feet' | 'armor_legs' | 'sword' | 'bow' | 'spear' | 'crossbow'
-  | 'melee_spear' | 'g_tool' | 'hoe' | 'shears' | 'flintsteel' | 'shield'
-  | 'g_digging' | 'axe' | 'pickaxe' | 'shovel' | 'fishing_rod' | 'carrot_stick'
-  | 'elytra' | 'cosmetic_head';
+type EnchantableSlot =
+  | 'none'
+  | 'all'
+  | 'g_armor'
+  | 'armor_head'
+  | 'armor_torso'
+  | 'armor_feet'
+  | 'armor_legs'
+  | 'sword'
+  | 'bow'
+  | 'spear'
+  | 'crossbow'
+  | 'melee_spear'
+  | 'g_tool'
+  | 'hoe'
+  | 'shears'
+  | 'flintsteel'
+  | 'shield'
+  | 'g_digging'
+  | 'axe'
+  | 'pickaxe'
+  | 'shovel'
+  | 'fishing_rod'
+  | 'carrot_stick'
+  | 'elytra'
+  | 'cosmetic_head';
 
 type AttackCriticalHitChoices = SoundEvent;
 type StartSoundChoices = SoundEvent;
@@ -409,10 +898,20 @@ interface ItemComponentOptions {
     swing_duration?: { value?: number };
     'minecraft:use_animation'?: string | { value?: string };
     'minecraft:wearable'?: {
-      slot: 'slot.armor.head' | 'slot.armor.chest' | 'slot.armor.legs'
-        | 'slot.armor.feet' | 'slot.armor.body' | 'slot.weapon.mainhand'
-        | 'slot.weapon.offhand' | 'slot.hotbar' | 'slot.inventory'
-        | 'slot.enderchest' | 'slot.saddle' | 'slot.armor' | 'slot.chest';
+      slot:
+        | 'slot.armor.head'
+        | 'slot.armor.chest'
+        | 'slot.armor.legs'
+        | 'slot.armor.feet'
+        | 'slot.armor.body'
+        | 'slot.weapon.mainhand'
+        | 'slot.weapon.offhand'
+        | 'slot.hotbar'
+        | 'slot.inventory'
+        | 'slot.enderchest'
+        | 'slot.saddle'
+        | 'slot.armor'
+        | 'slot.chest';
       protection?: number;
       hides_player_location?: boolean;
       dispensable?: boolean;
@@ -430,8 +929,13 @@ interface ItemComponentOptions {
     };
     use_animation?: string | { value?: string };
     wearable?: {
-      slot: 'slot.armor.head' | 'slot.armor.chest' | 'slot.armor.legs'
-        | 'slot.armor.feet' | 'slot.armor.body' | 'slot.weapon.mainhand'
+      slot:
+        | 'slot.armor.head'
+        | 'slot.armor.chest'
+        | 'slot.armor.legs'
+        | 'slot.armor.feet'
+        | 'slot.armor.body'
+        | 'slot.weapon.mainhand'
         | 'slot.weapon.offhand';
       protection?: number;
       hides_player_location?: boolean;
@@ -463,15 +967,28 @@ interface ItemComponentOptions {
     digger?: {
       use_efficiency?: boolean;
       destroy_speeds?: Array<{
-        block: string | { name?: string; states?: Record<string, number | string | boolean>; tags?: string };
+        block:
+          | string
+          | {
+              name?: string;
+              states?: Record<string, number | string | boolean>;
+              tags?: string;
+            };
         speed: number;
       }>;
     };
     damage_absorption?: { absorbable_causes: string[] };
-    durability?: { max_durability: number; damage_chance?: { min: number; max: number } };
+    durability?: {
+      max_durability: number;
+      damage_chance?: { min: number; max: number };
+    };
     durability_sensor?: {
       durability?: number;
-      durability_thresholds?: Array<{ durability: number; particle_type?: ParticleType; sound_event?: SoundEvent }>;
+      durability_thresholds?: Array<{
+        durability: number;
+        particle_type?: ParticleType;
+        sound_event?: SoundEvent;
+      }>;
       particle_type?: ParticleType;
       sound_event?: SoundEvent;
     };
@@ -479,21 +996,51 @@ interface ItemComponentOptions {
     enchantable?: { slot?: EnchantableSlot; value?: number };
     'minecraft:fire_resistant'?: { value?: boolean };
     'minecraft:entity_placer'?: {
-      dispense_on?: Array<string | { name: string; states?: Record<string, number | string | boolean>; tags?: string }>;
+      dispense_on?: Array<
+        | string
+        | {
+            name: string;
+            states?: Record<string, number | string | boolean>;
+            tags?: string;
+          }
+      >;
       entity: string;
-      use_on?: Array<string | { name: string; states?: Record<string, number | string | boolean>; tags?: string }>;
+      use_on?: Array<
+        | string
+        | {
+            name: string;
+            states?: Record<string, number | string | boolean>;
+            tags?: string;
+          }
+      >;
     };
     'minecraft:fuel'?: { duration: number };
     'minecraft:kinetic_weapon'?: {
       creative_reach?: { max?: number; min?: number };
-      damage_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
+      damage_conditions?: {
+        max_duration?: number;
+        min_relative_speed?: number;
+        min_speed?: number;
+      };
       damage_modifier?: number;
       damage_multiplier?: number;
       delay?: number;
-      dismount_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
+      dismount_conditions?: {
+        max_duration?: number;
+        min_relative_speed?: number;
+        min_speed?: number;
+      };
       hitbox_margin?: number;
-      knockback_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
-      kinetic_effect_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
+      knockback_conditions?: {
+        max_duration?: number;
+        min_relative_speed?: number;
+        min_speed?: number;
+      };
+      kinetic_effect_conditions?: {
+        max_duration?: number;
+        min_relative_speed?: number;
+        min_speed?: number;
+      };
       reach?: { max?: number; min?: number };
     };
     'minecraft:interact_button'?: boolean | string;
@@ -507,7 +1054,13 @@ interface ItemComponentOptions {
       nutrition?: number;
       on_use_action?: string;
       on_use_range?: [number, number, number];
-      saturation_modifier?: number | 'poor' | 'low' | 'normal' | 'good' | 'supernatural';
+      saturation_modifier?:
+        | number
+        | 'poor'
+        | 'low'
+        | 'normal'
+        | 'good'
+        | 'supernatural';
       using_converts_to?: string;
       remove_effects?: string[];
     };
@@ -520,27 +1073,63 @@ interface ItemComponentOptions {
       nutrition?: number;
       on_use_action?: string;
       on_use_range?: [number, number, number];
-      saturation_modifier?: number | 'poor' | 'low' | 'normal' | 'good' | 'supernatural';
+      saturation_modifier?:
+        | number
+        | 'poor'
+        | 'low'
+        | 'normal'
+        | 'good'
+        | 'supernatural';
       using_converts_to?: string;
       remove_effects?: string[];
     };
     fire_resistant?: { value?: boolean };
     entity_placer?: {
-      dispense_on?: Array<string | { name: string; states?: Record<string, number | string | boolean>; tags?: string }>;
+      dispense_on?: Array<
+        | string
+        | {
+            name: string;
+            states?: Record<string, number | string | boolean>;
+            tags?: string;
+          }
+      >;
       entity: string;
-      use_on?: Array<string | { name: string; states?: Record<string, number | string | boolean>; tags?: string }>;
+      use_on?: Array<
+        | string
+        | {
+            name: string;
+            states?: Record<string, number | string | boolean>;
+            tags?: string;
+          }
+      >;
     };
     fuel?: { duration: number };
     kinetic_weapon?: {
       creative_reach?: { max?: number; min?: number };
-      damage_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
+      damage_conditions?: {
+        max_duration?: number;
+        min_relative_speed?: number;
+        min_speed?: number;
+      };
       damage_modifier?: number;
       damage_multiplier?: number;
       delay?: number;
-      dismount_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
+      dismount_conditions?: {
+        max_duration?: number;
+        min_relative_speed?: number;
+        min_speed?: number;
+      };
       hitbox_margin?: number;
-      knockback_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
-      kinetic_effect_conditions?: { max_duration?: number; min_relative_speed?: number; min_speed?: number };
+      knockback_conditions?: {
+        max_duration?: number;
+        min_relative_speed?: number;
+        min_speed?: number;
+      };
+      kinetic_effect_conditions?: {
+        max_duration?: number;
+        min_relative_speed?: number;
+        min_speed?: number;
+      };
       reach?: { max?: number; min?: number };
     };
     interact_button?: boolean | string;
@@ -568,7 +1157,10 @@ interface MobEffectConfig {
 }
 
 interface JumpMovementConfig {
-  jump_delay?: number | [number, number] | { range_min?: number; range_max?: number };
+  jump_delay?:
+    | number
+    | [number, number]
+    | { range_min?: number; range_max?: number };
   max_turn?: number;
 }
 
@@ -596,8 +1188,7 @@ interface NavigationConfig {
   using_door_annotation?: boolean;
 }
 
-interface NavigationFloatConfig extends NavigationConfig {
-}
+interface NavigationFloatConfig extends NavigationConfig {}
 
 interface BlockComponentOptions {
   id: string;
@@ -609,51 +1200,77 @@ interface BlockComponentOptions {
     friction?: number;
     loot?: string;
     destructible_by_explosion?: boolean | { explosion_resistance?: number };
-    destructible_by_mining?: boolean | {
-      seconds_to_destroy?: number;
-      item_specific_speeds?: Array<{
-        item: string | { tags?: string };
-        destroy_speed: number;
-      }>;
-    };
-    flammable?: boolean | {
-      catch_chance_modifier?: number;
-      destroy_chance_modifier?: number;
-      lava_flammable?: boolean;
-    };
-    collision_box?: boolean | {
-      origin?: [number, number, number];
-      size?: [number, number, number];
-    };
-    selection_box?: boolean | {
-      origin?: [number, number, number];
-      size?: [number, number, number];
-    };
-    geometry?: string | {
-      identifier: string;
-      bone_visibility?: Record<string, boolean>;
-      culling?: string;
-      culling_layer?: string;
-      culling_shape?: string;
-      n_way_visual_rotation?: string;
-      uv_lock?: boolean | string[];
-    };
-    material_instances?: Record<string, string | {
-      texture: string;
-      render_method?: 'opaque' | 'double_sided' | 'blend' | 'alpha_test' | 'alpha_test_single_sided' | 'blend_to_opaque' | 'alpha_test_to_opaque' | 'alpha_test_single_sided_to_opaque';
-      ambient_occlusion?: number;
-      face_dimming?: boolean | string;
-      isotropic?: boolean;
-      tint_method?: string | boolean;
-    }>;
+    destructible_by_mining?:
+      | boolean
+      | {
+          seconds_to_destroy?: number;
+          item_specific_speeds?: Array<{
+            item: string | { tags?: string };
+            destroy_speed: number;
+          }>;
+        };
+    flammable?:
+      | boolean
+      | {
+          catch_chance_modifier?: number;
+          destroy_chance_modifier?: number;
+          lava_flammable?: boolean;
+        };
+    collision_box?:
+      | boolean
+      | {
+          origin?: [number, number, number];
+          size?: [number, number, number];
+        };
+    selection_box?:
+      | boolean
+      | {
+          origin?: [number, number, number];
+          size?: [number, number, number];
+        };
+    geometry?:
+      | string
+      | {
+          identifier: string;
+          bone_visibility?: Record<string, boolean>;
+          culling?: string;
+          culling_layer?: string;
+          culling_shape?: string;
+          n_way_visual_rotation?: string;
+          uv_lock?: boolean | string[];
+        };
+    material_instances?: Record<
+      string,
+      | string
+      | {
+          texture: string;
+          render_method?:
+            | 'opaque'
+            | 'double_sided'
+            | 'blend'
+            | 'alpha_test'
+            | 'alpha_test_single_sided'
+            | 'blend_to_opaque'
+            | 'alpha_test_to_opaque'
+            | 'alpha_test_single_sided_to_opaque';
+          ambient_occlusion?: number;
+          face_dimming?: boolean | string;
+          isotropic?: boolean;
+          tint_method?: string | boolean;
+        }
+    >;
     map_color?: string | { color: string; tint_method?: string };
     crafting_table?: { crafting_tags?: string[]; table_name?: string };
     transformation?: {
-      rotation?: [number, number, number] | { x?: number; y?: number; z?: number };
+      rotation?:
+        | [number, number, number]
+        | { x?: number; y?: number; z?: number };
       rotation_pivot?: [number, number, number];
       scale?: [number, number, number] | { x?: number; y?: number; z?: number };
       scale_pivot?: [number, number, number];
-      translation?: [number, number, number] | { x?: number; y?: number; z?: number };
+      translation?:
+        | [number, number, number]
+        | { x?: number; y?: number; z?: number };
     };
     tick?: { interval_range: [number, number]; looping?: boolean };
     random_offset?: {
@@ -668,14 +1285,20 @@ interface BlockComponentOptions {
     placement_filter?: {
       conditions: Array<{
         allowed_faces?: string[];
-        block_filter?: Array<string | {
-          name?: string;
-          states?: Record<string, number | string | boolean>;
-          tags?: string;
-        }>;
+        block_filter?: Array<
+          | string
+          | {
+              name?: string;
+              states?: Record<string, number | string | boolean>;
+              tags?: string;
+            }
+        >;
       }>;
     };
-    redstone_conductivity?: { allows_wire_to_step_down?: boolean; redstone_conductor?: boolean };
+    redstone_conductivity?: {
+      allows_wire_to_step_down?: boolean;
+      redstone_conductor?: boolean;
+    };
     redstone_consumer?: { min_power?: number; propagates_power?: boolean };
     redstone_producer?: {
       power?: number;
@@ -703,9 +1326,16 @@ interface BlockComponentOptions {
       }>;
     };
     precipitation_interactions?: {
-      precipitation_behavior?: 'none' | 'obstruct_rain' | 'obstruct_rain_accumulate_snow' | 'snowlogging';
+      precipitation_behavior?:
+        | 'none'
+        | 'obstruct_rain'
+        | 'obstruct_rain_accumulate_snow'
+        | 'snowlogging';
     };
-    entity_fall_on?: { min_fall_distance?: number; minimum_fall_distance?: number };
+    entity_fall_on?: {
+      min_fall_distance?: number;
+      minimum_fall_distance?: number;
+    };
     replaceable?: Record<string, never>;
     flower_pottable?: Record<string, never>;
     chest_obstruction?: Record<string, never>;
@@ -820,18 +1450,31 @@ interface EntityComponentOptions {
     'minecraft:mark_variant'?: { value?: number };
     'minecraft:mob_effect'?: MobEffectConfig;
     'minecraft:mob_effect_immunity'?: { mob_effects?: string[] };
-    'minecraft:movement'?: { max?: number; value?: number | { range_min: number; range_max: number } };
+    'minecraft:movement'?: {
+      max?: number;
+      value?: number | { range_min: number; range_max: number };
+    };
     'minecraft:movement.amphibious'?: { max_turn?: number };
     'minecraft:movement.basic'?: { max_turn?: number };
     'minecraft:movement.dolphin'?: Record<string, unknown>;
-    'minecraft:movement.fly'?: { max_turn?: number; speed_when_turning?: number; start_speed?: number };
+    'minecraft:movement.fly'?: {
+      max_turn?: number;
+      speed_when_turning?: number;
+      start_speed?: number;
+    };
     'minecraft:movement.generic'?: { max_turn?: number };
-    'minecraft:movement.glide'?: { max_turn?: number; speed_when_turning?: number };
+    'minecraft:movement.glide'?: {
+      max_turn?: number;
+      speed_when_turning?: number;
+    };
     'minecraft:movement.hover'?: { max_turn?: number };
     'minecraft:movement.jump'?: JumpMovementConfig;
     'minecraft:movement.skip'?: { max_turn?: number };
     'minecraft:movement.sound_distance_offset'?: { value?: number };
-    'minecraft:movement.sway'?: { sway_amplitude?: number; sway_frequency?: number };
+    'minecraft:movement.sway'?: {
+      sway_amplitude?: number;
+      sway_frequency?: number;
+    };
     'minecraft:nameable'?: {
       name_actions?: Array<{
         name_filter?: string[];

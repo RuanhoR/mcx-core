@@ -20,14 +20,15 @@ import {
   type SimpleExpressionNode,
 } from '@vue/compiler-core';
 
-function getExpressionContent(
-  expr: { content?: string } | undefined,
-): string {
+function getExpressionContent(expr: { content?: string } | undefined): string {
   return expr?.content ?? 'true';
 }
 
 /** Convert absolute character offset in source to MCX position (line: 1-indexed, column: 0-indexed) */
-function absOffsetToMCXPos(source: string, absOffset: number): { line: number; column: number } {
+function absOffsetToMCXPos(
+  source: string,
+  absOffset: number,
+): { line: number; column: number } {
   let line = 1;
   let col = 0;
   const len = Math.min(absOffset, source.length);
@@ -133,7 +134,10 @@ export default class McxAst {
     for (let i = 0; i < elementSource.length; i++) {
       const c = elementSource[i];
       if (inQuote) {
-        if (c === '\\') { i++; continue; }
+        if (c === '\\') {
+          i++;
+          continue;
+        }
         if (c === inQuote) inQuote = null;
       } else if (c === '"' || c === "'") {
         inQuote = c;
@@ -269,9 +273,7 @@ class MCXUtils {
     return !!obj && typeof obj === 'object' && !Array.isArray(obj);
   }
   static isParseNode(node: unknown): node is ParsedTagNode[] {
-    return (
-      Array.isArray(node) && (node as unknown[]).every(MCXUtils.isTagNode)
-    );
+    return Array.isArray(node) && (node as unknown[]).every(MCXUtils.isTagNode);
   }
   static isToken(_obj: unknown): boolean {
     return false;

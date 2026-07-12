@@ -23,11 +23,12 @@ export async function _transform(ctx: transformCtx): Promise<string> {
     (uiTag && uiTag.arr.setup !== undefined);
 
   // Determine mode type for defineProp (form vs ui)
-  const modeType: 'form' | 'ui' | null = formTag && formTag.arr.setup !== undefined
-    ? 'form'
-    : uiTag && uiTag.arr.setup !== undefined
-      ? 'ui'
-      : null;
+  const modeType: 'form' | 'ui' | null =
+    formTag && formTag.arr.setup !== undefined
+      ? 'form'
+      : uiTag && uiTag.arr.setup !== undefined
+        ? 'ui'
+        : null;
 
   const _temp_main = generateMain(ctx.compiledCode.JSIR);
   const mainFn = (ctx.mainFn.body = _temp_main[0]);
@@ -106,22 +107,19 @@ export async function _transform(ctx: transformCtx): Promise<string> {
     const hooks = processHooks(ctx.compiledCode.JSIR);
 
     const returnStmt = mainFn[mainFn.length - 1];
-    if (t.isReturnStatement(returnStmt) && t.isObjectExpression(returnStmt.argument)) {
+    if (
+      t.isReturnStatement(returnStmt) &&
+      t.isObjectExpression(returnStmt.argument)
+    ) {
       returnStmt.argument.properties.push(...setupDecls);
       if (hooks.startup) {
         returnStmt.argument.properties.push(
-          t.objectProperty(
-            t.identifier('__mcx_startup'),
-            hooks.startup,
-          ),
+          t.objectProperty(t.identifier('__mcx_startup'), hooks.startup),
         );
       }
       if (hooks.mounted) {
         returnStmt.argument.properties.push(
-          t.objectProperty(
-            t.identifier('__mcx_mounted'),
-            hooks.mounted,
-          ),
+          t.objectProperty(t.identifier('__mcx_mounted'), hooks.mounted),
         );
       }
     }

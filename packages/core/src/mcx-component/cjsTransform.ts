@@ -190,18 +190,18 @@ function transformESMToCJS(
             if (i.specifiers.length >= 1) {
               const exportExprs = i.specifiers
                 .map(specifier => {
-                    if (t.isExportSpecifier(specifier)) {
-                      const exportedName = t.isIdentifier(specifier.exported)
-                        ? specifier.exported.name
-                        : (specifier.exported as t.StringLiteral).value;
-                      return t.assignmentExpression(
-                        '=',
-                        t.memberExpression(
-                          t.identifier('exports'),
-                          t.identifier(exportedName),
-                        ),
-                        t.identifier(specifier.local.name),
-                      );
+                  if (t.isExportSpecifier(specifier)) {
+                    const exportedName = t.isIdentifier(specifier.exported)
+                      ? specifier.exported.name
+                      : (specifier.exported as t.StringLiteral).value;
+                    return t.assignmentExpression(
+                      '=',
+                      t.memberExpression(
+                        t.identifier('exports'),
+                        t.identifier(exportedName),
+                      ),
+                      t.identifier(specifier.local.name),
+                    );
                   }
                   return null;
                 })

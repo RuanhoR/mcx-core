@@ -35,13 +35,17 @@ interface ParsedUIOption extends Omit<MCXUIOpt, 'layout'> {
           useProp: string;
         };
     type: MCXUIOpt['layout'][number]['type'];
-    for?: string | {
-      variable: string;
-      useProp: string;
-    };
-    if?: string | {
-      useProp: string;
-    };
+    for?:
+      | string
+      | {
+          variable: string;
+          useProp: string;
+        };
+    if?:
+      | string
+      | {
+          useProp: string;
+        };
   }[];
 }
 interface ResolvedParams {
@@ -54,13 +58,17 @@ interface ResolvedLayoutItem {
   type: MCXUIOpt['layout'][number]['type'];
   params: ResolvedParams;
   content: string;
-  for?: string | {
-    variable: string;
-    useProp: string;
-  };
-  if?: string | {
-    useProp: string;
-  };
+  for?:
+    | string
+    | {
+        variable: string;
+        useProp: string;
+      };
+  if?:
+    | string
+    | {
+        useProp: string;
+      };
 }
 
 type SetupRecord = Record<string, unknown>;
@@ -292,8 +300,7 @@ export class ui implements typesPkg.ui {
         for (const element of arr) {
           const copy = JSON.parse(JSON.stringify(item)) as UnresolvedLayoutItem;
           if (typeof item.params.click === 'function') {
-            (copy.params as Record<string, unknown>).click =
-              item.params.click;
+            (copy.params as Record<string, unknown>).click = item.params.click;
           }
           if (
             typeof copy.content === 'object' &&

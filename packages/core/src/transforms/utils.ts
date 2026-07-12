@@ -312,7 +312,8 @@ function inferObservableType(expr: t.Expression): string | null {
   if (t.isBooleanLiteral(expr)) return 'ObservableBoolean';
   if (t.isNumericLiteral(expr)) return 'ObservableNumber';
   if (t.isNullLiteral(expr)) return 'ObservableString';
-  if (t.isIdentifier(expr) && expr.name === 'undefined') return 'ObservableString';
+  if (t.isIdentifier(expr) && expr.name === 'undefined')
+    return 'ObservableString';
   return null;
 }
 
@@ -328,18 +329,17 @@ function collectSetupDeclarations(
     for (const id of ids) {
       if (id && !seen.has(id)) {
         seen.add(id);
-        result.push(
-          t.objectProperty(t.identifier(id), t.identifier(id)),
-        );
+        result.push(t.objectProperty(t.identifier(id), t.identifier(id)));
       }
     }
   }
   return result;
 }
 
-function processHooks(
-  code: JsCompileData,
-): { startup: t.Expression | null; mounted: t.Expression | null } {
+function processHooks(code: JsCompileData): {
+  startup: t.Expression | null;
+  mounted: t.Expression | null;
+} {
   let startup: t.Expression | null = null;
   let mounted: t.Expression | null = null;
 

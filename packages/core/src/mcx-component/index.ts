@@ -9,7 +9,7 @@ import type { BaseJson, FilePoint } from './types';
 import { existsSync, readFileSync } from 'node:fs';
 import { parse } from '@babel/parser';
 import { styleText } from 'node:util';
-import type lib from "@mbler/mcx-component"
+import type lib from '@mbler/mcx-component';
 /** Accumulated bind data (e.g. item_texture entries) across all components in a build. */
 let cachedOption: Record<string, string[] | [string, string][]> = {};
 
@@ -524,7 +524,7 @@ export async function compileComponent(
       // since local variables (e.g. const item = new ItemComponent()) are
       // not captured by exportSources.
       const isMcxCoreSource = Object.values(exportSources).some(
-        (src) => src && src.startsWith('@mbler/mcx-component'),
+        src => src && src.startsWith('@mbler/mcx-component'),
       );
       await execEdit(json._meta.file_edit, ctx, isMcxCoreSource);
     }
@@ -534,4 +534,4 @@ export async function compileComponent(
     await writeFile(filePoint, JSON.stringify(json, null, 2));
   }
 }
-export * from "./vm"
+export * from './vm';

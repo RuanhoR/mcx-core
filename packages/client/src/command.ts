@@ -70,10 +70,7 @@ function registryCommand(command: Command): void {
       for (const cmd of commandQueue) {
         cmd.registerEnums(registry);
         try {
-          registry.registerCommand(
-            cmd.toCustomCommand(),
-            cmd.getCallback(),
-          );
+          registry.registerCommand(cmd.toCustomCommand(), cmd.getCallback());
         } catch (e) {
           console.error(
             `[mcx command]: Failed to register command '${cmd.getName()}'`,
@@ -93,10 +90,12 @@ class Command {
   private cheatsRequired: boolean = true;
   private mandatoryParams: CustomCommandParameter[] = [];
   private optionalParams: CustomCommandParameter[] = [];
-  private callback: ((
-    origin: CustomCommandOrigin,
-    ...args: unknown[]
-  ) => CustomCommandResult | undefined) | null = null;
+  private callback:
+    | ((
+        origin: CustomCommandOrigin,
+        ...args: unknown[]
+      ) => CustomCommandResult | undefined)
+    | null = null;
   private enums: { name: string; values: string[] }[] = [];
 
   constructor(name: string) {
@@ -184,7 +183,10 @@ class Command {
     param: CommandParamDef,
   ): CustomCommandParameter {
     if (typeof param === 'string') {
-      return { name, type: paramTypeMap[param] ?? CustomCommandParamType.String };
+      return {
+        name,
+        type: paramTypeMap[param] ?? CustomCommandParamType.String,
+      };
     }
 
     const result: CustomCommandParameter = {

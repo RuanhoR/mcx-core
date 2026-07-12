@@ -20,7 +20,9 @@ export class App {
           "[mcx runtime]: Can't load subscribe: don't load handler for " +
             index[0],
         );
-      eventOpt.data[index[0]] = setupResult[index[1]] as (event: unknown) => void;
+      eventOpt.data[index[0]] = setupResult[index[1]] as (
+        event: unknown,
+      ) => void;
     }
     return new Event(eventOpt, mcx => this._loadEventMCX(mcx));
   }

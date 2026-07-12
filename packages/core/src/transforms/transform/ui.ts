@@ -68,12 +68,12 @@ export async function Comp(ctx: transformParseCtx) {
 
   // Resolve title: if {{ }} use setup value, else literal
   const titleExpr = titleContent
-    ? (titleContent.startsWith('{{ ') && titleContent.endsWith(' }}')
-        ? t.memberExpression(
-            setupIdent,
-            t.identifier(titleContent.slice(3, titleContent.length - 3).trim()),
-          )
-        : t.stringLiteral(titleContent))
+    ? titleContent.startsWith('{{ ') && titleContent.endsWith(' }}')
+      ? t.memberExpression(
+          setupIdent,
+          t.identifier(titleContent.slice(3, titleContent.length - 3).trim()),
+        )
+      : t.stringLiteral(titleContent)
     : t.stringLiteral('');
 
   // new CustomForm(player, title)
@@ -210,10 +210,7 @@ export async function Comp(ctx: transformParseCtx) {
 
   // The full config object for the runtime
   const finallyData = t.objectExpression([
-    t.objectProperty(
-      t.identifier('build'),
-      buildFn,
-    ),
+    t.objectProperty(t.identifier('build'), buildFn),
     t.objectProperty(
       t.identifier('use'),
       t.memberExpression(
@@ -279,7 +276,9 @@ function resolveValueAttr(
   content: string,
 ): t.Expression {
   // :value attr takes priority
-  const valueKey = Object.keys(attrs).find(k => k === ':value' || k === 'value');
+  const valueKey = Object.keys(attrs).find(
+    k => k === ':value' || k === 'value',
+  );
   if (valueKey) {
     const val = attrs[valueKey];
     if (valueKey.startsWith(':')) {
@@ -377,12 +376,17 @@ function buildDropdownItems(
   if (optionVal && typeof optionVal === 'string') {
     if (typeof attrs.option === 'string' && !attrs[':option']) {
       // static: option="a,b,c"
-      const items = optionVal.split(',').map((item, idx) =>
-        t.objectExpression([
-          t.objectProperty(t.identifier('label'), t.stringLiteral(item.trim())),
-          t.objectProperty(t.identifier('value'), t.numericLiteral(idx)),
-        ]),
-      );
+      const items = optionVal
+        .split(',')
+        .map((item, idx) =>
+          t.objectExpression([
+            t.objectProperty(
+              t.identifier('label'),
+              t.stringLiteral(item.trim()),
+            ),
+            t.objectProperty(t.identifier('value'), t.numericLiteral(idx)),
+          ]),
+        );
       return t.arrayExpression(items);
     }
     // dynamic: :option="itemsVar" → setup.itemsVar
@@ -430,7 +434,9 @@ function buildOptions(
       optProps.push(
         t.objectProperty(
           t.identifier(key),
-          typeof val === 'boolean' ? t.booleanLiteral(val) : t.stringLiteral(String(val)),
+          typeof val === 'boolean'
+            ? t.booleanLiteral(val)
+            : t.stringLiteral(String(val)),
         ),
       );
     }
@@ -454,10 +460,7 @@ function buildOptions(
 }
 
 /** Resolve a string to setup.x.y.z */
-function resolveToSetup(
-  expr: string,
-  setupIdent: t.Identifier,
-): t.Expression {
+function resolveToSetup(expr: string, setupIdent: t.Identifier): t.Expression {
   const parts = expr.split('.');
   let member: t.Expression = setupIdent;
   for (const part of parts) {

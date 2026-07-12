@@ -96,9 +96,7 @@ export default class NodeUtils {
   ): unknown {
     const context = { ...topContext, ...currentContext };
 
-    const evaluate = (
-      expr: unknown,
-    ): unknown => {
+    const evaluate = (expr: unknown): unknown => {
       if (!expr) return undefined;
       const e = expr as Expression | PrivateName;
       switch (e.type) {
@@ -153,9 +151,7 @@ export default class NodeUtils {
         case 'ArrayExpression':
           return e.elements.map((element: unknown) => {
             const el = element as { type: string } | null;
-            return el && el.type !== 'SpreadElement'
-              ? evaluate(el)
-              : undefined;
+            return el && el.type !== 'SpreadElement' ? evaluate(el) : undefined;
           });
 
         case 'UnaryExpression':
@@ -185,7 +181,10 @@ export default class NodeUtils {
             typeof leftValue == 'number' && typeof rightValue == 'number';
           switch (e.operator) {
             case '+':
-              if (typeof leftValue === 'number' && typeof rightValue === 'number') {
+              if (
+                typeof leftValue === 'number' &&
+                typeof rightValue === 'number'
+              ) {
                 return leftValue + rightValue;
               }
               return String(leftValue) + String(rightValue);
@@ -274,7 +273,9 @@ export default class NodeUtils {
     try {
       return evaluate(expression);
     } catch (error: unknown) {
-      throw new Error(`Expression evaluation failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Expression evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 }

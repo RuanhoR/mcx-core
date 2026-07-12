@@ -173,8 +173,7 @@ export async function Comp(ctx: transformParseCtx) {
       }
       MCXUIType = 'ModalFormData';
       pushToTree(name, cleanedArr, tp.content, tp.for, tp.if);
-    }
-    else if (['button-m'].includes(name)) {
+    } else if (['button-m'].includes(name)) {
       if (MCXUIType && MCXUIType !== 'MessageFormData') {
         internalCtx.rollupContext.error(
           '[Form]: ',
@@ -188,8 +187,7 @@ export async function Comp(ctx: transformParseCtx) {
       }
       MCXUIType = 'MessageFormData';
       pushToTree(name, cleanedArr, tp.content, tp.for, tp.if);
-    }
-    else if (['body', 'divider', 'title', 'label'].includes(name)) {
+    } else if (['body', 'divider', 'title', 'label'].includes(name)) {
       pushToTree(name, cleanedArr, tp.content, tp.for, tp.if);
     } else if (name == 'button') {
       if (MCXUIType !== 'ActionFormData' && MCXUIType)

@@ -37,13 +37,17 @@ export interface MCXUIOpt {
       | {
           useProp: string;
         };
-    for?: string | {
-      variable: string;
-      useProp: string;
-    };
-    if?: string | {
-      useProp: string;
-    };
+    for?:
+      | string
+      | {
+          variable: string;
+          useProp: string;
+        };
+    if?:
+      | string
+      | {
+          useProp: string;
+        };
   }[];
   build?: (player: Player, setup: SetupRecord) => CustomForm;
   use?: typeof ModalFormData | typeof MessageFormData | typeof ActionFormData;

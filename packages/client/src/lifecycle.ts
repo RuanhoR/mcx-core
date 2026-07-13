@@ -26,10 +26,7 @@ type ObservableFor<T> =
   never;
 
 export function defineProp<T extends string | boolean | number>(
-  ...args: [defaultValue: T] | [name: string, defaultValue: T]
+  ..._args: [defaultValue: T] | [name: string, defaultValue: T]
 ): ObservableFor<T> {
-  const val = args.length === 1 ? args[0] : args[1];
-  if (typeof val === 'string') return new ObservableString(val) as ObservableFor<T>;
-  if (typeof val === 'boolean') return new ObservableBoolean(val) as ObservableFor<T>;
-  return new ObservableNumber(Number(val)) as ObservableFor<T>;
+  return undefined as unknown as ObservableFor<T>;
 }

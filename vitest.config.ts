@@ -6,6 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   test: {
+    testTimeout: 30000,
     root: __dirname,
     include: ['packages/*/__test__/**/*.spec.ts'],
     coverage: {

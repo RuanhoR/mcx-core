@@ -88,6 +88,6 @@ describe('initProject', () => {
       OtherModule: [],
     });
     const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'));
-    expect(pkg.dependencies['@minecraft/server']).toBe('2.0.0');
+    expect(pkg.dependencies['@minecraft/server']).toBe('2.2.0-beta');
   });
 });

@@ -53,3 +53,38 @@ export class Ref<T extends RefValue = RefValue> {
 export function ref<T extends RefValue>(defaultValue: T): Ref<T> {
   return new Ref(defaultValue);
 }
+
+export class Computation {
+  __deps: ((ctx: unknown[]) => Ref)[];
+  __eval: (ctx: unknown[]) => unknown;
+  __cleanupFns: (() => void)[] = [];
+
+  constructor(evalFn: (ctx: unknown[]) => unknown, deps: ((ctx: unknown[]) => Ref)[]) {
+    this.__eval = evalFn;
+    this.__deps = deps;
+  }
+
+  get value(): unknown {
+    return this.__eval([]);
+  }
+
+  evaluate(ctx: unknown[]): unknown {
+    return this.__eval(ctx);
+  }
+
+  subscribeAll(ctx: unknown[], fn: () => void): void {
+    for (const depFn of this.__deps) {
+      const dep = depFn(ctx);
+      if (dep instanceof Ref) {
+        const handler = () => fn();
+        dep.subscribe(handler);
+        this.__cleanupFns.push(() => dep.unsubscribe(handler));
+      }
+    }
+  }
+
+  __cleanup(): void {
+    for (const fn of this.__cleanupFns) fn();
+    this.__cleanupFns = [];
+  }
+}

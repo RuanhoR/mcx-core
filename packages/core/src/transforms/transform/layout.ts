@@ -105,13 +105,13 @@ export function generateLayout(
           if (paramName === 'click') {
             return t.objectProperty(
               t.identifier(paramName),
-              arrowFn(String(value)),
+              simpleFn(String(value)),
             );
           }
           return t.objectProperty(
             t.identifier(paramName),
             isDynamic
-              ? arrowFn(String(value))
+              ? simpleFn(String(value))
               : typeof value === 'boolean'
                 ? t.booleanLiteral(value)
                 : t.stringLiteral(value),
@@ -190,23 +190,51 @@ function detectFormType(
   return 'invalid';
 }
 
-/** Generate (__ctx) => __ctx[0].a.b.c arrow function (for simple expressions) */
-function arrowFn(expr: string): t.ArrowFunctionExpression {
-  const ctx = t.identifier('__ctx');
+/** Simple arrow function for params (non-reactive): (ctx) => ctx[0].a.b.c */
+function simpleFn(expr: string): t.ArrowFunctionExpression {
+  const ctx = t.identifier('ctx');
   const body = dotAccess(expr, ctx);
   return t.arrowFunctionExpression([ctx], body);
+}
+
+/** Extract root identifiers from an expression for dependency tracking */
+function extractIdentifiers(expr: string): string[] {
+  const reserved = new Set(['true', 'false', 'null', 'undefined', 'this', 'new', 'typeof', 'instanceof']);
+  const ids = new Set<string>();
+  const regex = /\b([a-zA-Z_$][\w$]*)\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(expr)) !== null) {
+    if (!reserved.has(m[1]!)) ids.add(m[1]!);
+  }
+  return [...ids];
+}
+
+/** Generate new Computation((ctx) => expr, [deps]) */
+function arrowFn(expr: string): t.NewExpression {
+  const ctx = t.identifier('ctx');
+  const body = dotAccess(expr, ctx);
+  const evalFn = t.arrowFunctionExpression([ctx], body);
+  const ids = extractIdentifiers(expr);
+  const deps = ids.map(id => {
+    const c = t.identifier('ctx');
+    return t.arrowFunctionExpression([c], dotAccess(id, c));
+  });
+  return t.newExpression(t.identifier('Computation'), [
+    evalFn,
+    t.arrayExpression(deps),
+  ]);
 }
 
 /**
  * Parse content string, returns:
  * - t.stringLiteral for pure static text
- * - t.ArrowFunctionExpression for content with {{ }} interpolation
+ * - t.NewExpression (Computation) for content with {{ }} interpolation
  *
  * Supports:
  * - "Hello" → "Hello"
- * - "{{ a }}" → (__ctx) => __ctx[0].a
- * - "Hi {{ a }}" → (__ctx) => `Hi ${__ctx[0].a}`
- * - "{{ a }}, Hi, {{ b }}" → (__ctx) => `${__ctx[0].a}, Hi, ${__ctx[0].b}`
+ * - "{{ a }}" → new Computation((ctx) => ctx[0].a, [ctx => ctx[0].a])
+ * - "Hi {{ a }}" → new Computation((ctx) => `Hi ${ctx[0].a}`, [ctx => ctx[0].a])
+ * - "{{ a.slice(1,2) }}" → new Computation((ctx) => ctx[0].a.slice(1,2), [ctx => ctx[0].a])
  */
 function parseContent(raw: string): t.Expression {
   // Check for any {{ }} interpolation
@@ -215,31 +243,41 @@ function parseContent(raw: string): t.Expression {
   }
 
   const parts = splitInterpolation(raw);
-  const hasInterp = parts.some(p => p.type === 'expr');
 
-  // Single interpolation, no surrounding text → pure member access
+  // Single interpolation, no surrounding text → Computation
   if (parts.length === 1 && parts[0]!.type === 'expr') {
     return arrowFn(parts[0]!.value);
   }
 
-  // Multiple parts or mixed → template literal arrow function
-  const ctx = t.identifier('__ctx');
+  // Multiple parts or mixed → template literal Computation
+  const ctx = t.identifier('ctx');
   const quasis: t.TemplateElement[] = [];
   const expressions: t.Expression[] = [];
+  const allIds = new Set<string>();
 
   for (const part of parts) {
     if (part.type === 'text') {
       quasis.push(t.templateElement({ raw: part.value, cooked: part.value }));
     } else {
-      // {{ expr }} → __ctx[0].expr
       expressions.push(dotAccess(part.value, ctx));
+      for (const id of extractIdentifiers(part.value)) {
+        allIds.add(id);
+      }
     }
   }
   // Template must end with a quasis
   quasis.push(t.templateElement({ raw: '', cooked: '' }, true));
 
   const tpl = t.templateLiteral(quasis, expressions);
-  return t.arrowFunctionExpression([ctx], tpl);
+  const evalFn = t.arrowFunctionExpression([ctx], tpl);
+  const deps = [...allIds].map(id => {
+    const c = t.identifier('ctx');
+    return t.arrowFunctionExpression([c], dotAccess(id, c));
+  });
+  return t.newExpression(t.identifier('Computation'), [
+    evalFn,
+    t.arrayExpression(deps),
+  ]);
 }
 
 type InterpolationPart = { type: 'text'; value: string } | { type: 'expr'; value: string };

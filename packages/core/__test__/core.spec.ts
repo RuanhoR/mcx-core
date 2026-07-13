@@ -237,7 +237,8 @@ describe('Form transform (legacy FormData)', () => {
       { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
       outdirs,
     );
-    expect(code).toContain('__ctx[0].name');
+    expect(code).toContain('Computation');
+    expect(code).toContain('ctx[0].name');
     expect(code).toContain('"input name"');
   });
 
@@ -253,7 +254,8 @@ describe('Form transform (legacy FormData)', () => {
       { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
       outdirs,
     );
-    expect(code).toContain('__ctx[0].name');
+    expect(code).toContain('Computation');
+    expect(code).toContain('ctx[0].name');
     expect(code).toContain('"Name"');
   });
 
@@ -304,7 +306,8 @@ describe('Form transform (legacy FormData)', () => {
     expect(code).toContain('"v"');
     expect(code).toContain('useSetup:');
     expect(code).toContain('"items"');
-    expect(code).toContain('__ctx[0].v.label');
+    expect(code).toContain('Computation');
+    expect(code).toContain('ctx[0].v.label');
   });
 
   it('should reject invalid for syntax in Form', async () => {
@@ -380,7 +383,8 @@ describe('Ui transform (CustomForm)', () => {
       { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
       outdirs,
     );
-    expect(code).toContain('__ctx[0].name');
+    expect(code).toContain('Computation');
+    expect(code).toContain('ctx[0].name');
     expect(code).toContain('"Settings"');
   });
 
@@ -397,7 +401,7 @@ describe('Ui transform (CustomForm)', () => {
       outdirs,
     );
     expect(code).toContain('Click');
-    expect(code).toContain('__ctx[0].handler');
+    expect(code).toContain('ctx[0].handler');
   });
 });
 

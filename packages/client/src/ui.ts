@@ -11,13 +11,20 @@ import {
   type MessageFormResponse,
   type ModalFormResponse,
 } from '@minecraft/server-ui';
-import { Ref } from './ref';
+import { Ref, Computation } from './ref';
 
 type SetupRecord = Record<string, unknown>;
 type LayoutFn = (ctx: unknown[]) => unknown;
 
 function toObs(val: unknown): ObservableString | ObservableBoolean | ObservableNumber | undefined {
   if (val instanceof Ref) return val.__obs;
+  if (val instanceof Computation) {
+    const v = val.value;
+    if (typeof v === 'string') return new ObservableString(v);
+    if (typeof v === 'boolean') return new ObservableBoolean(v);
+    if (typeof v === 'number') return new ObservableNumber(v);
+    return undefined;
+  }
   if (val instanceof ObservableString || val instanceof ObservableBoolean || val instanceof ObservableNumber) return val;
   return undefined;
 }
@@ -27,6 +34,15 @@ function refToObsOrWarn(
   expectedType: 'string' | 'boolean' | 'number',
   paramName: string,
 ): ObservableString | ObservableBoolean | ObservableNumber | undefined {
+  if (val instanceof Computation) {
+    const v = val.value;
+    if (typeof v !== expectedType) {
+      console.warn(`[mcx ui]: computation "${paramName}" is ${typeof v}, expected ${expectedType} — converting`);
+    }
+    if (expectedType === 'string') return new ObservableString(String(v));
+    if (expectedType === 'boolean') return new ObservableBoolean(Boolean(v));
+    return new ObservableNumber(Number(v));
+  }
   if (!(val instanceof Ref)) return val as undefined;
   const obs = val.__obs;
   const actual = typeof val.value;
@@ -38,19 +54,30 @@ function refToObsOrWarn(
   return obs instanceof ObservableNumber ? obs : new ObservableNumber(Number(val.value));
 }
 
+function conditionToObs(val: unknown): ObservableBoolean {
+  if (val instanceof Computation) {
+    const obs = new ObservableBoolean(Boolean(val.value));
+    val.subscribeAll([], () => obs.setData(Boolean(val.value)));
+    return obs;
+  }
+  if (val instanceof Ref) return val.__obs instanceof ObservableBoolean ? val.__obs : new ObservableBoolean(Boolean(val.value));
+  return new ObservableBoolean(Boolean(val));
+}
+
 function buildOpts(item: LayoutItem & { _loopSetup?: SetupRecord }, ctx: unknown[]): Record<string, unknown> {
   const opts: Record<string, unknown> = {};
   const p = item.params;
   if (p.tip) opts.tooltip = String(p.tip(ctx));
-  if (p.disabled) opts.disabled = Boolean(p.disabled(ctx));
-  if (p.visible) opts.visible = Boolean(p.visible(ctx));
+  if (p.disabled) {
+    const v = p.disabled(ctx);
+    opts.disabled = v instanceof Computation ? Boolean(v.value) : Boolean(v);
+  }
+  if (p.visible) {
+    const v = p.visible(ctx);
+    opts.visible = v instanceof Computation ? Boolean(v.value) : Boolean(v);
+  }
   if (p.description) opts.description = String(p.description(ctx));
   return opts;
-}
-
-function buildOptsMaybe(item: LayoutItem & { _loopSetup?: SetupRecord }, ctx: unknown[]): Record<string, unknown> | undefined {
-  const opts = buildOpts(item, ctx);
-  return Object.keys(opts).length ? opts : undefined;
 }
 
 interface LayoutItem {
@@ -120,76 +147,115 @@ export class ui implements typesPkg.ui {
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const form: any = new CFCtor(player, '');
-    const items = this._resolveItems(setup);
-    const refs: Ref[] = [];
+    const computations: Computation[] = [];
+    const items = this._resolveItems(setup, true);
 
     for (const item of items) {
       const type = item.type;
       const s = item._loopSetup || setup;
       const ctx = [s];
-      const content = item.content(ctx);
 
-      // Resolve label: Ref → read .value, otherwise string
+      // === Resolve content (reactive) ===
+      const rawContent = item.content(ctx);
       let label: string;
-      if (content instanceof Ref) {
-        label = String(content.value);
-        refs.push(content);
+      if (rawContent instanceof Computation) {
+        label = String(rawContent.value ?? '');
+        rawContent.subscribeAll(ctx, () => {
+          // Computation re-evaluates on ref change
+        });
+        computations.push(rawContent);
+      } else if (rawContent instanceof Ref) {
+        label = String(rawContent.value);
       } else {
-        label = String(content ?? '');
+        label = String(rawContent ?? '');
       }
 
       if (type === 'title') continue;
 
-      // Resolve :value binding with type conversion
+      // === Resolve if condition (reactive) ===
+      const ifObs = item.if ? conditionToObs(setup[item.if.useSetup]) : undefined;
+
+      // === Resolve :value binding ===
       const rawVal = item.params.value ? item.params.value(ctx) : undefined;
+
+      // === Resolve for-loop (reactive pre-allocate) ===
+      if (item.for && !item._loopSetup) {
+        const source = setup[item.for.useSetup];
+        if (Array.isArray(source)) {
+          const varName = item.for.variable;
+          for (let i = 0; i < source.length; i++) {
+            const loopSetup = { ...setup, [varName]: source[i] };
+            const loopCtx = [loopSetup];
+            const loopContent = item.content(loopCtx);
+            let loopLabel: string;
+            if (loopContent instanceof Computation) {
+              loopLabel = String(loopContent.value ?? '');
+              loopContent.subscribeAll(loopCtx, () => {});
+              computations.push(loopContent);
+            } else if (loopContent instanceof Ref) {
+              loopLabel = String(loopContent.value);
+            } else {
+              loopLabel = String(loopContent ?? '');
+            }
+            const slotObs = refToObsOrWarn(
+              item.params.value ? item.params.value(loopCtx) : undefined,
+              'string',
+              `${varName}[${i}]`,
+            );
+            const slotOpts: Record<string, unknown> = {};
+            slotOpts.visible = new ObservableBoolean(true);
+            form.textField(loopLabel, slotObs, slotOpts);
+          }
+        }
+        continue;
+      }
+
+      // === Add element ===
+      const opts = buildOpts(item, ctx);
+      if (ifObs) opts.visible = ifObs;
 
       if (type === 'input' || type === 'textField') {
         const obs = refToObsOrWarn(rawVal, 'string', 'input value');
         const ph = item.params.placeholderText ? String(item.params.placeholderText(ctx)) : '';
-        const opts = buildOpts(item, ctx);
         if (ph) opts.placeholder = ph;
         form.textField(label, obs, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'toggle') {
         const obs = refToObsOrWarn(rawVal, 'boolean', 'toggle value');
-        form.toggle(label, obs, buildOptsMaybe(item, ctx));
+        form.toggle(label, obs, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'dropdown') {
         const obs = refToObsOrWarn(rawVal, 'number', 'dropdown value');
         const raw = item.params.option ? item.params.option(ctx) : [];
         const items = Array.isArray(raw)
           ? raw
           : String(raw).split(',').map((v: string, i: number) => ({ label: v.trim(), value: i }));
-        form.dropdown(label, obs, items, buildOptsMaybe(item, ctx));
+        form.dropdown(label, obs, items, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'slider') {
         const obs = refToObsOrWarn(rawVal, 'number', 'slider value');
         const min = Number(item.params.min ? item.params.min(ctx) : 0);
         const max = Number(item.params.max ? item.params.max(ctx) : 100);
-        form.slider(label, obs, min, max, buildOptsMaybe(item, ctx));
+        form.slider(label, obs, min, max, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'button') {
         const handler = item.params.click ? item.params.click(ctx) : undefined;
         const onClick = typeof handler === 'function' ? handler : () => {};
-        form.button(label, onClick, buildOptsMaybe(item, ctx));
+        form.button(label, onClick, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'label' || type === 'body') {
-        form.label(label, buildOptsMaybe(item, ctx));
+        form.label(label, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'header') {
-        form.header(label, buildOptsMaybe(item, ctx));
+        form.header(label, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'divider') {
-        form.divider(buildOptsMaybe(item, ctx));
+        form.divider(Object.keys(opts).length ? opts : undefined);
       } else if (type === 'spacer') {
-        form.spacer(buildOptsMaybe(item, ctx));
+        form.spacer(Object.keys(opts).length ? opts : undefined);
       } else if (type === 'close-button') {
         form.closeButton();
       }
     }
 
-    // Collect all ref watchers for cleanup
-    const cleanup = () => {
-      for (const r of refs) r.__cleanup();
-    };
-
+    // Cleanup all computations on form close
     try {
       await form.show();
     } finally {
-      cleanup();
+      for (const c of computations) c.__cleanup();
     }
   }
 
@@ -305,25 +371,31 @@ export class ui implements typesPkg.ui {
   // ---- Shared: expand for/if, return items with loop setup baked in ----
   private _resolveItems(
     setup: SetupRecord,
+    reactive = false,
   ): (LayoutItem & { _loopSetup?: SetupRecord })[] {
     const resolved: (LayoutItem & { _loopSetup?: SetupRecord })[] = [];
 
     for (const item of this._layout) {
       if (item.for) {
-        const arr = setup[item.for.useSetup];
-        if (!Array.isArray(arr)) continue;
-        const varName = item.for.variable;
-        for (const element of arr) {
-          const loopSetup = { ...setup, [varName]: element };
-          if (item.if) {
-            const cond = item.if.useSetup;
-            const condVal = cond === varName ? element : loopSetup[cond];
-            if (!condVal) continue;
+        if (reactive) {
+          // In reactive mode, keep for-binding for runtime expansion
+          resolved.push({ ...item, _loopSetup: setup });
+        } else {
+          const arr = setup[item.for.useSetup];
+          if (!Array.isArray(arr)) continue;
+          const varName = item.for.variable;
+          for (const element of arr) {
+            const loopSetup = { ...setup, [varName]: element };
+            if (item.if) {
+              const cond = item.if.useSetup;
+              const condVal = cond === varName ? element : loopSetup[cond];
+              if (!condVal) continue;
+            }
+            resolved.push({ ...item, _loopSetup: loopSetup });
           }
-          resolved.push({ ...item, _loopSetup: loopSetup });
         }
       } else {
-        if (item.if) {
+        if (item.if && !reactive) {
           const val = setup[item.if.useSetup];
           if (!val) continue;
         }

@@ -119,11 +119,8 @@ export function generateLayout(
         }),
     );
 
-    // Content: {{ expr }} → (__ctx) => __ctx[0].expr, else string literal
-    const contentExpr =
-      el.content.startsWith('{{ ') && el.content.endsWith(' }}')
-        ? arrowFn(el.content.slice(3, el.content.length - 3).trim())
-        : t.stringLiteral(el.content);
+    // Content: parse {{ }} interpolation, supports mixed text + multiple interpolations
+    const contentExpr = parseContent(el.content);
 
     const props: t.ObjectProperty[] = [
       t.objectProperty(t.identifier('type'), t.stringLiteral(name)),
@@ -193,11 +190,80 @@ function detectFormType(
   return 'invalid';
 }
 
-/** Generate (__ctx) => __ctx[0].a.b.c arrow function */
+/** Generate (__ctx) => __ctx[0].a.b.c arrow function (for simple expressions) */
 function arrowFn(expr: string): t.ArrowFunctionExpression {
   const ctx = t.identifier('__ctx');
   const body = dotAccess(expr, ctx);
   return t.arrowFunctionExpression([ctx], body);
+}
+
+/**
+ * Parse content string, returns:
+ * - t.stringLiteral for pure static text
+ * - t.ArrowFunctionExpression for content with {{ }} interpolation
+ *
+ * Supports:
+ * - "Hello" → "Hello"
+ * - "{{ a }}" → (__ctx) => __ctx[0].a
+ * - "Hi {{ a }}" → (__ctx) => `Hi ${__ctx[0].a}`
+ * - "{{ a }}, Hi, {{ b }}" → (__ctx) => `${__ctx[0].a}, Hi, ${__ctx[0].b}`
+ */
+function parseContent(raw: string): t.Expression {
+  // Check for any {{ }} interpolation
+  if (!raw.includes('{{ ')) {
+    return t.stringLiteral(raw);
+  }
+
+  const parts = splitInterpolation(raw);
+  const hasInterp = parts.some(p => p.type === 'expr');
+
+  // Single interpolation, no surrounding text → pure member access
+  if (parts.length === 1 && parts[0]!.type === 'expr') {
+    return arrowFn(parts[0]!.value);
+  }
+
+  // Multiple parts or mixed → template literal arrow function
+  const ctx = t.identifier('__ctx');
+  const quasis: t.TemplateElement[] = [];
+  const expressions: t.Expression[] = [];
+
+  for (const part of parts) {
+    if (part.type === 'text') {
+      quasis.push(t.templateElement({ raw: part.value, cooked: part.value }));
+    } else {
+      // {{ expr }} → __ctx[0].expr
+      expressions.push(dotAccess(part.value, ctx));
+    }
+  }
+  // Template must end with a quasis
+  quasis.push(t.templateElement({ raw: '', cooked: '' }, true));
+
+  const tpl = t.templateLiteral(quasis, expressions);
+  return t.arrowFunctionExpression([ctx], tpl);
+}
+
+function splitInterpolation(
+  raw: string,
+): { type: 'text'; value: string }[] | { type: 'expr'; value: string }[] {
+  const result: ({ type: 'text'; value: string } | { type: 'expr'; value: string })[] = [];
+  const regex = /\{\{\s*(.*?)\s*\}\}/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(raw)) !== null) {
+    // Text before this match
+    if (match.index > lastIndex) {
+      result.push({ type: 'text', value: raw.slice(lastIndex, match.index) });
+    }
+    // The expression
+    result.push({ type: 'expr', value: match[1]! });
+    lastIndex = regex.lastIndex;
+  }
+  // Trailing text
+  if (lastIndex < raw.length) {
+    result.push({ type: 'text', value: raw.slice(lastIndex) });
+  }
+  return result;
 }
 
 /** "a.b.c" → __ctx[0].a.b.c */

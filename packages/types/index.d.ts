@@ -18,40 +18,15 @@ interface EventOpt {
   tick?: number;
 }
 interface MCXUIOpt {
-  layout: {
-    type:
-      | 'input'
-      | 'dropdown'
-      | 'submit'
-      | 'toggle'
-      | 'slider'
-      | 'button-m'
-      | 'button'
-      | 'divider'
-      | 'title'
-      | 'body';
-    params: {
-      [key in
-        | 'click'
-        | 'default'
-        | 'option'
-        | 'min'
-        | 'max'
-        | 'placeholderText'
-        | 'tip'
-        | 'img']: string | { useProp: string };
-    };
-    content:
-      | string
-      | {
-          useProp: string;
-        };
-    for?: {
-      variable: string;
-      useProp: string;
-    };
+  mode?: 'form' | 'ui';
+  layout?: {
+    type: string;
+    params: { [key: string]: (s: any) => unknown };
+    content: (s: any) => unknown;
+    for?: { variable: string; useSetup: string };
+    if?: { useSetup: string };
   }[];
-  use:
+  use?:
     | typeof serverUI.ModalFormData
     | typeof serverUI.MessageFormData
     | typeof serverUI.ActionFormData;

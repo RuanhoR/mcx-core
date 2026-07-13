@@ -225,7 +225,7 @@ describe('Form transform (legacy FormData)', () => {
     expect(cd.strLoc.Form!.name).toBe('Form');
   });
 
-  it('should generate {{ }} content as { useProp } in output for Form', async () => {
+  it('should generate {{ }} content as (s) => expr in output for Form', async () => {
     const cd = MCX.compiler.compileMCXFn(
       '<script>export const prop = ["name"]; export function handler() {}</script><Form><input placeholderText="input name">{{ name }}</input></Form>',
     );
@@ -237,11 +237,11 @@ describe('Form transform (legacy FormData)', () => {
       { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
       outdirs,
     );
-    expect(code).toContain('useProp');
-    expect(code).toContain('"name"');
+    expect(code).toContain('__ctx[0].name');
+    expect(code).toContain('"input name"');
   });
 
-  it('should compile :param syntax into { useProp } in output for Form', async () => {
+  it('should compile :param syntax into (s) => expr in output for Form', async () => {
     const cd = MCX.compiler.compileMCXFn(
       '<script>export const prop = ["name"]; export function handler() {}</script><Form><input :default="name" placeholderText="Name">{{ name }}</input></Form>',
     );
@@ -253,9 +253,8 @@ describe('Form transform (legacy FormData)', () => {
       { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
       outdirs,
     );
-    expect(code).toContain('useProp');
-    expect(code).toContain('"name"');
-    expect(code).toMatch(/default[:\s]*\{[^}]*useProp/);
+    expect(code).toContain('__ctx[0].name');
+    expect(code).toContain('"Name"');
   });
 
   it('should pass $prop via ctx at runtime', async () => {
@@ -303,8 +302,9 @@ describe('Form transform (legacy FormData)', () => {
     expect(code).toContain('for:');
     expect(code).toContain('variable:');
     expect(code).toContain('"v"');
-    expect(code).toContain('useProp:');
+    expect(code).toContain('useSetup:');
     expect(code).toContain('"items"');
+    expect(code).toContain('__ctx[0].v.label');
   });
 
   it('should reject invalid for syntax in Form', async () => {
@@ -352,7 +352,7 @@ describe('Ui transform (CustomForm)', () => {
     expect(cd.strLoc.UI!.name).toBe('Ui');
   });
 
-  it('should generate build function with CustomForm', async () => {
+  it('should generate layout with mode ui for Ui', async () => {
     const cd = MCX.compiler.compileMCXFn(
       '<script>export const prop = ["name"]</script><Ui><title>Form</title><input>{{ name }}</input></Ui>',
     );
@@ -364,11 +364,11 @@ describe('Ui transform (CustomForm)', () => {
       { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
       outdirs,
     );
-    expect(code).toContain('CustomForm');
-    expect(code).toContain('build');
+    expect(code).toContain('mode: "ui"');
+    expect(code).toContain('layout:');
   });
 
-  it('should resolve {{ }} to setup context in Ui', async () => {
+  it('should resolve {{ }} to (s) => expr in Ui', async () => {
     const cd = MCX.compiler.compileMCXFn(
       '<script>export const prop = ["name"]</script><Ui><title>Settings</title><input>{{ name }}</input></Ui>',
     );
@@ -380,7 +380,7 @@ describe('Ui transform (CustomForm)', () => {
       { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
       outdirs,
     );
-    expect(code).toContain('__s.name');
+    expect(code).toContain('__ctx[0].name');
     expect(code).toContain('"Settings"');
   });
 
@@ -397,7 +397,7 @@ describe('Ui transform (CustomForm)', () => {
       outdirs,
     );
     expect(code).toContain('Click');
-    expect(code).toContain('__s.handler');
+    expect(code).toContain('__ctx[0].handler');
   });
 });
 

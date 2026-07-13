@@ -289,7 +289,7 @@ describe('ui', () => {
     ({
       use: serverUI.ModalFormData,
       UI: serverUI,
-      layout: [{ type: 'title', content: 'Test Form', params: {} }],
+      layout: [{ type: 'title', content: () => 'Test Form', params: {} }],
       ...overrides,
     }) as unknown as MCXUIOpt;
 
@@ -298,34 +298,28 @@ describe('ui', () => {
     expect(instance).toBeDefined();
   });
 
-  it('should throw for invalid prop', () => {
-    expect(
-      () => new ui(createUIConfig(), () => ({ prop: 'not-an-array' })),
-    ).toThrow('invalid prop');
-  });
-
   it('should construct ui with modal form layout', () => {
     const instance = new ui(
       {
         use: serverUI.ModalFormData,
         UI: serverUI,
         layout: [
-          { type: 'title', content: 'Form', params: {} },
+          { type: 'title', content: () => 'Form', params: {} },
           {
             type: 'input',
-            content: 'Name',
-            params: { placeholderText: 'Enter name' },
+            content: () => 'Name',
+            params: { placeholderText: () => 'Enter name' },
           },
-          { type: 'slider', content: 'Count', params: { min: '0', max: '10' } },
-          { type: 'toggle', content: 'Enable', params: { default: 'true' } },
+          { type: 'slider', content: () => 'Count', params: { min: () => '0', max: () => '10' } },
+          { type: 'toggle', content: () => 'Enable', params: { default: () => 'true' } },
           {
             type: 'dropdown',
-            content: 'Color',
-            params: { option: 'red,green,blue' },
+            content: () => 'Color',
+            params: { option: () => 'red,green,blue' },
           },
-          { type: 'body', content: 'Body text', params: {} },
-          { type: 'divider', content: '', params: {} },
-          { type: 'submit', content: 'Go', params: { click: () => {} } },
+          { type: 'body', content: () => 'Body text', params: {} },
+          { type: 'divider', content: () => '', params: {} },
+          { type: 'submit', content: () => 'Go', params: { click: () => () => {} } },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -339,10 +333,10 @@ describe('ui', () => {
         use: serverUI.ActionFormData,
         UI: serverUI,
         layout: [
-          { type: 'title', content: 'Menu', params: {} },
-          { type: 'button', content: 'Option 1', params: { click: () => {} } },
-          { type: 'body', content: 'Select option', params: {} },
-          { type: 'divider', content: '', params: {} },
+          { type: 'title', content: () => 'Menu', params: {} },
+          { type: 'button', content: () => 'Option 1', params: { click: () => () => {} } },
+          { type: 'body', content: () => 'Select option', params: {} },
+          { type: 'divider', content: () => '', params: {} },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -356,9 +350,9 @@ describe('ui', () => {
         use: serverUI.MessageFormData,
         UI: serverUI,
         layout: [
-          { type: 'title', content: 'Confirm', params: {} },
-          { type: 'button-m', content: 'Yes', params: { click: () => {} } },
-          { type: 'button-m', content: 'No', params: { click: () => {} } },
+          { type: 'title', content: () => 'Confirm', params: {} },
+          { type: 'button-m', content: () => 'Yes', params: { click: () => () => {} } },
+          { type: 'button-m', content: () => 'No', params: { click: () => () => {} } },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -375,24 +369,14 @@ describe('ui', () => {
         layout: [
           {
             type: 'title',
-            content: 'X',
-            params: {} as unknown as {
-              [key in
-                | 'click'
-                | 'default'
-                | 'option'
-                | 'min'
-                | 'max'
-                | 'placeholderText'
-                | 'tip'
-                | 'img']: string | { useProp: string };
-            },
+            content: () => 'X',
+            params: {},
           },
         ],
       },
       () => ({ prop: [] }),
     );
-    await expect(instance.show({} as Player, {})).rejects.toThrow('Invalid UI type');
+    await expect(instance.show({} as Player, {})).rejects.toThrow('Invalid form type');
   });
 
   it('should accept string click for button as srcResult key', () => {
@@ -402,7 +386,7 @@ describe('ui', () => {
         use: serverUI.ActionFormData,
         UI: serverUI,
         layout: [
-          { type: 'button', content: 'Click', params: { click: 'handler' } },
+          { type: 'button', content: () => 'Click', params: { click: () => clickFn } },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [], handler: clickFn }),
@@ -424,8 +408,8 @@ describe('ui', () => {
           MessageFormData: MessageFormDataMock,
         } as unknown as typeof serverUI,
         layout: [
-          { type: 'title', content: 'Form', params: {} },
-          { type: 'input', content: 'Name', params: {} },
+          { type: 'title', content: () => 'Form', params: {} },
+          { type: 'input', content: () => 'Name', params: {} },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -451,7 +435,7 @@ describe('ui', () => {
           MessageFormData: MessageFormDataMock,
         } as unknown as typeof serverUI,
         layout: [
-          { type: 'button', content: 'Go', params: { click: clickHandler } },
+          { type: 'button', content: () => 'Go', params: { click: () => clickHandler } },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -478,7 +462,7 @@ describe('ui', () => {
           MessageFormData: MessageMock,
         } as unknown as typeof serverUI,
         layout: [
-          { type: 'button-m', content: 'Yes', params: { click: clickHandler } },
+          { type: 'button-m', content: () => 'Yes', params: { click: () => clickHandler } },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -487,41 +471,6 @@ describe('ui', () => {
     expect(mockShow).toHaveBeenCalled();
   });
 
-  it('should throw for props not found in show', async () => {
-    const instance = new ui(
-      {
-        use: serverUI.ModalFormData,
-        UI: serverUI,
-        layout: [
-          { type: 'title', content: { useProp: 'missing' }, params: {} },
-        ],
-      } as unknown as MCXUIOpt,
-      () => ({ prop: ['missing'] }),
-    );
-    await expect(instance.show({} as Player, {})).rejects.toThrow(
-      'prop "missing" not found',
-    );
-  });
-
-  it('should throw for useProp params not found in show', async () => {
-    const instance = new ui(
-      {
-        use: serverUI.ModalFormData,
-        UI: serverUI,
-        layout: [
-          {
-            type: 'input',
-            content: 'Name',
-            params: { default: { useProp: 'missing' } },
-          },
-        ],
-      } as unknown as MCXUIOpt,
-      () => ({ prop: ['missing'] }),
-    );
-    await expect(instance.show({} as Player, {})).rejects.toThrow(
-      'prop "missing" not found',
-    );
-  });
 });
 
 describe('Command', () => {

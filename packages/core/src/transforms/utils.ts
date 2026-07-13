@@ -325,6 +325,7 @@ function collectSetupDeclarations(
   const seen = new Set(existingReturnMembers);
 
   for (const stmt of code.node.body) {
+    if (!t.isDeclaration(stmt)) continue;
     const ids = extractIdList(stmt);
     for (const id of ids) {
       if (id && !seen.has(id)) {

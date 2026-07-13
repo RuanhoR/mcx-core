@@ -60,7 +60,7 @@ export default class McxAst {
     const result: ParsedTagNode[] = [];
     for (const child of ast.children) {
       const node = this.convertTemplateChild(child);
-      if (node) result.push(node);
+      if (node && node.type === 'TagNode') result.push(node);
     }
     return result;
   }

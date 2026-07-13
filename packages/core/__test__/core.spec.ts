@@ -481,6 +481,7 @@ describe('MCXCompileData', () => {
     const jsir = new JsCompileData(t.program([]));
     const data = new MCXCompileData([], jsir, {
       UI: null,
+      Form: null,
       script: '',
       Component: {},
       Event: {
@@ -501,6 +502,7 @@ describe('MCXCompileData', () => {
     const data = new MCXCompileData([], jsir, {
       script: '',
       UI: null,
+      Form: null,
       Component: {},
       Event: {
         subscribe: {},

@@ -71,7 +71,7 @@ describe('extractIdList', () => {
   });
 
   it('should return empty for unknown declaration type', () => {
-    const decl = t.declareFunction(t.identifier('x'), [], t.blockStatement([]));
+    const decl = t.declareFunction(t.identifier('x'));
     const result = extractIdList(decl);
     expect(result).toEqual([]);
   });

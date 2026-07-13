@@ -48,6 +48,6 @@ export async function transform(
     return result;
   } catch (err) {
     context.error(createErrorProxy(err, id));
-    return;
+    return '';
   }
 }

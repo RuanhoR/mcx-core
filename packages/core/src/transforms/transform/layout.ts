@@ -242,10 +242,10 @@ function parseContent(raw: string): t.Expression {
   return t.arrowFunctionExpression([ctx], tpl);
 }
 
-function splitInterpolation(
-  raw: string,
-): { type: 'text'; value: string }[] | { type: 'expr'; value: string }[] {
-  const result: ({ type: 'text'; value: string } | { type: 'expr'; value: string })[] = [];
+type InterpolationPart = { type: 'text'; value: string } | { type: 'expr'; value: string };
+
+function splitInterpolation(raw: string): InterpolationPart[] {
+  const result: InterpolationPart[] = [];
   const regex = /\{\{\s*(.*?)\s*\}\}/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;

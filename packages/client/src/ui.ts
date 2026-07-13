@@ -73,10 +73,12 @@ export class ui implements typesPkg.ui {
 
   // ---- CustomForm mode (Ui) ----
   private async _showCustomForm(player: Player, setup: SetupRecord) {
-    const form = new (this._mcUI as any).CustomForm(player, '');
-
-    let MsgFormUse = 0;
-    const clickHandlers: Map<number, Function> = new Map();
+    const CFCtor = (this._mcUI as Record<string, unknown>)['CustomForm'];
+    if (typeof CFCtor !== 'function') {
+      throw new Error('[mcx runtime]: CustomForm not available');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const form = new (CFCtor as any)(player, '');
 
     const items = this._resolveItems(setup);
 
@@ -96,20 +98,16 @@ export class ui implements typesPkg.ui {
         const placeholder = item.params.placeholderText
           ? String(item.params.placeholderText(ctx))
           : '';
-        const opts: any = {};
+        const opts: Record<string, unknown> = {};
         if (placeholder) opts.placeholder = placeholder;
         if (item.params.tip) opts.tooltip = String(item.params.tip(ctx));
         if (item.params.disabled) opts.disabled = Boolean(item.params.disabled(ctx));
         if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
         if (item.params.description) opts.description = String(item.params.description(ctx));
-        if (valueObs !== undefined) {
-          form.textField(label, valueObs, Object.keys(opts).length ? opts : undefined);
-        } else {
-          form.textField(label, valueObs, Object.keys(opts).length ? opts : undefined);
-        }
+        form.textField(label, valueObs, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'toggle') {
         const valueObs = item.params.value ? item.params.value(ctx) : undefined;
-        const opts: any = {};
+        const opts: Record<string, unknown> = {};
         if (item.params.tip) opts.tooltip = String(item.params.tip(ctx));
         if (item.params.disabled) opts.disabled = Boolean(item.params.disabled(ctx));
         if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
@@ -118,23 +116,23 @@ export class ui implements typesPkg.ui {
       } else if (type === 'dropdown') {
         const valueObs = item.params.value ? item.params.value(ctx) : undefined;
         const optionsRaw = item.params.option ? item.params.option(ctx) : [];
-        const items = Array.isArray(optionsRaw)
+        const dropdownItems = Array.isArray(optionsRaw)
           ? optionsRaw
           : String(optionsRaw).split(',').map((v: string, i: number) => ({
               label: v.trim(),
               value: i,
             }));
-        const opts: any = {};
+        const opts: Record<string, unknown> = {};
         if (item.params.tip) opts.tooltip = String(item.params.tip(ctx));
         if (item.params.disabled) opts.disabled = Boolean(item.params.disabled(ctx));
         if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
         if (item.params.description) opts.description = String(item.params.description(ctx));
-        form.dropdown(label, valueObs, items, Object.keys(opts).length ? opts : undefined);
+        form.dropdown(label, valueObs, dropdownItems, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'slider') {
         const valueObs = item.params.value ? item.params.value(ctx) : undefined;
         const min = Number(item.params.min ? item.params.min(ctx) : 0);
         const max = Number(item.params.max ? item.params.max(ctx) : 100);
-        const opts: any = {};
+        const opts: Record<string, unknown> = {};
         if (item.params.tip) opts.tooltip = String(item.params.tip(ctx));
         if (item.params.step) opts.step = Number(item.params.step(ctx));
         if (item.params.disabled) opts.disabled = Boolean(item.params.disabled(ctx));
@@ -144,25 +142,25 @@ export class ui implements typesPkg.ui {
       } else if (type === 'button') {
         const handler = item.params.click ? item.params.click(ctx) : undefined;
         const onClick = typeof handler === 'function' ? handler : () => {};
-        const opts: any = {};
+        const opts: Record<string, unknown> = {};
         if (item.params.disabled) opts.disabled = Boolean(item.params.disabled(ctx));
         if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
         if (item.params.tip) opts.tooltip = String(item.params.tip(ctx));
         form.button(label, onClick, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'label' || type === 'body') {
-        const opts: any = {};
+        const opts: Record<string, unknown> = {};
         if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
         form.label(label, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'header') {
-        const opts: any = {};
+        const opts: Record<string, unknown> = {};
         if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
         form.header(label, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'divider') {
-        const opts: any = {};
+        const opts: Record<string, unknown> = {};
         if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
         form.divider(Object.keys(opts).length ? opts : undefined);
       } else if (type === 'spacer') {
-        const opts: any = {};
+        const opts: Record<string, unknown> = {};
         if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
         form.spacer(Object.keys(opts).length ? opts : undefined);
       } else if (type === 'close-button') {
@@ -180,7 +178,7 @@ export class ui implements typesPkg.ui {
     // Build click handler map
     const clickHandlers: Map<number, Function> = new Map();
 
-    const ui = new this._UI();
+    const ui = new this._UI!();
     if (!this._uiType) {
       if (ui instanceof this._mcUI.ModalFormData) this._uiType = 'modal';
       else if (ui instanceof this._mcUI.ActionFormData) this._uiType = 'action';
@@ -202,7 +200,7 @@ export class ui implements typesPkg.ui {
           const def = item.params.default ? String(item.params.default(ctx)) : '';
           const ph = item.params.placeholderText ? String(item.params.placeholderText(ctx)) : '';
           const tip = item.params.tip ? String(item.params.tip(ctx)) : undefined;
-          f.textField(label, ph, { defaultValue: def, tooltip: tip });
+          f.textField(label, ph, { defaultValue: def, tooltip: tip! });
         } else if (item.type === 'slider') {
           const min = Number(item.params.min ? item.params.min(ctx) : 0);
           const max = Number(item.params.max ? item.params.max(ctx) : 10);

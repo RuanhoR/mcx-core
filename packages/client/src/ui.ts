@@ -2,15 +2,56 @@ import type { MCXCtx } from '@mbler/mcx-types';
 import type { MCXUIOpt } from './types';
 import type { Player } from '@minecraft/server';
 import * as typesPkg from '@mbler/mcx-types';
-import type {
-  ActionFormResponse,
-  MessageFormData,
-  MessageFormResponse,
-  ModalFormResponse,
+import {
+  ObservableString,
+  ObservableBoolean,
+  ObservableNumber,
+  type ActionFormResponse,
+  type MessageFormData,
+  type MessageFormResponse,
+  type ModalFormResponse,
 } from '@minecraft/server-ui';
+import { Ref } from './ref';
 
 type SetupRecord = Record<string, unknown>;
 type LayoutFn = (ctx: unknown[]) => unknown;
+
+function toObs(val: unknown): ObservableString | ObservableBoolean | ObservableNumber | undefined {
+  if (val instanceof Ref) return val.__obs;
+  if (val instanceof ObservableString || val instanceof ObservableBoolean || val instanceof ObservableNumber) return val;
+  return undefined;
+}
+
+function refToObsOrWarn(
+  val: unknown,
+  expectedType: 'string' | 'boolean' | 'number',
+  paramName: string,
+): ObservableString | ObservableBoolean | ObservableNumber | undefined {
+  if (!(val instanceof Ref)) return val as undefined;
+  const obs = val.__obs;
+  const actual = typeof val.value;
+  if (actual !== expectedType) {
+    console.warn(`[mcx ui]: ref "${paramName}" is ${actual}, expected ${expectedType} — converting`);
+  }
+  if (expectedType === 'string') return obs instanceof ObservableString ? obs : new ObservableString(String(val.value));
+  if (expectedType === 'boolean') return obs instanceof ObservableBoolean ? obs : new ObservableBoolean(Boolean(val.value));
+  return obs instanceof ObservableNumber ? obs : new ObservableNumber(Number(val.value));
+}
+
+function buildOpts(item: LayoutItem & { _loopSetup?: SetupRecord }, ctx: unknown[]): Record<string, unknown> {
+  const opts: Record<string, unknown> = {};
+  const p = item.params;
+  if (p.tip) opts.tooltip = String(p.tip(ctx));
+  if (p.disabled) opts.disabled = Boolean(p.disabled(ctx));
+  if (p.visible) opts.visible = Boolean(p.visible(ctx));
+  if (p.description) opts.description = String(p.description(ctx));
+  return opts;
+}
+
+function buildOptsMaybe(item: LayoutItem & { _loopSetup?: SetupRecord }, ctx: unknown[]): Record<string, unknown> | undefined {
+  const opts = buildOpts(item, ctx);
+  return Object.keys(opts).length ? opts : undefined;
+}
 
 interface LayoutItem {
   type: string;
@@ -73,102 +114,83 @@ export class ui implements typesPkg.ui {
 
   // ---- CustomForm mode (Ui) ----
   private async _showCustomForm(player: Player, setup: SetupRecord) {
-    const CFCtor = (this._mcUI as Record<string, unknown>)['CustomForm'];
+    const CFCtor = this._mcUI.CustomForm;
     if (typeof CFCtor !== 'function') {
       throw new Error('[mcx runtime]: CustomForm not available');
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const form = new (CFCtor as any)(player, '');
-
+    const form: any = new CFCtor(player, '');
     const items = this._resolveItems(setup);
+    const refs: Ref[] = [];
 
     for (const item of items) {
       const type = item.type;
       const s = item._loopSetup || setup;
       const ctx = [s];
       const content = item.content(ctx);
-      const label = String(content ?? '');
 
-      if (type === 'title') {
-        continue;
+      // Resolve label: Ref → read .value, otherwise string
+      let label: string;
+      if (content instanceof Ref) {
+        label = String(content.value);
+        refs.push(content);
+      } else {
+        label = String(content ?? '');
       }
 
+      if (type === 'title') continue;
+
+      // Resolve :value binding with type conversion
+      const rawVal = item.params.value ? item.params.value(ctx) : undefined;
+
       if (type === 'input' || type === 'textField') {
-        const valueObs = item.params.value ? item.params.value(ctx) : undefined;
-        const placeholder = item.params.placeholderText
-          ? String(item.params.placeholderText(ctx))
-          : '';
-        const opts: Record<string, unknown> = {};
-        if (placeholder) opts.placeholder = placeholder;
-        if (item.params.tip) opts.tooltip = String(item.params.tip(ctx));
-        if (item.params.disabled) opts.disabled = Boolean(item.params.disabled(ctx));
-        if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
-        if (item.params.description) opts.description = String(item.params.description(ctx));
-        form.textField(label, valueObs, Object.keys(opts).length ? opts : undefined);
+        const obs = refToObsOrWarn(rawVal, 'string', 'input value');
+        const ph = item.params.placeholderText ? String(item.params.placeholderText(ctx)) : '';
+        const opts = buildOpts(item, ctx);
+        if (ph) opts.placeholder = ph;
+        form.textField(label, obs, Object.keys(opts).length ? opts : undefined);
       } else if (type === 'toggle') {
-        const valueObs = item.params.value ? item.params.value(ctx) : undefined;
-        const opts: Record<string, unknown> = {};
-        if (item.params.tip) opts.tooltip = String(item.params.tip(ctx));
-        if (item.params.disabled) opts.disabled = Boolean(item.params.disabled(ctx));
-        if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
-        if (item.params.description) opts.description = String(item.params.description(ctx));
-        form.toggle(label, valueObs, Object.keys(opts).length ? opts : undefined);
+        const obs = refToObsOrWarn(rawVal, 'boolean', 'toggle value');
+        form.toggle(label, obs, buildOptsMaybe(item, ctx));
       } else if (type === 'dropdown') {
-        const valueObs = item.params.value ? item.params.value(ctx) : undefined;
-        const optionsRaw = item.params.option ? item.params.option(ctx) : [];
-        const dropdownItems = Array.isArray(optionsRaw)
-          ? optionsRaw
-          : String(optionsRaw).split(',').map((v: string, i: number) => ({
-              label: v.trim(),
-              value: i,
-            }));
-        const opts: Record<string, unknown> = {};
-        if (item.params.tip) opts.tooltip = String(item.params.tip(ctx));
-        if (item.params.disabled) opts.disabled = Boolean(item.params.disabled(ctx));
-        if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
-        if (item.params.description) opts.description = String(item.params.description(ctx));
-        form.dropdown(label, valueObs, dropdownItems, Object.keys(opts).length ? opts : undefined);
+        const obs = refToObsOrWarn(rawVal, 'number', 'dropdown value');
+        const raw = item.params.option ? item.params.option(ctx) : [];
+        const items = Array.isArray(raw)
+          ? raw
+          : String(raw).split(',').map((v: string, i: number) => ({ label: v.trim(), value: i }));
+        form.dropdown(label, obs, items, buildOptsMaybe(item, ctx));
       } else if (type === 'slider') {
-        const valueObs = item.params.value ? item.params.value(ctx) : undefined;
+        const obs = refToObsOrWarn(rawVal, 'number', 'slider value');
         const min = Number(item.params.min ? item.params.min(ctx) : 0);
         const max = Number(item.params.max ? item.params.max(ctx) : 100);
-        const opts: Record<string, unknown> = {};
-        if (item.params.tip) opts.tooltip = String(item.params.tip(ctx));
-        if (item.params.step) opts.step = Number(item.params.step(ctx));
-        if (item.params.disabled) opts.disabled = Boolean(item.params.disabled(ctx));
-        if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
-        if (item.params.description) opts.description = String(item.params.description(ctx));
-        form.slider(label, valueObs, min, max, Object.keys(opts).length ? opts : undefined);
+        form.slider(label, obs, min, max, buildOptsMaybe(item, ctx));
       } else if (type === 'button') {
         const handler = item.params.click ? item.params.click(ctx) : undefined;
         const onClick = typeof handler === 'function' ? handler : () => {};
-        const opts: Record<string, unknown> = {};
-        if (item.params.disabled) opts.disabled = Boolean(item.params.disabled(ctx));
-        if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
-        if (item.params.tip) opts.tooltip = String(item.params.tip(ctx));
-        form.button(label, onClick, Object.keys(opts).length ? opts : undefined);
+        form.button(label, onClick, buildOptsMaybe(item, ctx));
       } else if (type === 'label' || type === 'body') {
-        const opts: Record<string, unknown> = {};
-        if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
-        form.label(label, Object.keys(opts).length ? opts : undefined);
+        form.label(label, buildOptsMaybe(item, ctx));
       } else if (type === 'header') {
-        const opts: Record<string, unknown> = {};
-        if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
-        form.header(label, Object.keys(opts).length ? opts : undefined);
+        form.header(label, buildOptsMaybe(item, ctx));
       } else if (type === 'divider') {
-        const opts: Record<string, unknown> = {};
-        if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
-        form.divider(Object.keys(opts).length ? opts : undefined);
+        form.divider(buildOptsMaybe(item, ctx));
       } else if (type === 'spacer') {
-        const opts: Record<string, unknown> = {};
-        if (item.params.visible) opts.visible = Boolean(item.params.visible(ctx));
-        form.spacer(Object.keys(opts).length ? opts : undefined);
+        form.spacer(buildOptsMaybe(item, ctx));
       } else if (type === 'close-button') {
         form.closeButton();
       }
     }
 
-    await form.show();
+    // Collect all ref watchers for cleanup
+    const cleanup = () => {
+      for (const r of refs) r.__cleanup();
+    };
+
+    try {
+      await form.show();
+    } finally {
+      cleanup();
+    }
   }
 
   // ---- Form mode (legacy FormData) ----

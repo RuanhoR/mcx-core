@@ -6,5 +6,5 @@ export { Utils, types };
 export { ui } from './ui';
 export { ref, Ref, Computation } from './ref';
 export { watch } from './watch';
-export { onStartup, onMounted } from './lifecycle';
+export { onStartup, onMounted, defineProp } from './lifecycle';
 export { Command, registryCommand } from './command';

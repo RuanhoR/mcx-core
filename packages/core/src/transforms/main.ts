@@ -30,6 +30,9 @@ export async function _transform(ctx: transformCtx): Promise<string> {
         ? 'ui'
         : null;
 
+  // Process hooks BEFORE generateMain so hook calls are removed from body
+  const hooks = isSetupMode ? processHooks(ctx.compiledCode.JSIR) : { startup: null, mounted: null };
+
   const _temp_main = generateMain(ctx.compiledCode.JSIR);
   const mainFn = (ctx.mainFn.body = _temp_main[0]);
   const prop: t.ObjectProperty[] = [];
@@ -102,9 +105,6 @@ export async function _transform(ctx: transformCtx): Promise<string> {
       ctx.compiledCode.JSIR,
       existingExportNames,
     );
-
-    // Process hooks (onStartup / onMounted)
-    const hooks = processHooks(ctx.compiledCode.JSIR);
 
     const returnStmt = mainFn[mainFn.length - 1];
     if (

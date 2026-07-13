@@ -2,6 +2,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { InputResult } from './types';
 import { stat, mkdir, cp, writeFile } from 'node:fs/promises';
+import sapi from './sapi';
 
 function spawnCmd(cmd: string, args: string[], cwd: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -33,20 +34,12 @@ async function findTemplate(language: InputResult['Language']) {
   }
   throw new Error("Can't find template");
 }
-
-function mcVersionToGameTest(mcVersion: string): string {
-  const map: Record<string, string> = {
-    '1.21.100': '2.0.0',
-    '1.21.120': '2.0.0',
-  };
-  return map[mcVersion] || '2.0.0';
-}
 /**
- * 从npm registry获取指定包的最新版本
- * @param pkgName - 包名称
- * @param registry - npm registry地址，默认为官方源
- * @returns 返回最新版本号
- * @throws 当请求失败或包不存在时抛出错误
+ * Get latest version from npm's registry
+ * @param pkgName - Package name
+ * @param registry - npm registry url, default: registry.npmjs.com
+ * @returns version string
+ * @throws request error
  */
 async function getLatestPackageVersion(
   pkgName: string,
@@ -102,12 +95,13 @@ export async function initProject(inputOpt: InputResult) {
     engines: { node: '>=18.0.0' },
     scripts: {
       dev: 'mbler watch',
-      build: 'mcx-tsc && cross-env BUILD_MODULE=release mbler build',
+      build: 'cross-env BUILD_MODULE=release mbler build',
       'dev-build': 'mbler build',
+      'type-check': 'mcx-tsc'
     },
     type: 'module',
     dependencies: {
-      '@minecraft/server': mcVersionToGameTest(inputOpt.McVersion),
+      '@minecraft/server': await sapi.generateVersion("@minecraft/server", inputOpt.McVersion, inputOpt.OtherModule.includes("beta-api"), false),
     },
     devDependencies: {
       'cross-env': '^7.0.3',
@@ -119,7 +113,7 @@ export async function initProject(inputOpt: InputResult) {
   if (isMcx) {
     packageJson.dependencies['@mbler/mcx'] =
       await getLatestPackageVersion('@mbler/mcx');
-    packageJson.dependencies['@mbler/mcx-component'] =
+    packageJson.devDependencies['@mbler/mcx-component'] =
       await getLatestPackageVersion('@mbler/mcx-component');
     packageJson.devDependencies['@mbler/mcx-core'] =
       await getLatestPackageVersion('@mbler/mcx-core');
@@ -132,10 +126,17 @@ export async function initProject(inputOpt: InputResult) {
   const beta = inputOpt.OtherModule.includes('beta-api');
   const mblerConfig = `// @ts-check
 import { defineConfig } from "mbler"
+// mbler config
+// defineConfig is for IDE's auto-complete
 export default defineConfig({
+  // description: use in manifest generate
   description: '${inputOpt.Description}',
+  // mcVersion: work on ... mcbe version, e.g 1.26.32
   mcVersion: '${inputOpt.McVersion}',
+  // out code minfiy mode, support: "terser" | "esbuild | "oxc" | false , "terser" | "esbuild" need install on project
   minify: 'oxc',
+  // out to game in dev(env.BUILD_MODULE != release)
+  outGameOnDev: false,
   script: {
     main: 'index.ts',
     ui: ${ui},
@@ -143,12 +144,14 @@ export default defineConfig({
     UseBeta: ${beta}
   },
   build: {
+    // should true
     bundle: true,
     cache: "file"
   },
   outdir: {
     resources: './dist/res',
     behavior: './dist/dep',
+    // only emit on env.BUILD_MODULE == release
     dist: './dist.mcaddon'
   }
 });\n`;
@@ -167,7 +170,6 @@ export default defineConfig({
         isolatedModules: true,
         moduleDetection: 'force',
         skipLibCheck: true,
-        types: ['mbler/client'],
       },
       include: ['./behavior/scripts/**/*'],
     };

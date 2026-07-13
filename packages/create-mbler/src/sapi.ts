@@ -1,0 +1,220 @@
+import * as path from 'node:path'
+import * as fs from 'node:fs'
+import { tmpdir } from 'node:os'
+export function sleep(time: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, time)
+  })
+}
+export function compareVersion(a: string, b: string): number {
+  const pa = a.split('.').map((x) => parseInt(x, 10) || 0)
+  const pb = b.split('.').map((x) => parseInt(x, 10) || 0)
+  for (let i = 0; i < 3; i++) {
+    const na = pa[i] || 0
+    const nb = pb[i] || 0
+    if (na !== nb) return na - nb
+  }
+  return 0
+}
+export interface npmFetchData {
+  name: string
+  'dist-tags': Record<string, string>
+  versions: Record<
+    string,
+    {
+      maintainers: {
+        name: string
+        mail: string
+      }[]
+      dist: {
+        shasum: string
+        tarball: string
+      }
+      author: {
+        name: string
+        mail: string
+      }
+      license: string
+      version: string
+    }
+  >
+  readme: string
+  keywords: string[]
+  homepage: string
+  time: Record<string, string>
+}
+export interface cacheValue {
+  formal: string
+  beta: string
+}
+
+const Sapi = function (): {
+  refresh: () => Promise<void>
+  generateVersion: (
+    module: '@minecraft/server-ui' | '@minecraft/server',
+    mcVersion: string,
+    isBeta: boolean,
+    withFull: boolean
+  ) => Promise<string>
+} {
+  const MAX_RETRIES = 3
+
+  async function json(path: string, attempt = 1) {
+    const r = await fetch('https://registry.npmjs.com' + path)
+    if (!r.ok && attempt < MAX_RETRIES) {
+      await sleep(1000 * attempt)
+      return json(path, attempt + 1)
+    }
+    return await r.json()
+  }
+
+  const cacheFile = path.join(tmpdir(), '_sapi_version.json')
+  let cacheData: Array<{
+    version: string
+    server: cacheValue
+    'server-ui': cacheValue
+  }> | null = null
+
+  async function fetchData(
+    pkgName: string
+  ): Promise<Record<string, cacheValue>> {
+    const data = (await json(`/${pkgName}`)) as unknown as npmFetchData
+    const pkgVersions = Object.keys(data.versions)
+    const reValue: Record<string, cacheValue> = {}
+
+    const mcVersionFrom = (str: string): string | null => {
+      const m = str.match(/-(?:rc|beta)(?:\.[^-.]+)*?\.((?:\d+\.){2}\d+)/)
+      return m ? (m[1] as string) : null
+    }
+
+    for (const v of pkgVersions) {
+      const mcVersion = mcVersionFrom(v)
+      if (!mcVersion) continue
+
+      const isStable = /(?:-stable)(?:$|[-.])/.test(v)
+      let entry = reValue[mcVersion]
+      if (!entry) {
+        entry = { formal: '', beta: '' }
+        reValue[mcVersion] = entry
+      }
+
+      if (isStable) {
+        if (!entry.formal || compareVersion(v, entry.formal) > 0) {
+          entry.formal = v
+        }
+      } else {
+        if (!entry.beta || compareVersion(v, entry.beta) > 0) {
+          entry.beta = v
+        }
+      }
+    }
+
+    return reValue
+  }
+
+  async function refresh() {
+    const serverMap = await fetchData('@minecraft/server')
+    const uiMap = await fetchData('@minecraft/server-ui')
+    const versions = new Set([
+      ...Object.keys(serverMap),
+      ...Object.keys(uiMap),
+    ])
+
+    const arr: Array<{
+      version: string
+      server: cacheValue
+      'server-ui': cacheValue
+    }> = []
+
+    for (const ver of versions) {
+      arr.push({
+        version: ver,
+        server: serverMap[ver] ?? { formal: '', beta: '' },
+        'server-ui': uiMap[ver] ?? { formal: '', beta: '' },
+      })
+    }
+
+    arr.sort((a, b) => compareVersion(a.version, b.version))
+    cacheData = arr
+
+    await fs.promises.mkdir(tmpdir(), { recursive: true }).catch(() => {})
+    await fs.promises.writeFile(cacheFile, JSON.stringify(arr, null, 2), 'utf-8')
+  }
+
+  async function generateVersion(
+    module: '@minecraft/server-ui' | '@minecraft/server',
+    mcVersion: string,
+    isBeta: boolean,
+    withFull: boolean = false
+  ): Promise<string> {
+    if (!cacheData) {
+      try {
+        const txt = await fs.promises.readFile(cacheFile, 'utf-8')
+        cacheData = JSON.parse(txt)
+      } catch {
+        await refresh()
+      }
+    }
+
+    if (!cacheData) {
+      throw new Error(
+        'unable to load SAPI version data. Check network connectivity or delete ~/.mbler/_sapi_version.json and try again.'
+      )
+    }
+
+    let entry = cacheData.find((e) => e.version === mcVersion)
+    if (!entry) {
+      let candidate: (typeof cacheData)[0] | null = null
+      for (const e of cacheData) {
+        if (compareVersion(e.version, mcVersion) <= 0) {
+          candidate = e
+        } else {
+          break
+        }
+      }
+      entry = candidate ?? cacheData[0]
+    }
+
+    if (!entry) {
+      throw new Error(
+        `no SAPI version data found for Minecraft version ${mcVersion}`
+      )
+    }
+
+    const moduleKey = module === '@minecraft/server' ? 'server' : 'server-ui'
+    const entryModule = entry[moduleKey]
+    let result = isBeta ? entryModule.beta : entryModule.formal
+    if (!result) {
+      result = entryModule.formal || entryModule.beta
+    }
+    if (withFull) return result || ''
+    return evalVersion(result || 'error')
+  }
+
+  return {
+    refresh,
+    generateVersion,
+  }
+}
+
+let sapiEmul: null | ReturnType<typeof Sapi> = null
+export default new Proxy(
+  {},
+  {
+    get(_, p) {
+      if (!sapiEmul) sapiEmul = Sapi()
+      return sapiEmul[p as keyof typeof sapiEmul]
+    },
+    set(_, p, n) {
+      if (!sapiEmul) sapiEmul = Sapi()
+      sapiEmul[p as keyof typeof sapiEmul] = n
+      return true
+    },
+  }
+) as ReturnType<typeof Sapi>
+
+export function evalVersion(result: string): string {
+  const tmp = result.split('-').slice(0, 2) as [string, string]
+  tmp[1] = tmp[1].split('.')[0] as string
+  return tmp.join('-')
+}

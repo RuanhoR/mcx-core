@@ -36,6 +36,9 @@ The pipeline: **`.mcx` file → parser → AST → transform (Babel) → compile
 - **Component MCX** — Generate MCBE component JSON (items, blocks, entities) fast and declaratively
 - **Form MCX** (`<Form>`) — Build in-game forms using traditional FormData (ModalFormData / ActionFormData / MessageFormData)
 - **UI MCX** (`<Ui>`) — Build in-game CustomForm UIs with Observable reactive binding (DDUI)
+- **Explicit form type** — Set `type="modal|action|message"` on `<Ui>` or `<Form>` to override heuristic detection
+- **Nested UI elements** — Child elements recursively flattened; grouping containers supported
+- **`for` loops with `in` / `of`** — Iterate over arrays in templates with `for="item in items"` or `for="item of items"`
 - **Setup system** — `<Form setup>` / `<Ui setup>` auto-collect declarations, no manual `export` needed
 - **`defineProp` macro** — Compile-time prop declarations with defaults
 - **Lifecycle hooks** — `onStartup` (once) and `onMounted` (per show) for setup logic

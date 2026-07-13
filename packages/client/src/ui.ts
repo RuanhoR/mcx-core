@@ -10,26 +10,12 @@ import {
   type MessageFormData,
   type MessageFormResponse,
   type ModalFormResponse,
+  CustomForm,
 } from '@minecraft/server-ui';
 import { Ref, Computation } from './ref';
 
 type SetupRecord = Record<string, unknown>;
 type LayoutFn = (ctx: unknown[]) => unknown;
-
-interface CustomFormHandle {
-  textField(label: string, value?: unknown, opts?: Record<string, unknown>): void;
-  toggle(label: string, value?: unknown, opts?: Record<string, unknown>): void;
-  dropdown(label: string, value?: unknown, options?: unknown[], opts?: Record<string, unknown>): void;
-  slider(label: string, value?: unknown, min?: number, max?: number, opts?: Record<string, unknown>): void;
-  button(label: string, onClick?: () => void, opts?: Record<string, unknown>): void;
-  label(label: string, opts?: Record<string, unknown>): void;
-  header(label: string, opts?: Record<string, unknown>): void;
-  divider(opts?: Record<string, unknown>): void;
-  spacer(opts?: Record<string, unknown>): void;
-  closeButton(): void;
-  show(): Promise<void>;
-}
-
 function toObs(val: unknown): ObservableString | ObservableBoolean | ObservableNumber | undefined {
   if (val instanceof Ref) return val.__obs;
   if (val instanceof Computation) {
@@ -42,20 +28,24 @@ function toObs(val: unknown): ObservableString | ObservableBoolean | ObservableN
   if (val instanceof ObservableString || val instanceof ObservableBoolean || val instanceof ObservableNumber) return val;
   return undefined;
 }
-
-function refToObsOrWarn(
+interface ObsMap {
+  string: ObservableString,
+  boolean: ObservableBoolean,
+  number: ObservableNumber
+}
+function refToObsOrWarn<_, T extends keyof ObsMap>(
   val: unknown,
-  expectedType: 'string' | 'boolean' | 'number',
+  expectedType: T,
   paramName: string,
-): ObservableString | ObservableBoolean | ObservableNumber | undefined {
+): ObsMap[T] | undefined {
   if (val instanceof Computation) {
     const v = val.value;
     if (typeof v !== expectedType) {
       console.warn(`[mcx ui]: computation "${paramName}" is ${typeof v}, expected ${expectedType} — converting`);
     }
-    if (expectedType === 'string') return new ObservableString(String(v));
-    if (expectedType === 'boolean') return new ObservableBoolean(Boolean(v));
-    return new ObservableNumber(Number(v));
+    if (expectedType === 'string') return new ObservableString(String(v)) as ObsMap[T];
+    if (expectedType === 'boolean') return new ObservableBoolean(Boolean(v)) as ObsMap[T];
+    return new ObservableNumber(Number(v)) as ObsMap[T];
   }
   if (!(val instanceof Ref)) return val as undefined;
   const obs = val.__obs;
@@ -63,9 +53,9 @@ function refToObsOrWarn(
   if (actual !== expectedType) {
     console.warn(`[mcx ui]: ref "${paramName}" is ${actual}, expected ${expectedType} — converting`);
   }
-  if (expectedType === 'string') return obs instanceof ObservableString ? obs : new ObservableString(String(val.value));
-  if (expectedType === 'boolean') return obs instanceof ObservableBoolean ? obs : new ObservableBoolean(Boolean(val.value));
-  return obs instanceof ObservableNumber ? obs : new ObservableNumber(Number(val.value));
+  if (expectedType === 'string') return obs instanceof ObservableString ? obs as ObsMap[T] : new ObservableString(String(val.value)) as ObsMap[T];
+  if (expectedType === 'boolean') return obs instanceof ObservableBoolean ? obs as ObsMap[T] : new ObservableBoolean(Boolean(val.value)) as ObsMap[T];
+  return obs instanceof ObservableNumber ? obs as ObsMap[T] : new ObservableNumber(Number(val.value)) as ObsMap[T];
 }
 
 function conditionToObs(val: unknown): ObservableBoolean {
@@ -159,7 +149,7 @@ export class ui implements typesPkg.ui {
     if (typeof CFCtor !== 'function') {
       throw new Error('[mcx runtime]: CustomForm not available');
     }
-    const form = new CFCtor(player, '') as CustomFormHandle;
+    const form = new CFCtor(player, '');
     const computations: Computation[] = [];
     const items = this._resolveItems(setup, true);
 
@@ -233,7 +223,7 @@ export class ui implements typesPkg.ui {
   }
 
   private _addFormElement(
-    form: CustomFormHandle,
+    form: CustomForm,
     type: string,
     label: string,
     rawVal: unknown,
@@ -242,29 +232,29 @@ export class ui implements typesPkg.ui {
     opts: Record<string, unknown>,
   ): void {
     if (type === 'input' || type === 'textField') {
-      const obs = refToObsOrWarn(rawVal, 'string', 'input value');
+      const obs = refToObsOrWarn(rawVal, 'string', 'input value') as ObservableString;
       const ph = item.params.placeholderText ? String(item.params.placeholderText(ctx)) : '';
       if (ph) opts.placeholder = ph;
       form.textField(label, obs, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'toggle') {
-      const obs = refToObsOrWarn(rawVal, 'boolean', 'toggle value');
+      const obs = refToObsOrWarn(rawVal, 'boolean', 'toggle value') as ObservableBoolean;
       form.toggle(label, obs, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'dropdown') {
-      const obs = refToObsOrWarn(rawVal, 'number', 'dropdown value');
+      const obs = refToObsOrWarn(rawVal, 'number', 'dropdown value') as ObservableNumber;
       const raw = item.params.option ? item.params.option(ctx) : [];
       const items = Array.isArray(raw)
         ? raw
         : String(raw).split(',').map((v: string, i: number) => ({ label: v.trim(), value: i }));
       form.dropdown(label, obs, items, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'slider') {
-      const obs = refToObsOrWarn(rawVal, 'number', 'slider value');
+      const obs = refToObsOrWarn(rawVal, 'number', 'slider value') as ObservableNumber;
       const min = Number(item.params.min ? item.params.min(ctx) : 0);
       const max = Number(item.params.max ? item.params.max(ctx) : 100);
       form.slider(label, obs, min, max, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'button') {
       const handler = item.params.click ? item.params.click(ctx) : undefined;
       const onClick = typeof handler === 'function' ? handler : () => {};
-      form.button(label, onClick, Object.keys(opts).length ? opts : undefined);
+      form.button(label, onClick as () => void, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'label' || type === 'body') {
       form.label(label, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'header') {

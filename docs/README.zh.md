@@ -50,9 +50,15 @@ playerJoin = onPlayerJoin
 </Event>
 <script lang="ts">
 import { world } from "@minecraft/server";
+import { showForm } from "@mbler/mcx";
+import form from "../ui/greeting.mcx"
 
 export function onPlayerJoin(event: PlayerJoinAfterEvent) {
-  event.player.sendMessage("欢迎来到服务器！");
+  const player = event.player;
+  player.sendMessage("欢迎来到服务器！");
+  showForm(form, player, {
+    playerName: player.name
+  })
 }
 </script>
 ```

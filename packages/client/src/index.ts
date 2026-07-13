@@ -3,7 +3,7 @@ import type * as types from '@mbler/mcx-types';
 export { Event } from './event';
 export { createApp } from './createApp';
 export { Utils, types };
-export { ui } from './ui';
+export { ui, showForm } from './ui';
 export { ref, Ref, Computation } from './ref';
 export { watch } from './watch';
 export { onStartup, onMounted, defineProp } from './lifecycle';

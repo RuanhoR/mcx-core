@@ -1,6 +1,8 @@
 import { ParsedTagNode, transformParseCtx } from '../../types';
 import * as t from '@babel/types';
 
+const SETUP_CTX_INDEX = 0;
+
 /**
  * Shared layout generation for both <Form> and <Ui>.
  * Generates layout config with (s) => expr functions for content and params.
@@ -16,7 +18,7 @@ export function generateLayout(
   const parsedObj: t.Expression[] = [];
   const typeTags: string[] = [];
 
-  // Collect child elements
+  // Collect child elements (recursively flatten nested groups)
   const elements: {
     arr: Record<string, string | boolean>;
     content: string;
@@ -26,53 +28,53 @@ export function generateLayout(
     if?: { useSetup: string };
   }[] = [];
 
-  for (const child of tagNode.content) {
-    if (child.type !== 'TagNode') continue;
+  function collectElements(node: ParsedTagNode) {
+    for (const child of node.content) {
+      if (child.type !== 'TagNode') continue;
 
-    if (child.content.some(i => i.type === 'TagNode')) {
-      internalCtx.rollupContext.error(
-        `[${tagName}]: can't support nested elements`,
-        child.loc
-          ? { column: child.loc.start.column, line: child.loc.start.line }
-          : void 0,
-      );
-    }
-
-    // parse for
-    let _for: { variable: string; useSetup: string } | undefined;
-    if (typeof child.arr.for === 'string') {
-      const match = (child.arr.for as string).match(
-        /^(\w+)\s+in\s+(\w+)$/,
-      );
-      if (match) {
-        _for = { variable: match[1]!, useSetup: match[2]! };
-      } else {
-        internalCtx.rollupContext.error(
-          `[${tagName}]: invalid for syntax, expected 'variable in propName'`,
-          child.loc
-            ? { column: child.loc.start.column, line: child.loc.start.line }
-            : void 0,
-        );
+      if (child.content.some(i => i.type === 'TagNode')) {
+        collectElements(child);
+        continue;
       }
-    }
 
-    // parse if
-    let _if: { useSetup: string } | undefined;
-    if (typeof child.arr.if === 'string') {
-      _if = { useSetup: child.arr.if as string };
-    }
+      // parse for — support both `in` and `of` keywords
+      let _for: { variable: string; useSetup: string } | undefined;
+      if (typeof child.arr.for === 'string') {
+        const match = (child.arr.for as string).match(
+          /^(\w+)\s+(?:in|of)\s+(\w+)$/,
+        );
+        if (match) {
+          _for = { variable: match[1]!, useSetup: match[2]! };
+        } else {
+          internalCtx.rollupContext.error(
+            `[${tagName}]: invalid for syntax, expected 'variable in|of propName'`,
+            child.loc
+              ? { column: child.loc.start.column, line: child.loc.start.line }
+              : void 0,
+          );
+        }
+      }
 
-    elements.push({
-      arr: child.arr,
-      content: child.content
-        .map(i => (i.type === 'TagContent' && i.data) || '')
-        .join(''),
-      type: child.name,
-      loc: child.loc,
-      ...(_for ? { for: _for } : {}),
-      ...(_if ? { if: _if } : {}),
-    });
+      // parse if
+      let _if: { useSetup: string } | undefined;
+      if (typeof child.arr.if === 'string') {
+        _if = { useSetup: child.arr.if as string };
+      }
+
+      elements.push({
+        arr: child.arr,
+        content: child.content
+          .map(i => (i.type === 'TagContent' && i.data) || '')
+          .join(''),
+        type: child.name,
+        loc: child.loc,
+        ...(_for ? { for: _for } : {}),
+        ...(_if ? { if: _if } : {}),
+      });
+    }
   }
+
+  collectElements(tagNode);
 
   // Build layout objects
   for (const el of elements) {
@@ -165,14 +167,25 @@ export function generateLayout(
     parsedObj.push(t.objectExpression(props));
   }
 
-  // Detect which form type was used
-  let formTypeStr = 'ActionFormData';
-  if (typeTags.some(t => ['input', 'dropdown', 'submit', 'toggle', 'slider'].includes(t))) {
-    formTypeStr = 'ModalFormData';
-  } else if (typeTags.some(t => t === 'button-m')) {
-    formTypeStr = 'MessageFormData';
-  } else if (typeTags.some(t => t === 'button')) {
+  // Detect which form type was used (explicit type attr overrides heuristic)
+  let formTypeStr: string;
+  const explicitType = tagNode.arr.type;
+  if (typeof explicitType === 'string') {
+    const typeMap: Record<string, string> = {
+      modal: 'ModalFormData',
+      action: 'ActionFormData',
+      message: 'MessageFormData',
+    };
+    formTypeStr = typeMap[explicitType] || 'ActionFormData';
+  } else {
     formTypeStr = 'ActionFormData';
+    if (typeTags.some(t => ['input', 'dropdown', 'submit', 'toggle', 'slider'].includes(t))) {
+      formTypeStr = 'ModalFormData';
+    } else if (typeTags.some(t => t === 'button-m')) {
+      formTypeStr = 'MessageFormData';
+    } else if (typeTags.some(t => t === 'button')) {
+      formTypeStr = 'ActionFormData';
+    }
   }
 
   return { parsedObj, formTypeStr };
@@ -304,13 +317,32 @@ function splitInterpolation(raw: string): InterpolationPart[] {
   return result;
 }
 
-/** "a.b.c" → __ctx[0].a.b.c */
+/** "a.b.c" → __ctx[SETUP_CTX_INDEX].a.b.c */
 function dotAccess(expr: string, root: t.Identifier): t.Expression {
   const parts = expr.split('.');
-  // First part accesses root[0] (the setup object)
-  let node: t.Expression = t.memberExpression(root, t.numericLiteral(0), true);
+  // First part accesses root[SETUP_CTX_INDEX] (the setup object)
+  let node: t.Expression = t.memberExpression(root, t.numericLiteral(SETUP_CTX_INDEX), true);
   for (const part of parts) {
     node = t.memberExpression(node, t.identifier(part));
   }
   return node;
+}
+
+/** Build the shared config object expression for both <Ui> and <Form> transforms */
+export function buildUIConfig(
+  ctx: transformParseCtx,
+  tagNode: ParsedTagNode,
+  tagName: string,
+  mode: 'form' | 'ui',
+): t.ObjectExpression {
+  const { parsedObj, formTypeStr } = generateLayout(ctx, tagNode, tagName, mode);
+  return t.objectExpression([
+    t.objectProperty(t.identifier('mode'), t.stringLiteral(mode)),
+    t.objectProperty(t.identifier('layout'), t.arrayExpression(parsedObj)),
+    t.objectProperty(
+      t.identifier('use'),
+      t.memberExpression(t.identifier('__minecraft__ui'), t.identifier(formTypeStr)),
+    ),
+    t.objectProperty(t.identifier('UI'), t.identifier('__minecraft__ui')),
+  ]);
 }

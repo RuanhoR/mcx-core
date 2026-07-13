@@ -16,6 +16,20 @@ import { Ref, Computation } from './ref';
 type SetupRecord = Record<string, unknown>;
 type LayoutFn = (ctx: unknown[]) => unknown;
 
+interface CustomFormHandle {
+  textField(label: string, value?: unknown, opts?: Record<string, unknown>): void;
+  toggle(label: string, value?: unknown, opts?: Record<string, unknown>): void;
+  dropdown(label: string, value?: unknown, options?: unknown[], opts?: Record<string, unknown>): void;
+  slider(label: string, value?: unknown, min?: number, max?: number, opts?: Record<string, unknown>): void;
+  button(label: string, onClick?: () => void, opts?: Record<string, unknown>): void;
+  label(label: string, opts?: Record<string, unknown>): void;
+  header(label: string, opts?: Record<string, unknown>): void;
+  divider(opts?: Record<string, unknown>): void;
+  spacer(opts?: Record<string, unknown>): void;
+  closeButton(): void;
+  show(): Promise<void>;
+}
+
 function toObs(val: unknown): ObservableString | ObservableBoolean | ObservableNumber | undefined {
   if (val instanceof Ref) return val.__obs;
   if (val instanceof Computation) {
@@ -145,8 +159,7 @@ export class ui implements typesPkg.ui {
     if (typeof CFCtor !== 'function') {
       throw new Error('[mcx runtime]: CustomForm not available');
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const form: any = new CFCtor(player, '');
+    const form = new CFCtor(player, '') as CustomFormHandle;
     const computations: Computation[] = [];
     const items = this._resolveItems(setup, true);
 
@@ -160,9 +173,7 @@ export class ui implements typesPkg.ui {
       let label: string;
       if (rawContent instanceof Computation) {
         label = String(rawContent.value ?? '');
-        rawContent.subscribeAll(ctx, () => {
-          // Computation re-evaluates on ref change
-        });
+        rawContent.subscribeAll(ctx, () => {});
         computations.push(rawContent);
       } else if (rawContent instanceof Ref) {
         label = String(rawContent.value);
@@ -197,14 +208,10 @@ export class ui implements typesPkg.ui {
             } else {
               loopLabel = String(loopContent ?? '');
             }
-            const slotObs = refToObsOrWarn(
-              item.params.value ? item.params.value(loopCtx) : undefined,
-              'string',
-              `${varName}[${i}]`,
-            );
-            const slotOpts: Record<string, unknown> = {};
-            slotOpts.visible = new ObservableBoolean(true);
-            form.textField(loopLabel, slotObs, slotOpts);
+            const loopRawVal = item.params.value ? item.params.value(loopCtx) : undefined;
+            const loopOpts: Record<string, unknown> = {};
+            loopOpts.visible = new ObservableBoolean(true);
+            this._addFormElement(form, type, loopLabel, loopRawVal, item, loopCtx, loopOpts);
           }
         }
         continue;
@@ -214,41 +221,7 @@ export class ui implements typesPkg.ui {
       const opts = buildOpts(item, ctx);
       if (ifObs) opts.visible = ifObs;
 
-      if (type === 'input' || type === 'textField') {
-        const obs = refToObsOrWarn(rawVal, 'string', 'input value');
-        const ph = item.params.placeholderText ? String(item.params.placeholderText(ctx)) : '';
-        if (ph) opts.placeholder = ph;
-        form.textField(label, obs, Object.keys(opts).length ? opts : undefined);
-      } else if (type === 'toggle') {
-        const obs = refToObsOrWarn(rawVal, 'boolean', 'toggle value');
-        form.toggle(label, obs, Object.keys(opts).length ? opts : undefined);
-      } else if (type === 'dropdown') {
-        const obs = refToObsOrWarn(rawVal, 'number', 'dropdown value');
-        const raw = item.params.option ? item.params.option(ctx) : [];
-        const items = Array.isArray(raw)
-          ? raw
-          : String(raw).split(',').map((v: string, i: number) => ({ label: v.trim(), value: i }));
-        form.dropdown(label, obs, items, Object.keys(opts).length ? opts : undefined);
-      } else if (type === 'slider') {
-        const obs = refToObsOrWarn(rawVal, 'number', 'slider value');
-        const min = Number(item.params.min ? item.params.min(ctx) : 0);
-        const max = Number(item.params.max ? item.params.max(ctx) : 100);
-        form.slider(label, obs, min, max, Object.keys(opts).length ? opts : undefined);
-      } else if (type === 'button') {
-        const handler = item.params.click ? item.params.click(ctx) : undefined;
-        const onClick = typeof handler === 'function' ? handler : () => {};
-        form.button(label, onClick, Object.keys(opts).length ? opts : undefined);
-      } else if (type === 'label' || type === 'body') {
-        form.label(label, Object.keys(opts).length ? opts : undefined);
-      } else if (type === 'header') {
-        form.header(label, Object.keys(opts).length ? opts : undefined);
-      } else if (type === 'divider') {
-        form.divider(Object.keys(opts).length ? opts : undefined);
-      } else if (type === 'spacer') {
-        form.spacer(Object.keys(opts).length ? opts : undefined);
-      } else if (type === 'close-button') {
-        form.closeButton();
-      }
+      this._addFormElement(form, type, label, rawVal, item, ctx, opts);
     }
 
     // Cleanup all computations on form close
@@ -256,6 +229,52 @@ export class ui implements typesPkg.ui {
       await form.show();
     } finally {
       for (const c of computations) c.__cleanup();
+    }
+  }
+
+  private _addFormElement(
+    form: CustomFormHandle,
+    type: string,
+    label: string,
+    rawVal: unknown,
+    item: LayoutItem & { _loopSetup?: SetupRecord },
+    ctx: unknown[],
+    opts: Record<string, unknown>,
+  ): void {
+    if (type === 'input' || type === 'textField') {
+      const obs = refToObsOrWarn(rawVal, 'string', 'input value');
+      const ph = item.params.placeholderText ? String(item.params.placeholderText(ctx)) : '';
+      if (ph) opts.placeholder = ph;
+      form.textField(label, obs, Object.keys(opts).length ? opts : undefined);
+    } else if (type === 'toggle') {
+      const obs = refToObsOrWarn(rawVal, 'boolean', 'toggle value');
+      form.toggle(label, obs, Object.keys(opts).length ? opts : undefined);
+    } else if (type === 'dropdown') {
+      const obs = refToObsOrWarn(rawVal, 'number', 'dropdown value');
+      const raw = item.params.option ? item.params.option(ctx) : [];
+      const items = Array.isArray(raw)
+        ? raw
+        : String(raw).split(',').map((v: string, i: number) => ({ label: v.trim(), value: i }));
+      form.dropdown(label, obs, items, Object.keys(opts).length ? opts : undefined);
+    } else if (type === 'slider') {
+      const obs = refToObsOrWarn(rawVal, 'number', 'slider value');
+      const min = Number(item.params.min ? item.params.min(ctx) : 0);
+      const max = Number(item.params.max ? item.params.max(ctx) : 100);
+      form.slider(label, obs, min, max, Object.keys(opts).length ? opts : undefined);
+    } else if (type === 'button') {
+      const handler = item.params.click ? item.params.click(ctx) : undefined;
+      const onClick = typeof handler === 'function' ? handler : () => {};
+      form.button(label, onClick, Object.keys(opts).length ? opts : undefined);
+    } else if (type === 'label' || type === 'body') {
+      form.label(label, Object.keys(opts).length ? opts : undefined);
+    } else if (type === 'header') {
+      form.header(label, Object.keys(opts).length ? opts : undefined);
+    } else if (type === 'divider') {
+      form.divider(Object.keys(opts).length ? opts : undefined);
+    } else if (type === 'spacer') {
+      form.spacer(Object.keys(opts).length ? opts : undefined);
+    } else if (type === 'close-button') {
+      form.closeButton();
     }
   }
 

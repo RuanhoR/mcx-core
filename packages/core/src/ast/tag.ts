@@ -118,7 +118,7 @@ export default class McxAst {
           attrs[key] = getExpressionContent(dir.exp as SimpleExpressionNode);
         } else if (dir.name === 'on') {
           const key = `@${getExpressionContent(dir.arg as SimpleExpressionNode)}`;
-          attrs[key] = 'true';
+          attrs[key] = getExpressionContent(dir.exp as SimpleExpressionNode);
         }
       }
     }

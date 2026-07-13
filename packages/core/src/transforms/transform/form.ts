@@ -1,7 +1,7 @@
 import { transformParseCtx } from '../../types';
 import * as t from '@babel/types';
 import config from '../config';
-import { generateLayout } from './layout';
+import { buildUIConfig } from './layout';
 
 export async function Comp(ctx: transformParseCtx) {
   ctx.impBody.push(
@@ -19,20 +19,7 @@ export async function Comp(ctx: transformParseCtx) {
   if (!tagNode || tagNode.name !== 'Form')
     throw new Error('[Form Component]: why did parent not verify?');
 
-  const { parsedObj, formTypeStr } = generateLayout(ctx, tagNode, 'Form', 'form');
-
-  const configObj = t.objectExpression([
-    t.objectProperty(t.identifier('mode'), t.stringLiteral('form')),
-    t.objectProperty(t.identifier('layout'), t.arrayExpression(parsedObj)),
-    t.objectProperty(
-      t.identifier('use'),
-      t.memberExpression(
-        t.identifier('__minecraft__ui'),
-        t.identifier(formTypeStr),
-      ),
-    ),
-    t.objectProperty(t.identifier('UI'), t.identifier('__minecraft__ui')),
-  ]);
+  const configObj = buildUIConfig(ctx, tagNode, 'Form', 'form');
 
   ctx.app([
     t.objectProperty(

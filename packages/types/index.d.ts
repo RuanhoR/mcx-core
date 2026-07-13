@@ -21,8 +21,8 @@ interface MCXUIOpt {
   mode?: 'form' | 'ui';
   layout?: {
     type: string;
-    params: { [key: string]: (s: any) => unknown };
-    content: (s: any) => unknown;
+    params: Record<string, (s: Record<string, unknown>) => unknown>;
+    content: (s: Record<string, unknown>) => unknown;
     for?: { variable: string; useSetup: string };
     if?: { useSetup: string };
   }[];
@@ -45,7 +45,7 @@ declare class Event {
   unsubscribe(...events: string[]): boolean;
   useWorld(_world: World): void;
 }
-type MCXFileType = 'app' | 'component' | 'event' | 'ui';
+type MCXFileType = 'app' | 'component' | 'event' | 'ui' | 'form';
 /** runtime context passed into `setup` */
 /**
  * MCX Setup CTX will auto-generate by core

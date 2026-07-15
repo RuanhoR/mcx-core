@@ -101,10 +101,10 @@ export async function initProject(inputOpt: InputResult) {
     },
     type: 'module',
     dependencies: {
-      '@minecraft/server': await sapi.generateVersion("@minecraft/server", inputOpt.McVersion, inputOpt.OtherModule.includes("beta-api"), false),
+      '@minecraft/server': await sapi.generateVersion("@minecraft/server", inputOpt.McVersion, inputOpt.OtherModule.includes("beta-api"), true),
     },
     devDependencies: {
-      'cross-env': '^7.0.3',
+      'cross-env': '^10.1.0',
       mbler: '^' + (await getLatestPackageVersion('mbler')),
       '@mbler/mcx-types':
         '^' + (await getLatestPackageVersion('@mbler/mcx-types')),
@@ -117,13 +117,16 @@ export async function initProject(inputOpt: InputResult) {
       await getLatestPackageVersion('@mbler/mcx-component');
     packageJson.devDependencies['@mbler/mcx-core'] =
       await getLatestPackageVersion('@mbler/mcx-core');
+  } const ui = inputOpt.OtherModule.includes('ui');
+  const beta = inputOpt.OtherModule.includes('beta-api');
+  if (ui) {
+    packageJson.dependencies["@minecraft/server-ui"] = await sapi.generateVersion("@minecraft/server-ui", inputOpt.McVersion, beta, true)
   }
   await writeFile(
     path.join(dir, 'package.json'),
     JSON.stringify(packageJson, null, 2) + '\n',
   );
-  const ui = inputOpt.OtherModule.includes('ui');
-  const beta = inputOpt.OtherModule.includes('beta-api');
+
   const mblerConfig = `// @ts-check
 import { defineConfig } from "mbler"
 // mbler config

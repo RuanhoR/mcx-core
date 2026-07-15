@@ -237,7 +237,7 @@ describe('Form transform (legacy FormData)', () => {
       { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
       outdirs,
     );
-    expect(code).toContain('Computation');
+    expect(code).not.toContain('Computation');
     expect(code).toContain('ctx[0].name');
     expect(code).toContain('"input name"');
   });
@@ -254,7 +254,7 @@ describe('Form transform (legacy FormData)', () => {
       { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
       outdirs,
     );
-    expect(code).toContain('Computation');
+    expect(code).not.toContain('Computation');
     expect(code).toContain('ctx[0].name');
     expect(code).toContain('"Name"');
   });
@@ -306,7 +306,7 @@ describe('Form transform (legacy FormData)', () => {
     expect(code).toContain('"v"');
     expect(code).toContain('useSetup:');
     expect(code).toContain('"items"');
-    expect(code).toContain('Computation');
+    expect(code).not.toContain('Computation');
     expect(code).toContain('ctx[0].v.label');
   });
 

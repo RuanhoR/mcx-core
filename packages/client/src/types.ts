@@ -2,6 +2,7 @@ import {
   ActionFormData,
   MessageFormData,
   ModalFormData,
+  CustomForm,
 } from '@minecraft/server-ui';
 import type { Player } from '@minecraft/server';
 
@@ -19,6 +20,6 @@ interface LayoutItem {
 export interface MCXUIOpt {
   mode?: 'form' | 'ui';
   layout?: LayoutItem[];
-  use?: typeof ModalFormData | typeof MessageFormData | typeof ActionFormData;
+  use?: typeof ModalFormData | typeof MessageFormData | typeof ActionFormData | typeof CustomForm;
   UI: typeof import('@minecraft/server-ui');
 }

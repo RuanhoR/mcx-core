@@ -21,7 +21,7 @@
   "engines": {
     "node": ">= 20"
   },
-  "version": "0.0.3",
+  "version": "0.0.3-rc.4",
   "dependencies": {
     "commander": "14.0.3",
     "inquirer": "13.4.3"
@@ -42,9 +42,9 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/main.js",
-      "require": "./dist/main.js",
-      "types": "./dist/main.d.ts"
+      "import": "./dist/main.mjs",
+      "require": "./dist/main.mjs",
+      "types": "./dist/main.d.mts"
     }
   },
   "main": "./dist/main.js"

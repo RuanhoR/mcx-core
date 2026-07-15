@@ -171,7 +171,11 @@ export class ui implements typesPkg.ui {
         label = String(rawContent ?? '');
       }
 
-      if (type === 'title') continue;
+      // title is handled via form.title assignment, not as a form element
+      if (type === 'title') {
+        form.title = label;
+        continue;
+      }
 
       // === Resolve if condition (reactive) ===
       const ifObs = item.if ? conditionToObs(setup[item.if.useSetup]) : undefined;
@@ -201,7 +205,7 @@ export class ui implements typesPkg.ui {
             const loopRawVal = item.params.value ? item.params.value(loopCtx) : undefined;
             const loopOpts: Record<string, unknown> = {};
             loopOpts.visible = new ObservableBoolean(true);
-            this._addFormElement(form, type, loopLabel, loopRawVal, item, loopCtx, loopOpts);
+            this._addFormElement(form, type, loopLabel, loopRawVal, item, loopCtx, loopOpts, player);
           }
         }
         continue;
@@ -211,7 +215,7 @@ export class ui implements typesPkg.ui {
       const opts = buildOpts(item, ctx);
       if (ifObs) opts.visible = ifObs;
 
-      this._addFormElement(form, type, label, rawVal, item, ctx, opts);
+      this._addFormElement(form, type, label, rawVal, item, ctx, opts, player);
     }
 
     // Cleanup all computations on form close
@@ -230,6 +234,7 @@ export class ui implements typesPkg.ui {
     item: LayoutItem & { _loopSetup?: SetupRecord },
     ctx: unknown[],
     opts: Record<string, unknown>,
+    player: Player,
   ): void {
     if (type === 'input' || type === 'textField') {
       const obs = refToObsOrWarn(rawVal, 'string', 'input value') as ObservableString;
@@ -253,12 +258,15 @@ export class ui implements typesPkg.ui {
       form.slider(label, obs, min, max, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'button') {
       const handler = item.params.click ? item.params.click(ctx) : undefined;
-      const onClick = typeof handler === 'function' ? handler : () => {};
-      form.button(label, onClick as () => void, Object.keys(opts).length ? opts : undefined);
+      const fn = typeof handler === 'function' ? handler : () => {};
+      const onClick = () => fn(player);
+      form.button(label, onClick, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'label' || type === 'body') {
       form.label(label, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'header') {
       form.header(label, Object.keys(opts).length ? opts : undefined);
+    } else if (type === 'title') {
+      form.title = label;
     } else if (type === 'divider') {
       form.divider(Object.keys(opts).length ? opts : undefined);
     } else if (type === 'spacer') {

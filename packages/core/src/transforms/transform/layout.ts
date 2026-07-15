@@ -3,9 +3,38 @@ import * as t from '@babel/types';
 
 const SETUP_CTX_INDEX = 0;
 
+const UI_TAGS = new Set([
+  'input', 'textField', 'toggle', 'dropdown', 'slider',
+  'button', 'label', 'body', 'header', 'title',
+  'divider', 'spacer', 'close-button',
+]);
+
+const FORM_TAGS = new Set([
+  'input', 'dropdown', 'submit', 'toggle', 'slider',
+  'button', 'button-m', 'body', 'divider', 'title',
+]);
+
+const COMMON_ATTRS = new Set([
+  'id', 'for', 'if', 'tip', 'disabled', 'visible', 'description',
+  ':id', ':for', ':if', ':tip', ':disabled', ':visible', ':description',
+]);
+
+const TAG_ATTRS: Record<string, Set<string>> = {
+  input: new Set(['placeholderText', 'default', 'value', ':placeholderText', ':default', ':value']),
+  textField: new Set(['placeholderText', 'default', 'value', ':placeholderText', ':default', ':value']),
+  toggle: new Set(['default', 'value', ':default', ':value']),
+  dropdown: new Set(['default', 'value', 'option', ':default', ':value', ':option']),
+  slider: new Set(['default', 'value', 'min', 'max', ':default', ':value', ':min', ':max']),
+  button: new Set(['click', 'img', ':click', ':img']),
+  submit: new Set(['click', ':click']),
+  'button-m': new Set(['click', ':click']),
+};
+
 /**
  * Shared layout generation for both <Form> and <Ui>.
  * Generates layout config with (s) => expr functions for content and params.
+ * - For 'form' mode: validates tags and auto-detects ModalFormData/ActionFormData/MessageFormData
+ * - For 'ui' mode: accepts all tags, always uses CustomForm
  */
 export function generateLayout(
   ctx: transformParseCtx,
@@ -83,9 +112,9 @@ export function generateLayout(
     delete cleanedArr.for;
     delete cleanedArr.if;
 
-    // Validate tag type
-    const formType = detectFormType(name);
-    if (formType === 'invalid') {
+    // Validate tag name and attributes
+    const validTags = mode === 'ui' ? UI_TAGS : FORM_TAGS;
+    if (!validTags.has(name)) {
       internalCtx.rollupContext.error(
         `[${tagName}]: don't support tag: ${name}`,
         el.loc
@@ -94,7 +123,33 @@ export function generateLayout(
       );
       continue;
     }
-    if (formType) typeTags.push(formType);
+
+    // Validate attributes
+    const allowedAttrs = new Set(COMMON_ATTRS);
+    const tagSpecific = TAG_ATTRS[name];
+    if (tagSpecific) {
+      for (const attr of tagSpecific) {
+        allowedAttrs.add(attr);
+      }
+    }
+    for (const key of Object.keys(cleanedArr)) {
+      if (key === 'for' || key === 'if') continue;
+      if (!allowedAttrs.has(key)) {
+        internalCtx.rollupContext.error(
+          `[${tagName}]: tag '${name}' does not support attribute '${key}'`,
+          el.loc
+            ? { line: el.loc.start.line, column: el.loc.start.column }
+            : void 0,
+        );
+        continue;
+      }
+    }
+
+    // Track for auto-detection in form mode
+    if (mode === 'form') {
+      const formType = detectFormType(name);
+      if (formType) typeTags.push(formType);
+    }
 
     // Build params: static values as literals, dynamic (:attr) as (s) => expr
     const paramsObj = t.objectExpression(
@@ -122,7 +177,7 @@ export function generateLayout(
     );
 
     // Content: parse {{ }} interpolation, supports mixed text + multiple interpolations
-    const contentExpr = parseContent(el.content);
+    const contentExpr = mode === 'form' ? parseContentForm(el.content) : parseContent(el.content);
 
     const props: t.ObjectProperty[] = [
       t.objectProperty(t.identifier('type'), t.stringLiteral(name)),
@@ -167,25 +222,31 @@ export function generateLayout(
     parsedObj.push(t.objectExpression(props));
   }
 
-  // Detect which form type was used (explicit type attr overrides heuristic)
+  // Detect which form type was used
   let formTypeStr: string;
-  const explicitType = tagNode.arr.type;
-  if (typeof explicitType === 'string') {
-    const typeMap: Record<string, string> = {
-      modal: 'ModalFormData',
-      action: 'ActionFormData',
-      message: 'MessageFormData',
-    };
-    formTypeStr = typeMap[explicitType] || 'ActionFormData';
-  } else {
-    formTypeStr = 'ActionFormData';
-    if (typeTags.some(t => ['input', 'dropdown', 'submit', 'toggle', 'slider'].includes(t))) {
-      formTypeStr = 'ModalFormData';
-    } else if (typeTags.some(t => t === 'button-m')) {
-      formTypeStr = 'MessageFormData';
-    } else if (typeTags.some(t => t === 'button')) {
+  if (mode === 'form') {
+    // For <Form> — auto-detect based on child tags or explicit type attr
+    const explicitType = tagNode.arr.type;
+    if (typeof explicitType === 'string') {
+      const typeMap: Record<string, string> = {
+        modal: 'ModalFormData',
+        action: 'ActionFormData',
+        message: 'MessageFormData',
+      };
+      formTypeStr = typeMap[explicitType] || 'ActionFormData';
+    } else {
       formTypeStr = 'ActionFormData';
+      if (typeTags.some(t => ['input', 'dropdown', 'submit', 'toggle', 'slider'].includes(t))) {
+        formTypeStr = 'ModalFormData';
+      } else if (typeTags.some(t => t === 'button-m')) {
+        formTypeStr = 'MessageFormData';
+      } else if (typeTags.some(t => t === 'button')) {
+        formTypeStr = 'ActionFormData';
+      }
     }
+  } else {
+    // For <Ui> — always use CustomForm
+    formTypeStr = 'CustomForm';
   }
 
   return { parsedObj, formTypeStr };
@@ -236,6 +297,37 @@ function arrowFn(expr: string): t.NewExpression {
     evalFn,
     t.arrayExpression(deps),
   ]);
+}
+
+/** Parse content for form mode: never creates Computation, uses plain functions */
+function parseContentForm(raw: string): t.Expression {
+  if (!raw.includes('{{ ')) {
+    return t.stringLiteral(raw);
+  }
+
+  const parts = splitInterpolation(raw);
+
+  // Single interpolation → (ctx) => ctx[0].a.b
+  if (parts.length === 1 && parts[0]!.type === 'expr') {
+    return simpleFn(parts[0]!.value);
+  }
+
+  // Mixed → (ctx) => `text ${ctx[0].a} text`
+  const ctx = t.identifier('ctx');
+  const quasis: t.TemplateElement[] = [];
+  const expressions: t.Expression[] = [];
+
+  for (const part of parts) {
+    if (part.type === 'text') {
+      quasis.push(t.templateElement({ raw: part.value, cooked: part.value }));
+    } else {
+      expressions.push(dotAccess(part.value, ctx));
+    }
+  }
+  quasis.push(t.templateElement({ raw: '', cooked: '' }, true));
+
+  const tpl = t.templateLiteral(quasis, expressions);
+  return t.arrowFunctionExpression([ctx], tpl);
 }
 
 /**

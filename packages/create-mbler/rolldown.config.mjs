@@ -6,7 +6,7 @@ export default defineConfig({
   input: path.resolve('src/main.ts'),
   output: {
     dir: './dist',
-    entryFileNames: '[name].js',
+    entryFileNames: '[name].mjs',
     format: 'esm',
     minify: true
   },

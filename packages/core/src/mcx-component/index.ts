@@ -422,6 +422,8 @@ export async function compileComponent(
   // image file requires (e.g. require('./icon.png')) into
   // require('@mbler/mcx-component').PNGImageComponent(require('node:path').join(...))
   // so that image assets are handled by the mcx-core ImageComponent classes.
+  // The moduleResolver (if provided) enables loading TypeScript and other non-JS
+  // modules via the shared transform pipeline.
   const scriptRunResult = (await new RunScript(compiledCode.File, 'esm').run(
     src,
     execESMMethod.transformCjs,
@@ -469,6 +471,7 @@ export async function compileComponent(
         }
       }
     },
+    ctx.moduleResolver,
   )) as Record<
     string,
     InstanceType<(typeof lib)[MCXstructureLocComponentType]> | undefined

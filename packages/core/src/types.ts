@@ -1,5 +1,6 @@
 import type { TransformPluginContext } from 'rollup';
 import type { MCXCompileData } from './compile-mcx/compiler/compileData';
+import type { ModuleResolver } from './mcx-component/moduleResolver';
 import { CompileOpt } from '@mbler/mcx-types';
 import * as t from '@babel/types';
 interface BaseToken {
@@ -112,6 +113,7 @@ export interface transformCtx {
     behavior: string;
     resources: string;
   };
+  moduleResolver?: ModuleResolver;
 }
 export interface transformParseCtx {
   prop: t.ObjectProperty[];

@@ -16,8 +16,11 @@ import {
   generateItemTextureJson,
   clearCachedOptions,
 } from '../../mcx-component';
+import { ModuleResolver } from '../../mcx-component/moduleResolver';
 function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
   let cache: Map<string, MCXCompileData> = new Map();
+  let moduleResolver: ModuleResolver;
+  let moduleResolverCache: Map<string, string>;
   let tsconfig: ts.ParsedCommandLine;
   try {
     const configResult = ts.readConfigFile(opt.tsconfigPath, path => {
@@ -235,6 +238,7 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
           this,
           opt,
           output,
+          moduleResolver,
         );
         return {
           code: compiledCode,
@@ -243,7 +247,6 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
             : void 0,
         };
       } else if (tsRegex.test(id)) {
-        // Use the parsed TypeScript configuration
         const compiledCode = ts.transpileModule(code, {
           compilerOptions: tsconfig.options,
           fileName: id,
@@ -259,11 +262,14 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
     },
     async buildEnd() {
       cache.clear();
+      moduleResolver?.clear();
       await generateItemTextureJson(output);
       clearCachedOptions();
     },
     buildStart() {
       cache = new Map();
+      moduleResolverCache = new Map();
+      moduleResolver = new ModuleResolver(tsconfig.options);
     },
   } satisfies Plugin;
 }

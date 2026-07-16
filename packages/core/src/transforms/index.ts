@@ -5,6 +5,7 @@ import { transformCtx } from '../types';
 import { _transform } from './main';
 import { program } from '@babel/types';
 import type { RollupError } from 'rolldown';
+import type { ModuleResolver } from '../mcx-component/moduleResolver';
 function createErrorProxy(err: unknown, id: string): RollupError {
   if (err instanceof Error) {
     return {
@@ -22,6 +23,7 @@ export async function transform(
   context: TransformPluginContext,
   opt: CompileOpt,
   output: transformCtx['output'],
+  moduleResolver?: ModuleResolver,
 ): Promise<string> {
   try {
     const scriptTag = code.raw.find(node => {
@@ -43,6 +45,7 @@ export async function transform(
         body: [],
       },
       output,
+      moduleResolver,
     };
     const result = await _transform(transformContext);
     return result;

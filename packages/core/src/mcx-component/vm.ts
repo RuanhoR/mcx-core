@@ -5,6 +5,7 @@ import * as t from '@babel/types';
 import { parse } from '@babel/parser';
 import * as generator from '@babel/generator';
 import { transformESMToCJS } from './cjsTransform';
+import { ModuleResolver, isNonJSRequire } from './moduleResolver';
 const BLOCKED_MODULES = new Set([
   'child_process',
   'node:child_process',
@@ -43,6 +44,7 @@ export class RunScript {
   private _context;
   private _module;
   private _pluginContext;
+  private _moduleResolver: ModuleResolver | undefined;
   constructor(
     public filePath: string = '<repl>',
     public module: 'esm' | 'cjs' = 'cjs',
@@ -64,7 +66,20 @@ export class RunScript {
       data: t.CallExpression | t.MemberExpression,
       setData?: (newData: t.Expression) => void,
     ) => void,
+    moduleResolver?: ModuleResolver,
   ): Promise<unknown> {
+    if (moduleResolver) {
+      this._moduleResolver = moduleResolver;
+    }
+    // When moduleResolver is available, update the context's require to handle
+    // non-JS modules (e.g. TypeScript files) through the shared transform pipeline.
+    if (this._moduleResolver && this.module === 'esm') {
+      this._context.require = this._createEnhancedRequire(
+        this._moduleResolver,
+        this._context,
+        this.filePath,
+      );
+    }
     if (this.module === 'esm') {
       if (esmExecMethod == execESMMethod.importESM) {
         let processedCode = code;
@@ -159,6 +174,42 @@ export class RunScript {
       global: context,
     });
     return vm.createContext(context);
+  }
+  /**
+   * Create an enhanced require proxy that intercepts non-JS module requests
+   * and loads them through the ModuleResolver's transform pipeline (TS→JS, etc).
+   * For JS files and Node built-ins, it delegates to the original require.
+   */
+  private _createEnhancedRequire(
+    moduleResolver: ModuleResolver,
+    context: vm.Context,
+    importerPath: string,
+  ): { (id: string): unknown; resolve: { (id: string): string; paths: (request: string) => string[] | null } } {
+    const originalRequire = Module.createRequire
+      ? Module.createRequire(importerPath)
+      : require;
+    return new Proxy(originalRequire, {
+      apply(target, thisArg, args) {
+        const id = args[0];
+        if (typeof id === 'string' && BLOCKED_MODULES.has(id)) {
+          throw new Error(
+            `[mcx component]: require('${id}') is not allowed in component scripts`,
+          );
+        }
+        // Route through ModuleResolver for:
+        // 1. Explicit non-JS extensions (.ts, .mts, .cts)
+        // 2. All relative/absolute paths (which may need extension resolution after TS transpilation)
+        if (
+          typeof id === 'string' &&
+          (isNonJSRequire(id) || id.startsWith('.') || id.startsWith('/'))
+        ) {
+          const currentImporter =
+            (context.module as { filename?: string })?.filename || importerPath;
+          return moduleResolver.ensureModule(id, currentImporter, context);
+        }
+        return Reflect.apply(target, thisArg, args);
+      },
+    });
   }
   public static isCanUseEsmRunVm = typeof vm.SourceTextModule == 'function';
 }

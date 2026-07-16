@@ -418,59 +418,13 @@ export async function compileComponent(
   const exportSources = collectExportSources(src);
   checkComponentImports(exportSources, compiledCode.File);
 
-  // Execute the component script in a VM. The transformCjsHook rewrites
-  // image file requires (e.g. require('./icon.png')) into
-  // require('@mbler/mcx-component').PNGImageComponent(require('node:path').join(...))
-  // so that image assets are handled by the mcx-core ImageComponent classes.
-  // The moduleResolver (if provided) enables loading TypeScript and other non-JS
-  // modules via the shared transform pipeline.
+  // Execute the component script in a VM. The moduleResolver handles loading
+  // TypeScript and image files through the shared plugin transform pipeline
+  // via the enhanced require proxy.
   const scriptRunResult = (await new RunScript(compiledCode.File, 'esm').run(
     src,
     execESMMethod.transformCjs,
-    (data, setData) => {
-      if (
-        setData &&
-        data.type == 'CallExpression' &&
-        data.callee.type == 'Identifier' &&
-        data.arguments.length == 1 &&
-        data.arguments[0]?.type == 'CallExpression' &&
-        data.arguments[0].callee.type == 'Identifier' &&
-        data.arguments[0].callee.name == 'require'
-      ) {
-        const callRequire = data.arguments[0];
-        const arg = callRequire.arguments[0];
-        if (arg && arg.type == 'StringLiteral') {
-          if (/^.+?\.(png|svg|jpg|jpeg|gif)$/.test(arg.value)) {
-            const imageComponentRequire = t.memberExpression(
-              t.callExpression(t.identifier('require'), [
-                t.stringLiteral('@mbler/mcx-component'),
-              ]),
-              t.identifier(
-                {
-                  png: 'PNGImageComponent',
-                  svg: 'SVGImageComponent',
-                  jpg: 'JPGImageComponent',
-                  jpeg: 'JPGImageComponent',
-                  gif: 'GIFImageComponent',
-                }[path.extname(arg.value).slice(1)] as string,
-              ),
-            );
-            const finishExpression = t.newExpression(imageComponentRequire, [
-              t.callExpression(
-                t.memberExpression(
-                  t.callExpression(t.identifier('require'), [
-                    t.stringLiteral('node:path'),
-                  ]),
-                  t.identifier('join'),
-                ),
-                [t.stringLiteral(path.dirname(compiledCode.File)), arg],
-              ),
-            ]);
-            setData(finishExpression);
-          }
-        }
-      }
-    },
+    undefined,
     ctx.moduleResolver,
   )) as Record<
     string,

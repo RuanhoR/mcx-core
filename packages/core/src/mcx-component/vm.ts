@@ -45,6 +45,7 @@ export class RunScript {
   private _module;
   private _pluginContext;
   private _moduleResolver: ModuleResolver | undefined;
+  private _nativeRequire;
   constructor(
     public filePath: string = '<repl>',
     public module: 'esm' | 'cjs' = 'cjs',
@@ -52,6 +53,9 @@ export class RunScript {
   ) {
     this._module = new Module.Module(this.filePath);
     this._pluginContext = pluginContext || {};
+    this._nativeRequire = Module.createRequire
+      ? Module.createRequire(this.filePath)
+      : require;
     this._context = this.getContext(this._pluginContext);
   }
   /**
@@ -72,12 +76,15 @@ export class RunScript {
       this._moduleResolver = moduleResolver;
     }
     // When moduleResolver is available, update the context's require to handle
-    // non-JS modules (e.g. TypeScript files) through the shared transform pipeline.
+    // non-JS modules through the shared transform pipeline.
+    // The enhanced proxy tries native require first, then falls back to
+    // ModuleResolver which resolves→reads→transforms→caches→executes.
     if (this._moduleResolver && this.module === 'esm') {
       this._context.require = this._createEnhancedRequire(
         this._moduleResolver,
         this._context,
         this.filePath,
+        this._nativeRequire,
       );
     }
     if (this.module === 'esm') {
@@ -176,19 +183,17 @@ export class RunScript {
     return vm.createContext(context);
   }
   /**
-   * Create an enhanced require proxy that intercepts non-JS module requests
-   * and loads them through the ModuleResolver's transform pipeline (TS→JS, etc).
-   * For JS files and Node built-ins, it delegates to the original require.
+   * Create an enhanced require proxy that first tries native Node require,
+   * then falls back to ModuleResolver's transform pipeline (TS→JS, image→JS, etc).
+   * This allows loading any file type through the shared plugin transform cache.
    */
   private _createEnhancedRequire(
     moduleResolver: ModuleResolver,
     context: vm.Context,
     importerPath: string,
+    nativeRequire: NodeJS.Require,
   ): { (id: string): unknown; resolve: { (id: string): string; paths: (request: string) => string[] | null } } {
-    const originalRequire = Module.createRequire
-      ? Module.createRequire(importerPath)
-      : require;
-    return new Proxy(originalRequire, {
+    return new Proxy(nativeRequire, {
       apply(target, thisArg, args) {
         const id = args[0];
         if (typeof id === 'string' && BLOCKED_MODULES.has(id)) {
@@ -196,18 +201,22 @@ export class RunScript {
             `[mcx component]: require('${id}') is not allowed in component scripts`,
           );
         }
-        // Route through ModuleResolver for:
-        // 1. Explicit non-JS extensions (.ts, .mts, .cts)
-        // 2. All relative/absolute paths (which may need extension resolution after TS transpilation)
-        if (
-          typeof id === 'string' &&
-          (isNonJSRequire(id) || id.startsWith('.') || id.startsWith('/'))
-        ) {
-          const currentImporter =
-            (context.module as { filename?: string })?.filename || importerPath;
-          return moduleResolver.ensureModule(id, currentImporter, context);
+        // First: try native Node require (handles .js, .json, .node, builtins, packages)
+        try {
+          return Reflect.apply(target, thisArg, args);
+        } catch {
+          // Fall through to custom resolution
         }
-        return Reflect.apply(target, thisArg, args);
+        // Second: use ModuleResolver to resolve, read, transform (TS→JS, image→JS, etc.)
+        // and cache the compiled result.
+        const currentImporter =
+          (context.module as { filename?: string })?.filename || importerPath;
+        return moduleResolver.ensureModule(
+          id,
+          currentImporter,
+          context,
+          undefined, // don't recurse — we already tried native
+        );
       },
     });
   }

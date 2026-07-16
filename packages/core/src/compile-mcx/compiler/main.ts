@@ -16,11 +16,17 @@ import {
   generateItemTextureJson,
   clearCachedOptions,
 } from '../../mcx-component';
-import { ModuleResolver } from '../../mcx-component/moduleResolver';
+import {
+  ModuleResolver,
+  createImageTransformCode,
+} from '../../mcx-component/moduleResolver';
+
+const IMAGE_EXTS = new Set(['.png', '.svg', '.jpg', '.jpeg', '.gif']);
+
 function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
   let cache: Map<string, MCXCompileData> = new Map();
+  let moduleTransformCache: Map<string, string>;
   let moduleResolver: ModuleResolver;
-  let moduleResolverCache: Map<string, string>;
   let tsconfig: ts.ParsedCommandLine;
   try {
     const configResult = ts.readConfigFile(opt.tsconfigPath, path => {
@@ -45,7 +51,6 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
       );
     }
 
-    // Parse the configuration with proper path resolution
     const parsedConfig = ts.parseJsonConfigFileContent(
       configResult.config,
       ts.sys,
@@ -65,7 +70,6 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
 
     tsconfig = parsedConfig;
   } catch (error) {
-    // Fallback to default configuration if reading fails
     console.warn(
       `Failed to load TypeScript config from ${opt.tsconfigPath}: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -151,7 +155,6 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
         }
         return null;
       } else {
-        // First try Node.js native resolution for reliable symlink/pkg resolution
         if (imp) {
           try {
             const localRequire = createRequire(imp);
@@ -247,10 +250,20 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
             : void 0,
         };
       } else if (tsRegex.test(id)) {
+        const cached = moduleTransformCache.get(id);
+        if (cached) {
+          return {
+            code: cached,
+            map: opt.sourcemap
+              ? magic.generateMap({ hires: true, source: id })
+              : void 0,
+          };
+        }
         const compiledCode = ts.transpileModule(code, {
           compilerOptions: tsconfig.options,
           fileName: id,
         }).outputText;
+        moduleTransformCache.set(id, compiledCode);
         return {
           code: compiledCode,
           map: opt.sourcemap
@@ -268,8 +281,19 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
     },
     buildStart() {
       cache = new Map();
-      moduleResolverCache = new Map();
-      moduleResolver = new ModuleResolver(tsconfig.options);
+      moduleTransformCache = new Map();
+      const tsOptions = tsconfig.options;
+      moduleResolver = new ModuleResolver(
+        tsOptions,
+        moduleTransformCache,
+        (fileCode: string, fileId: string) => {
+          const fileExt = extname(fileId).toLowerCase();
+          if (IMAGE_EXTS.has(fileExt)) {
+            return createImageTransformCode(fileId, fileExt);
+          }
+          return fileCode;
+        },
+      );
     },
   } satisfies Plugin;
 }

@@ -1,19 +1,26 @@
 import { readFileSync } from 'node:fs';
 import { extname, resolve, dirname, sep } from 'node:path';
 import * as vm from 'node:vm';
-import type { CompilerOptions } from 'typescript';
 import ts from 'typescript';
 
 const TS_EXTS = new Set(['.ts', '.mts', '.cts']);
-const NON_JS_EXTS = new Set(['.ts', '.mts', '.cts', '.tsx']);
+
+export type FileTransformFn = (code: string, id: string) => string;
 
 export class ModuleResolver {
-  private cache = new Map<string, string>();
+  private cache: Map<string, string>;
   private loadingModules = new Set<string>();
   private tsconfigOptions: ts.CompilerOptions;
+  private transformFile?: FileTransformFn;
 
-  constructor(tsconfigOptions: ts.CompilerOptions) {
+  constructor(
+    tsconfigOptions: ts.CompilerOptions,
+    cache: Map<string, string>,
+    transformFile?: FileTransformFn,
+  ) {
     this.tsconfigOptions = tsconfigOptions;
+    this.cache = cache;
+    this.transformFile = transformFile;
   }
 
   getCache() {
@@ -29,7 +36,16 @@ export class ModuleResolver {
     specifier: string,
     importerPath: string,
     context: vm.Context,
+    nativeRequire?: (id: string) => unknown,
   ): unknown {
+    if (nativeRequire) {
+      try {
+        return nativeRequire(specifier);
+      } catch {
+        // fall through to custom resolution
+      }
+    }
+
     const resolved = this.resolveSync(specifier, importerPath);
     if (!resolved) {
       throw new Error(
@@ -51,7 +67,9 @@ export class ModuleResolver {
       const ext = extname(resolved);
       const compiled = TS_EXTS.has(ext)
         ? this.transformModule(code, resolved)
-        : code;
+        : this.transformFile
+          ? this.transformFile(code, resolved)
+          : code;
 
       this.cache.set(resolved, compiled);
       return this.executeInContext(resolved, context);
@@ -133,5 +151,30 @@ export class ModuleResolver {
 
 export function isNonJSRequire(id: string): boolean {
   const ext = extname(id).toLowerCase();
-  return NON_JS_EXTS.has(ext);
+  return ext === '.ts' || ext === '.mts' || ext === '.cts' || ext === '.tsx';
+}
+
+export function createImageTransformCode(
+  absolutePath: string,
+  ext: string,
+): string {
+  const componentMap: Record<string, string> = {
+    '.png': 'PNGImageComponent',
+    '.svg': 'SVGImageComponent',
+    '.jpg': 'JPGImageComponent',
+    '.jpeg': 'JPGImageComponent',
+    '.gif': 'GIFImageComponent',
+  };
+  const className = componentMap[ext.toLowerCase()];
+  if (!className) {
+    throw new Error(
+      `[mcx component]: unsupported image extension '${ext}' for '${absolutePath}'`,
+    );
+  }
+  return [
+    `Object.defineProperty(exports, '__esModule', { value: true });`,
+    `const { ${className} } = require('@mbler/mcx-component');`,
+    `const path = require('node:path');`,
+    `exports.default = new ${className}(${JSON.stringify(absolutePath)});`,
+  ].join('\n');
 }

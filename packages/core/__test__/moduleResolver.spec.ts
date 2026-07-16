@@ -3,7 +3,12 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import * as vm from 'node:vm';
-import { ModuleResolver } from '../src/mcx-component/moduleResolver';
+import {
+  ModuleResolver,
+  createImageTransformCode,
+} from '../src/mcx-component/moduleResolver';
+
+const IMAGE_EXTS = new Set(['.png', '.svg', '.jpg', '.jpeg', '.gif']);
 
 function createVmContext(): vm.Context {
   const ctx: vm.Context = Object.create(null);
@@ -34,7 +39,7 @@ describe('ModuleResolver', () => {
   });
 
   it('should resolve and transpile a .ts file to CJS and return its exports', () => {
-    const resolver = new ModuleResolver({});
+    const resolver = new ModuleResolver({}, new Map());
     const tsPath = join(tmpDir, 'helper.ts');
     writeFileSync(
       tsPath,
@@ -56,7 +61,7 @@ describe('ModuleResolver', () => {
   });
 
   it('should transpile default exports correctly', () => {
-    const resolver = new ModuleResolver({});
+    const resolver = new ModuleResolver({}, new Map());
     const tsPath = join(tmpDir, 'greeter.ts');
     writeFileSync(
       tsPath,
@@ -87,7 +92,7 @@ describe('ModuleResolver', () => {
       'utf-8',
     );
 
-    const resolver = new ModuleResolver({});
+    const resolver = new ModuleResolver({}, new Map());
     const context = createVmContext();
 
     const mod1 = resolver.ensureModule(tsPath, tmpDir, context);
@@ -106,7 +111,7 @@ describe('ModuleResolver', () => {
   });
 
   it('should handle relative imports in transpiled code', () => {
-    const resolver = new ModuleResolver({});
+    const resolver = new ModuleResolver({}, new Map());
     const utilsPath = join(tmpDir, 'utils.ts');
     writeFileSync(
       utilsPath,
@@ -143,5 +148,51 @@ describe('ModuleResolver', () => {
 
     expect(mod).toBeDefined();
     expect((mod as any).result).toBe(7);
+  });
+
+  it('should use transformFile callback for image files', () => {
+    const cache = new Map<string, string>();
+    const resolver = new ModuleResolver(
+      {},
+      cache,
+      (code: string, id: string) => {
+        const ext = id.split('.').pop()?.toLowerCase();
+        if (ext && IMAGE_EXTS.has('.' + ext)) {
+          return createImageTransformCode(id, '.' + ext);
+        }
+        return code;
+      },
+    );
+
+    const pngPath = join(tmpDir, 'icon.png');
+    writeFileSync(pngPath, 'fake-png-bytes', 'utf-8');
+
+    const context = createVmContext();
+    try {
+      resolver.ensureModule(pngPath, tmpDir, context);
+    } catch {
+      // ignore — VM may not have require() available,
+      // we verify the cache contents below
+    }
+
+    expect(cache.has(pngPath)).toBe(true);
+    const code = cache.get(pngPath)!;
+    expect(code).toContain('PNGImageComponent');
+    expect(code).toContain('exports.default');
+    expect(code).toContain('__esModule');
+    expect(code).toContain(JSON.stringify(pngPath));
+  });
+
+  it('should share cache with external map', () => {
+    const cache = new Map<string, string>();
+    const resolver = new ModuleResolver({}, cache);
+    const tsPath = join(tmpDir, 'shared.ts');
+    writeFileSync(tsPath, 'export const x = 1;', 'utf-8');
+
+    const context = createVmContext();
+    resolver.ensureModule(tsPath, tmpDir, context);
+
+    expect(cache.has(tsPath)).toBe(true);
+    expect(cache.get(tsPath)!).toContain('exports.x');
   });
 });

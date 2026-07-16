@@ -38,7 +38,15 @@ const item = new ItemComponent({
 const json = item.toJSON()
 // Outputs MCBE-compatible item JSON
 ```
-
+## How to use `toJSON` return data?
+1. Use with [MCX CORE](https://npmjs.com/package/@mbler/mcx-core)
+```bash
+git clone https://github.com/RuanhoR/mcbe-bedwars-addon.git
+cd mcbe-bedwars-addon
+# Edit ./behavior/scripts/component/Menu.mcx to test Component mcx
+```
+2. Use on your app
+Read [`file_edit` handle in MCX CORE Open source repo](https://github.com/RuanhoR/mcx-core/blob/main/packages/core/src/mcx-component/index.ts) and impl in your app
 ## License
 
 MIT

@@ -22,8 +22,8 @@ pnpm add -D @mbler/mcx-core
 ```
 
 ## Usage
-
-Add the plugin to your Rollup or Rolldown config:
+1. Use manually
+Add the plugin to your Rollup or Rolldown/Rollup config:
 
 ```ts
 import { rollupPlugin } from '@mbler/mcx-core'
@@ -32,7 +32,10 @@ export default {
   plugins: [rollupPlugin({ moduleDir: './modules', tsconfigPath: './tsconfig.json' })],
 }
 ```
-
+2. Use with [mbler](https://npmjs.com/package/mbler)
+```bash
+pnpm create mbler
+```
 For full documentation, visit the **[Docs](https://mbler-docs.ruanhor.dpdns.org/guide/mcx)**.
 
 ## License

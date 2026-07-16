@@ -13,7 +13,6 @@ class ModalFormDataMock {
   title = vi.fn().mockReturnThis();
   show = vi.fn().mockResolvedValue({ canceled: true });
 }
-
 class ActionFormDataMock {
   button = vi.fn().mockReturnThis();
   label = vi.fn().mockReturnThis();
@@ -125,7 +124,7 @@ describe('Event', () => {
     new Event(
       {
         on: 'after',
-        data: { playerJoin: () => {} },
+        data: { playerJoin: () => { } },
         extends: [{} as unknown as MCXFile<'event'>],
       },
       extendLoader,
@@ -319,7 +318,7 @@ describe('ui', () => {
           },
           { type: 'body', content: () => 'Body text', params: {} },
           { type: 'divider', content: () => '', params: {} },
-          { type: 'submit', content: () => 'Go', params: { click: () => () => {} } },
+          { type: 'submit', content: () => 'Go', params: { click: () => () => { } } },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -334,7 +333,7 @@ describe('ui', () => {
         UI: serverUI,
         layout: [
           { type: 'title', content: () => 'Menu', params: {} },
-          { type: 'button', content: () => 'Option 1', params: { click: () => () => {} } },
+          { type: 'button', content: () => 'Option 1', params: { click: () => () => { } } },
           { type: 'body', content: () => 'Select option', params: {} },
           { type: 'divider', content: () => '', params: {} },
         ],
@@ -351,8 +350,8 @@ describe('ui', () => {
         UI: serverUI,
         layout: [
           { type: 'title', content: () => 'Confirm', params: {} },
-          { type: 'button-m', content: () => 'Yes', params: { click: () => () => {} } },
-          { type: 'button-m', content: () => 'No', params: { click: () => () => {} } },
+          { type: 'button-m', content: () => 'Yes', params: { click: () => () => { } } },
+          { type: 'button-m', content: () => 'No', params: { click: () => () => { } } },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -361,7 +360,7 @@ describe('ui', () => {
   });
 
   it('should throw for invalid UI type', async () => {
-    class FakeUI {}
+    class FakeUI { }
     const instance = new ui(
       {
         use: FakeUI as unknown as typeof serverUI.ModalFormData,
@@ -574,7 +573,7 @@ describe('registryCommand', () => {
 
   it('.action() should call registryCommand and not duplicate subscription', () => {
     const cmd = new Command('my:actcmd');
-    cmd.action(() => ({ status: 0 } as any));
+    cmd.action(() => ({ status: 0 }));
     expect(startupSubscribeMock).toHaveBeenCalledTimes(1);
   });
 
@@ -592,7 +591,7 @@ describe('registryCommand', () => {
   });
 
   it('should error when registering via registryCommand after startup', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     const cmd = new Command('my:cmd03');
     registryCommand(cmd);
     expect(consoleSpy).toHaveBeenCalled();
@@ -601,9 +600,9 @@ describe('registryCommand', () => {
   });
 
   it('.action() should error when called after startup', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     const cmd = new Command('my:actafter');
-    cmd.action(() => ({ status: 0 } as any));
+    cmd.action(() => ({ status: 0 }));
     expect(consoleSpy).toHaveBeenCalled();
     expect(consoleSpy.mock.calls[0]![0]).toContain('Cannot register command');
     consoleSpy.mockRestore();

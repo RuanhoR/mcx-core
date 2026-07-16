@@ -9,7 +9,7 @@
     "url": "https://github.com/RuanhoR/"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "readme": "./README.md",
   "repository": {

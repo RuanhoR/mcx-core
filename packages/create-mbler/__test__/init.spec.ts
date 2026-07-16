@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { initProject, fileExists } from '../src/init';
-import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises';
+import { mkdtemp, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 

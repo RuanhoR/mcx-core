@@ -4,37 +4,6 @@ import { transform } from '../../src/transforms/index';
 import type { TransformPluginContext } from 'rollup';
 import type { CompileOpt } from '@mbler/mcx-types';
 import type { transformCtx } from '../../src/types';
-
-function createMockPluginContext(): TransformPluginContext {
-  return {
-    error: (err: any) => {
-      const msg = typeof err === 'string' ? err : err?.message ?? String(err);
-      throw new Error(msg);
-    },
-    warn: (_msg: string) => {},
-    parse: (_input: string) => {
-      throw new Error('Not implemented');
-    },
-    resolve: async (source: string, _importer: string | undefined) => ({ id: source }),
-    emitFile: (_file: any) => '',
-    getFileName: (_ref: string) => '',
-    getModuleInfo: (_id: string) => null,
-    getModuleIds: () => (async function* () {})(),
-    addWatchFile: (_id: string) => {},
-    getCombinedSourcemap: () => null,
-    moduleParsed: { on: () => {}, off: () => {} },
-    cache: null as any,
-  } as unknown as TransformPluginContext;
-}
-
-function createMockOpt(): CompileOpt {
-  return {
-    moduleDir: '',
-    tsconfigPath: '',
-    sourcemap: false,
-  } as CompileOpt;
-}
-
 function createMockOutput(): transformCtx['output'] {
   return {
     dist: '',
@@ -46,10 +15,8 @@ function createMockOutput(): transformCtx['output'] {
 function compileMCX(mcxSource: string): Promise<string> {
   const compileData = compileMCXFn(mcxSource);
   const cache = new Map();
-  const mockCtx = createMockPluginContext();
-  const opt = createMockOpt();
   const output = createMockOutput();
-  return transform(compileData, cache, 'test.ui.mcx', mockCtx, opt, output);
+  return transform(compileData, cache, 'test.ui.mcx', {} as unknown as TransformPluginContext, {} as unknown as CompileOpt, output);
 }
 
 describe('UI Transform - Computation import', () => {

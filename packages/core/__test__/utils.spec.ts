@@ -37,7 +37,7 @@ describe('Utils.AbsoluteJoin', () => {
   it('should join relative path with base', () => {
     const result = Utils.AbsoluteJoin('/base', './relative/file.ts');
     expect(result).toBe(
-      process.platform === 'win32'
+      process.platform.includes("win")
         ? '\\base\\relative\\file.ts'
         : '/base/relative/file.ts',
     );

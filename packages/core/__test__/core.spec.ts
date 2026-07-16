@@ -14,8 +14,6 @@ import type {
 } from '../src/types';
 import * as MCX from '../src/index.js';
 import { Lexer } from '../src/ast/prop';
-import { isNonNullChain } from 'typescript';
-
 describe('compileJSFn', () => {
   it('should parse imports, calls, and exports', () => {
     const result = MCX.compiler.compileJSFn(
@@ -27,7 +25,12 @@ describe('compileJSFn', () => {
     expect(result.BuildCache.call).toBeDefined();
     expect(result.BuildCache.export.length).toBeGreaterThanOrEqual(1);
   });
-
+  it('should cache result', () => {
+    const script = "console.log('Hello world')"
+    const resultV1 = MCX.compiler.compileJSFn(script);
+    const resultV2 = MCX.compiler.compileJSFn(script);
+    expect(resultV1).toBe(resultV2)
+  })
   it('should handle empty script', () => {
     const result = MCX.compiler.compileJSFn('');
     expect(result).toBeDefined();
@@ -146,9 +149,9 @@ describe('transform', () => {
       error: (msg: unknown) => {
         throw new Error(String(msg));
       },
-      warn: () => {},
-      debug: () => {},
-      info: () => {},
+      warn: () => { },
+      debug: () => { },
+      info: () => { },
       getCombinedSourcemap: () =>
         ({ mappings: '' }) as ReturnType<
           TransformPluginContext['getCombinedSourcemap']
@@ -205,9 +208,9 @@ describe('Form transform (legacy FormData)', () => {
       error: (msg: unknown) => {
         throw new Error(String(msg));
       },
-      warn: () => {},
-      debug: () => {},
-      info: () => {},
+      warn: () => { },
+      debug: () => { },
+      info: () => { },
       getCombinedSourcemap: () =>
         ({ mappings: '' }) as ReturnType<
           TransformPluginContext['getCombinedSourcemap']
@@ -335,9 +338,9 @@ describe('Ui transform (CustomForm)', () => {
       error: (msg: unknown) => {
         throw new Error(String(msg));
       },
-      warn: () => {},
-      debug: () => {},
-      info: () => {},
+      warn: () => { },
+      debug: () => { },
+      info: () => { },
       getCombinedSourcemap: () =>
         ({ mappings: '' }) as ReturnType<
           TransformPluginContext['getCombinedSourcemap']

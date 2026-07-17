@@ -420,12 +420,15 @@ export async function compileComponent(
 
   // Execute the component script in a VM. The moduleResolver handles loading
   // TypeScript and image files through the shared plugin transform pipeline
-  // via the enhanced require proxy.
-  const scriptRunResult = (await new RunScript(compiledCode.File, 'esm').run(
-    src,
-    execESMMethod.transformCjs,
+  // via the enhanced require proxy (injected into the context at construction).
+  const scriptRunResult = (await new RunScript(
+    compiledCode.File,
+    'esm',
     undefined,
     ctx.moduleResolver,
+  ).run(
+    src,
+    execESMMethod.transformCjs,
   )) as Record<
     string,
     InstanceType<(typeof lib)[MCXstructureLocComponentType]> | undefined

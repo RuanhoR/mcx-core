@@ -5,7 +5,7 @@ import * as t from '@babel/types';
 import { parse } from '@babel/parser';
 import * as generator from '@babel/generator';
 import { transformESMToCJS } from './cjsTransform';
-import { ModuleResolver, isNonJSRequire } from './moduleResolver';
+import { ModuleResolver } from './moduleResolver';
 const BLOCKED_MODULES = new Set([
   'child_process',
   'node:child_process',
@@ -50,12 +50,14 @@ export class RunScript {
     public filePath: string = '<repl>',
     public module: 'esm' | 'cjs' = 'cjs',
     private pluginContext?: Record<string, string | null | boolean | number>,
+    moduleResolver?: ModuleResolver,
   ) {
     this._module = new Module.Module(this.filePath);
     this._pluginContext = pluginContext || {};
     this._nativeRequire = Module.createRequire
       ? Module.createRequire(this.filePath)
       : require;
+    this._moduleResolver = moduleResolver;
     this._context = this.getContext(this._pluginContext);
   }
   /**
@@ -70,23 +72,7 @@ export class RunScript {
       data: t.CallExpression | t.MemberExpression,
       setData?: (newData: t.Expression) => void,
     ) => void,
-    moduleResolver?: ModuleResolver,
   ): Promise<unknown> {
-    if (moduleResolver) {
-      this._moduleResolver = moduleResolver;
-    }
-    // When moduleResolver is available, update the context's require to handle
-    // non-JS modules through the shared transform pipeline.
-    // The enhanced proxy tries native require first, then falls back to
-    // ModuleResolver which resolves→reads→transforms→caches→executes.
-    if (this._moduleResolver && this.module === 'esm') {
-      this._context.require = this._createEnhancedRequire(
-        this._moduleResolver,
-        this._context,
-        this.filePath,
-        this._nativeRequire,
-      );
-    }
     if (this.module === 'esm') {
       if (esmExecMethod == execESMMethod.importESM) {
         let processedCode = code;
@@ -163,13 +149,31 @@ export class RunScript {
     const originalRequire = Module.createRequire
       ? Module.createRequire(this.filePath)
       : require;
-    const restrictedRequire = new Proxy(originalRequire, {
-      apply(target, thisArg, args) {
+    const contextRequire = new Proxy(originalRequire, {
+      apply: (target, thisArg, args) => {
         const id = args[0];
         if (typeof id === 'string' && BLOCKED_MODULES.has(id)) {
           throw new Error(
             `[mcx component]: require('${id}') is not allowed in component scripts`,
           );
+        }
+        // When moduleResolver is available, try native first, then fall
+        // through to transform pipeline (TS→JS, image→JS, etc.) so that
+        // any module loaded recursively goes through the shared cache.
+        if (this._moduleResolver) {
+          try {
+            return Reflect.apply(target, thisArg, args);
+          } catch {
+            const currentImporter =
+              (context.module as { filename?: string })?.filename ||
+              this.filePath;
+            return this._moduleResolver.ensureModule(
+              id,
+              currentImporter,
+              context,
+              undefined,
+            );
+          }
         }
         return Reflect.apply(target, thisArg, args);
       },
@@ -177,48 +181,10 @@ export class RunScript {
     Object.assign(context, {
       exports,
       module,
-      require: restrictedRequire,
+      require: contextRequire,
       global: context,
     });
     return vm.createContext(context);
-  }
-  /**
-   * Create an enhanced require proxy that first tries native Node require,
-   * then falls back to ModuleResolver's transform pipeline (TS→JS, image→JS, etc).
-   * This allows loading any file type through the shared plugin transform cache.
-   */
-  private _createEnhancedRequire(
-    moduleResolver: ModuleResolver,
-    context: vm.Context,
-    importerPath: string,
-    nativeRequire: NodeJS.Require,
-  ): { (id: string): unknown; resolve: { (id: string): string; paths: (request: string) => string[] | null } } {
-    return new Proxy(nativeRequire, {
-      apply(target, thisArg, args) {
-        const id = args[0];
-        if (typeof id === 'string' && BLOCKED_MODULES.has(id)) {
-          throw new Error(
-            `[mcx component]: require('${id}') is not allowed in component scripts`,
-          );
-        }
-        // First: try native Node require (handles .js, .json, .node, builtins, packages)
-        try {
-          return Reflect.apply(target, thisArg, args);
-        } catch {
-          // Fall through to custom resolution
-        }
-        // Second: use ModuleResolver to resolve, read, transform (TS→JS, image→JS, etc.)
-        // and cache the compiled result.
-        const currentImporter =
-          (context.module as { filename?: string })?.filename || importerPath;
-        return moduleResolver.ensureModule(
-          id,
-          currentImporter,
-          context,
-          undefined, // don't recurse — we already tried native
-        );
-      },
-    });
   }
   public static isCanUseEsmRunVm = typeof vm.SourceTextModule == 'function';
 }

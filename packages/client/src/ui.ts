@@ -68,19 +68,23 @@ function conditionToObs(val: unknown): ObservableBoolean {
   return new ObservableBoolean(Boolean(val));
 }
 
+function callLayoutFn(fn: unknown, ctx: unknown[]): unknown {
+  return typeof fn === 'function' ? (fn as LayoutFn)(ctx) : fn;
+}
+
 function buildOpts(item: LayoutItem & { _loopSetup?: SetupRecord }, ctx: unknown[]): Record<string, unknown> {
   const opts: Record<string, unknown> = {};
   const p = item.params;
-  if (p.tip) opts.tooltip = String(p.tip(ctx));
+  if (p.tip) opts.tooltip = String(callLayoutFn(p.tip, ctx));
   if (p.disabled) {
-    const v = p.disabled(ctx);
+    const v = callLayoutFn(p.disabled, ctx);
     opts.disabled = v instanceof Computation ? Boolean(v.value) : Boolean(v);
   }
   if (p.visible) {
-    const v = p.visible(ctx);
+    const v = callLayoutFn(p.visible, ctx);
     opts.visible = v instanceof Computation ? Boolean(v.value) : Boolean(v);
   }
-  if (p.description) opts.description = String(p.description(ctx));
+  if (p.description) opts.description = String(callLayoutFn(p.description, ctx));
   return opts;
 }
 
@@ -93,6 +97,8 @@ interface LayoutItem {
 }
 
 export class ui implements typesPkg.ui {
+  private static _activeForms = new WeakMap<Player, CustomForm | null>();
+
   private _mcUI: typeof import('@minecraft/server-ui');
   private _mcxSrcFn: (
     ctx: MCXCtx & { $prop?: Record<string, unknown> },
@@ -123,7 +129,18 @@ export class ui implements typesPkg.ui {
     player: Player,
     prop?: Record<string, unknown>,
   ): Promise<void> {
-    const setup = this._mcxSrcFn({ $prop: prop || {} });
+    // Close any existing form for this player first
+    const existing = ui._activeForms.get(player);
+    if (existing) {
+      try { existing.close(); } catch { /* ignore */ }
+      ui._activeForms.set(player, null);
+      // Wait for the old form's show() promise to fully resolve
+      // (its finally block also runs here via microtask queue)
+      await Promise.resolve();
+    }
+
+    const rawSetup = this._mcxSrcFn({ $prop: prop || {} });
+    const setup = { ...prop, ...rawSetup } as SetupRecord;
 
     // onStartup — once
     if (!this._startupDone) {
@@ -150,6 +167,7 @@ export class ui implements typesPkg.ui {
       throw new Error('[mcx runtime]: CustomForm not available');
     }
     const form = new CFCtor(player, '');
+    ui._activeForms.set(player, form);
     const computations: Computation[] = [];
     const items = this._resolveItems(setup, true);
 
@@ -159,7 +177,7 @@ export class ui implements typesPkg.ui {
       const ctx = [s];
 
       // === Resolve content (reactive) ===
-      const rawContent = item.content(ctx);
+      const rawContent = callLayoutFn(item.content, ctx);
       let label: string;
       if (rawContent instanceof Computation) {
         label = String(rawContent.value ?? '');
@@ -171,9 +189,8 @@ export class ui implements typesPkg.ui {
         label = String(rawContent ?? '');
       }
 
-      // title is handled via form.title assignment, not as a form element
       if (type === 'title') {
-        form.title = label;
+        (form as unknown as { title: string }).title = label;
         continue;
       }
 
@@ -181,7 +198,7 @@ export class ui implements typesPkg.ui {
       const ifObs = item.if ? conditionToObs(setup[item.if.useSetup]) : undefined;
 
       // === Resolve :value binding ===
-      const rawVal = item.params.value ? item.params.value(ctx) : undefined;
+      const rawVal = callLayoutFn(item.params.value, ctx);
 
       // === Resolve for-loop (reactive pre-allocate) ===
       if (item.for && !item._loopSetup) {
@@ -191,7 +208,7 @@ export class ui implements typesPkg.ui {
           for (let i = 0; i < source.length; i++) {
             const loopSetup = { ...setup, [varName]: source[i] };
             const loopCtx = [loopSetup];
-            const loopContent = item.content(loopCtx);
+            const loopContent = callLayoutFn(item.content, loopCtx);
             let loopLabel: string;
             if (loopContent instanceof Computation) {
               loopLabel = String(loopContent.value ?? '');
@@ -202,7 +219,7 @@ export class ui implements typesPkg.ui {
             } else {
               loopLabel = String(loopContent ?? '');
             }
-            const loopRawVal = item.params.value ? item.params.value(loopCtx) : undefined;
+            const loopRawVal = item.params.value ? callLayoutFn(item.params.value, loopCtx) : undefined;
             const loopOpts: Record<string, unknown> = {};
             loopOpts.visible = new ObservableBoolean(true);
             this._addFormElement(form, type, loopLabel, loopRawVal, item, loopCtx, loopOpts, player);
@@ -222,6 +239,7 @@ export class ui implements typesPkg.ui {
     try {
       await form.show();
     } finally {
+      ui._activeForms.set(player, null);
       for (const c of computations) c.__cleanup();
     }
   }
@@ -238,7 +256,7 @@ export class ui implements typesPkg.ui {
   ): void {
     if (type === 'input' || type === 'textField') {
       const obs = refToObsOrWarn(rawVal, 'string', 'input value') as ObservableString;
-      const ph = item.params.placeholderText ? String(item.params.placeholderText(ctx)) : '';
+      const ph = String(callLayoutFn(item.params.placeholderText, ctx) ?? '');
       if (ph) opts.placeholder = ph;
       form.textField(label, obs, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'toggle') {
@@ -246,27 +264,27 @@ export class ui implements typesPkg.ui {
       form.toggle(label, obs, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'dropdown') {
       const obs = refToObsOrWarn(rawVal, 'number', 'dropdown value') as ObservableNumber;
-      const raw = item.params.option ? item.params.option(ctx) : [];
+      const raw = callLayoutFn(item.params.option, ctx);
       const items = Array.isArray(raw)
         ? raw
         : String(raw).split(',').map((v: string, i: number) => ({ label: v.trim(), value: i }));
       form.dropdown(label, obs, items, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'slider') {
       const obs = refToObsOrWarn(rawVal, 'number', 'slider value') as ObservableNumber;
-      const min = Number(item.params.min ? item.params.min(ctx) : 0);
-      const max = Number(item.params.max ? item.params.max(ctx) : 100);
+      const min = Number(callLayoutFn(item.params.min, ctx) ?? 0);
+      const max = Number(callLayoutFn(item.params.max, ctx) ?? 100);
       form.slider(label, obs, min, max, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'button') {
-      const handler = item.params.click ? item.params.click(ctx) : undefined;
+      const handler = callLayoutFn(item.params.click, ctx);
       const fn = typeof handler === 'function' ? handler : () => {};
-      const onClick = () => fn(player);
+      const onClick = () => fn(undefined, player);
       form.button(label, onClick, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'label' || type === 'body') {
       form.label(label, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'header') {
       form.header(label, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'title') {
-      form.title = label;
+      (form as unknown as { title: string }).title = label;
     } else if (type === 'divider') {
       form.divider(Object.keys(opts).length ? opts : undefined);
     } else if (type === 'spacer') {
@@ -283,7 +301,7 @@ export class ui implements typesPkg.ui {
     // Build click handler map
     const clickHandlers: Map<number, Function> = new Map();
 
-    const ui = new this._UI!();
+    const ui = new (this._UI as new (...args: never[]) => InstanceType<NonNullable<typeof this._UI>>)();
     if (!this._uiType) {
       if (ui instanceof this._mcUI.ModalFormData) this._uiType = 'modal';
       else if (ui instanceof this._mcUI.ActionFormData) this._uiType = 'action';
@@ -297,30 +315,30 @@ export class ui implements typesPkg.ui {
     for (const item of items) {
       const s = item._loopSetup || setup;
       const ctx = [s];
-      const label = String(item.content(ctx) ?? '');
+      const label = String(callLayoutFn(item.content, ctx) ?? '');
 
       if (this._uiType === 'modal') {
         const f = ui as InstanceType<typeof this._mcUI.ModalFormData>;
         if (item.type === 'input') {
-          const def = item.params.default ? String(item.params.default(ctx)) : '';
-          const ph = item.params.placeholderText ? String(item.params.placeholderText(ctx)) : '';
-          const tip = item.params.tip ? String(item.params.tip(ctx)) : undefined;
-          f.textField(label, ph, { defaultValue: def, tooltip: tip! });
+          const def = String(callLayoutFn(item.params.default, ctx) ?? '');
+          const ph = String(callLayoutFn(item.params.placeholderText, ctx) ?? '');
+          const tip = callLayoutFn(item.params.tip, ctx);
+          f.textField(label, ph, { defaultValue: def, ...(tip != null ? { tooltip: String(tip) } : {}) });
         } else if (item.type === 'slider') {
-          const min = Number(item.params.min ? item.params.min(ctx) : 0);
-          const max = Number(item.params.max ? item.params.max(ctx) : 10);
-          const tip = item.params.tip ? String(item.params.tip(ctx)) : undefined;
-          f.slider(label, min, max, { tooltip: { text: tip || '' } });
+          const min = Number(callLayoutFn(item.params.min, ctx) ?? 0);
+          const max = Number(callLayoutFn(item.params.max, ctx) ?? 10);
+          const tip = callLayoutFn(item.params.tip, ctx);
+          f.slider(label, min, max, { ...(tip != null ? { tooltip: { text: String(tip) } } : {}) });
         } else if (item.type === 'toggle') {
-          const def = item.params.default ? Boolean(item.params.default(ctx)) : false;
+          const def = Boolean(callLayoutFn(item.params.default, ctx) ?? false);
           f.toggle(label, { defaultValue: def });
         } else if (item.type === 'dropdown') {
-          const opt = item.params.option ? String(item.params.option(ctx)) : '';
+          const opt = String(callLayoutFn(item.params.option, ctx) ?? '');
           f.dropdown(label, opt.split(','));
         } else if (item.type === 'submit') {
           f.submitButton(label);
           if (item.params.click) {
-            const handler = item.params.click(ctx);
+            const handler = callLayoutFn(item.params.click, ctx);
             if (typeof handler === 'function') clickHandlers.set(0, handler);
           }
         } else if (item.type === 'body') {
@@ -331,10 +349,10 @@ export class ui implements typesPkg.ui {
       } else if (this._uiType === 'action') {
         const f = ui as InstanceType<typeof this._mcUI.ActionFormData>;
         if (item.type === 'button') {
-          const img = item.params.img ? String(item.params.img(ctx)) : undefined;
+          const img = String(callLayoutFn(item.params.img, ctx) ?? '');
           f.button(label, img || void 0);
           if (item.params.click) {
-            const handler = item.params.click(ctx);
+            const handler = callLayoutFn(item.params.click, ctx);
             if (typeof handler === 'function') {
               clickHandlers.set(ActionBtnUse, handler);
             }
@@ -352,7 +370,7 @@ export class ui implements typesPkg.ui {
           else if (MsgFormUse === 1) f.button2(label);
           else throw new Error('[mcx runtime]: MessageFormData only supports two buttons');
           if (item.params.click) {
-            const handler = item.params.click(ctx);
+            const handler = callLayoutFn(item.params.click, ctx);
             if (typeof handler === 'function') clickHandlers.set(MsgFormUse, handler);
           }
           MsgFormUse++;
@@ -360,11 +378,11 @@ export class ui implements typesPkg.ui {
       }
 
       if (item.type === 'title') {
-        ui.title(label);
+        (ui as InstanceType<typeof this._mcUI.ModalFormData | typeof this._mcUI.ActionFormData | typeof this._mcUI.MessageFormData>).title(label);
       }
     }
 
-    const formResponse = await ui.show(player);
+    const formResponse = await ui.show(player) as ActionFormResponse | ModalFormResponse | MessageFormResponse;
     if (formResponse.canceled) return;
 
     if (this._uiType === 'action') {

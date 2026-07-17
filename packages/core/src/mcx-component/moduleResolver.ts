@@ -115,8 +115,8 @@ export function createImageTransformCode(
   }
   return [
     `Object.defineProperty(exports, '__esModule', { value: true });`,
-    `const { ${className} } = require('@mbler/mcx-component');`,
-    `const path = require('node:path');`,
+    `var { ${className} } = require('@mbler/mcx-component');`,
+    `var path = require('node:path');`,
     `exports.default = new ${className}(${JSON.stringify(absolutePath)});`,
   ].join('\n');
 }

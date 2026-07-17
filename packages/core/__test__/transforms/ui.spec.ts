@@ -47,7 +47,7 @@ function compileMCX(mcxSource: string): Promise<string> {
 }
 
 describe('UI Transform - Computation import', () => {
-  it('should add Computation import for {{ }} interpolation in content (Ui mode)', async () => {
+  it('should use arrow function for {{ }} interpolation in content (Ui mode)', async () => {
     const mcxSource = `<Ui setup>
   <button :click="handleClick">hello {{ a }}</button>
 </Ui>
@@ -60,10 +60,10 @@ describe('UI Transform - Computation import', () => {
     const code = await compileMCX(mcxSource);
     expect(code).toContain("Computation");
     expect(code).toContain("import { ui as __mcx__ui, Computation } from \"@mbler/mcx\"");
-    expect(code).toContain("new Computation");
+    expect(code).toContain("content: ctx => `hello ${ctx[0].a}`");
   });
 
-  it('should add Computation import even without {{ }} interpolation (Ui mode)', async () => {
+  it('should use arrow function for static content (Ui mode)', async () => {
     const mcxSource = `<Ui setup>
   <button :click="handleClick">hello</button>
 </Ui>
@@ -76,6 +76,7 @@ describe('UI Transform - Computation import', () => {
     const code = await compileMCX(mcxSource);
     expect(code).toContain("Computation");
     expect(code).toContain("import { ui as __mcx__ui, Computation } from \"@mbler/mcx\"");
+    expect(code).toContain("content: ctx => \"hello\"");
   });
 
   it('should NOT add Computation import in Form mode, even with {{ }}', async () => {

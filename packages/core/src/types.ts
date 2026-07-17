@@ -1,4 +1,3 @@
-import type { TransformPluginContext } from 'rollup';
 import type { MCXCompileData } from './compile-mcx/compiler/compileData';
 import type { ModuleResolver } from './mcx-component/moduleResolver';
 import { CompileOpt } from '@mbler/mcx-types';
@@ -95,8 +94,13 @@ export type {
   MCXLoc,
   MCXPosition,
 };
+export interface McxPluginContext {
+  error: (err: string | { message: string; [key: string]: unknown }, extra?: number | { column: number; line: number }) => void;
+  warn: (warning: string | { message: string }) => void;
+}
+
 export interface transformCtx {
-  rollupContext: TransformPluginContext;
+  rollupContext: McxPluginContext;
   compiledCode: MCXCompileData;
   cache: Map<string, MCXCompileData>;
   currentId: string;

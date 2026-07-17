@@ -1,26 +1,21 @@
-import type { TransformPluginContext } from 'rollup';
 import { MCXCompileData } from '../compile-mcx/compiler/compileData';
 import { CompileOpt } from '@mbler/mcx-types';
-import { transformCtx } from '../types';
+import { transformCtx, McxPluginContext } from '../types';
 import { _transform } from './main';
 import { program } from '@babel/types';
-import type { RollupError } from 'rolldown';
 import type { ModuleResolver } from '../mcx-component/moduleResolver';
-function createErrorProxy(err: unknown, id: string): RollupError {
-  if (err instanceof Error) {
-    return {
-      ...err,
-      message: `${err.message} (At ${id})`,
-    };
-  } else {
-    return { message: String(err) };
-  }
+function toMcxError(err: unknown, id: string): { message: string } {
+  return {
+    message: err instanceof Error
+      ? `${err.message} (At ${id})`
+      : String(err),
+  };
 }
 export async function transform(
   code: MCXCompileData,
   cache: Map<string, MCXCompileData>,
   id: string,
-  context: TransformPluginContext,
+  context: McxPluginContext,
   opt: CompileOpt,
   output: transformCtx['output'],
   moduleResolver?: ModuleResolver,
@@ -45,12 +40,12 @@ export async function transform(
         body: [],
       },
       output,
-      moduleResolver,
+      ...(moduleResolver ? { moduleResolver } : {}),
     };
     const result = await _transform(transformContext);
     return result;
   } catch (err) {
-    context.error(createErrorProxy(err, id));
+    context.error(toMcxError(err, id));
     return '';
   }
 }

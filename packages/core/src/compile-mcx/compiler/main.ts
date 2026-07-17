@@ -1,4 +1,4 @@
-import type { Plugin, TransformResult } from 'rollup';
+import type { Plugin } from 'rollup';
 import type { Plugin as RolldownPlugin } from 'rolldown';
 import { CompileOpt } from '../types';
 import { extname } from 'node:path';
@@ -9,7 +9,7 @@ import { readFile } from 'node:fs/promises';
 import MagicString from 'magic-string';
 import * as path from 'node:path';
 import { createRequire } from 'node:module';
-import { transformCtx } from '../../types';
+import { transformCtx, McxPluginContext } from '../../types';
 import ts from 'typescript';
 import { readFileSync } from 'node:fs';
 import {
@@ -20,6 +20,7 @@ import {
   ModuleResolver,
   createImageTransformCode,
 } from '../../mcx-component/moduleResolver';
+import { resolveFileAsync } from './resolve';
 
 const IMAGE_EXTS = new Set(['.png', '.svg', '.jpg', '.jpeg', '.gif']);
 
@@ -80,27 +81,6 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
       errors: [],
     };
   }
-  const resolveExtensions = ['', '.ts', '.mts', '.cts', '.js', '.mjs', '.cjs'];
-  const indexExtensions = resolveExtensions.map(ext => '/index' + ext);
-
-  async function tryResolvePath(filePath: string): Promise<string | null> {
-    for (const idxExt of indexExtensions) {
-      try {
-        const fullPath = filePath + idxExt;
-        await readFile(fullPath, 'utf-8');
-        return fullPath;
-      } catch {}
-    }
-    for (const ext of resolveExtensions) {
-      try {
-        const fullPath = filePath + ext;
-        await readFile(fullPath, 'utf-8');
-        return fullPath;
-      } catch {}
-    }
-    return null;
-  }
-
   async function resolvePackageExports(
     pkgDir: string,
     subPath: string,
@@ -123,7 +103,7 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
             return path.join(
               pkgDir,
               (targetObj.default as string) ||
-                (Object.values(targetObj)[0] as string),
+              (Object.values(targetObj)[0] as string),
             );
           }
         }
@@ -145,12 +125,12 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
 
   return {
     name: 'mbler-mcx-core',
-    async resolveId(id, imp) {
+    async resolveId(id: string, imp: string | undefined) {
       const i = path.parse(id);
       if (i.dir.startsWith('.') || i.root) {
         if (imp) {
           const baseDir = path.dirname(imp);
-          const resolved = await tryResolvePath(path.join(baseDir, id));
+          const resolved = await resolveFileAsync(path.join(baseDir, id));
           if (resolved) return resolved;
         }
         return null;
@@ -193,11 +173,11 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
         if (subPath) {
           const fromExports = await resolvePackageExports(d, subPath, pkgJson);
           if (fromExports) return fromExports;
-          const fromDist = await tryResolvePath(
+          const fromDist = await resolveFileAsync(
             path.join(d, './dist', subPath),
           );
           if (fromDist) return fromDist;
-          const fromRoot = await tryResolvePath(path.join(d, subPath));
+          const fromRoot = await resolveFileAsync(path.join(d, subPath));
           if (fromRoot) return fromRoot;
           return null;
         }
@@ -205,9 +185,10 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
       }
     },
     transform: async function (
+      this: McxPluginContext,
       code: string,
       id: string,
-    ): Promise<TransformResult> {
+    ) {
       const magic = new MagicString(code);
       const ext = extname(id).slice(1);
       const tsRegex = /^.+?\.(ts|mts|cts)$/;
@@ -230,7 +211,7 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
                 ? `${err.message} : ${err.stack}`
                 : String(err),
             );
-          }
+          };
           return;
         }
         compileData.setFilePath(id);
@@ -245,30 +226,33 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
         );
         return {
           code: compiledCode,
-          map: opt.sourcemap
-            ? magic.generateMap({ hires: true, source: id })
-            : void 0,
+          ...(opt.sourcemap ? { map: magic.generateMap({ hires: true, source: id }) } : {}),
         };
-      } else if (tsRegex.test(id)) {
-        const cached = moduleTransformCache.get(id);
-        if (cached) {
-          return {
-            code: cached,
-            map: opt.sourcemap
-              ? magic.generateMap({ hires: true, source: id })
-              : void 0,
-          };
-        }
-        const compiledCode = ts.transpileModule(code, {
+      }
+      const cached = moduleTransformCache.get(id);
+      if (cached) {
+        return {
+          code: cached,
+          ...(opt.sourcemap ? { map: magic.generateMap({ hires: true, source: id }) } : {}),
+        };
+      }
+      let compiledCode: string | null = null;
+      if (tsRegex.test(id)) {
+        compiledCode = ts.transpileModule(code, {
           compilerOptions: tsconfig.options,
           fileName: id,
         }).outputText;
+      } else {
+        const fileExt = extname(id).toLowerCase();
+        if (IMAGE_EXTS.has(fileExt)) {
+          compiledCode = createImageTransformCode(id, fileExt);
+        }
+      }
+      if (compiledCode !== null) {
         moduleTransformCache.set(id, compiledCode);
         return {
           code: compiledCode,
-          map: opt.sourcemap
-            ? magic.generateMap({ hires: true, source: id })
-            : void 0,
+          ...(opt.sourcemap ? { map: magic.generateMap({ hires: true, source: id }) } : {}),
         };
       }
       return null;
@@ -282,12 +266,16 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
     buildStart() {
       cache = new Map();
       moduleTransformCache = new Map();
-      const tsOptions = tsconfig.options;
       moduleResolver = new ModuleResolver(
-        tsOptions,
         moduleTransformCache,
         (fileCode: string, fileId: string) => {
           const fileExt = extname(fileId).toLowerCase();
+          if (fileExt === '.ts' || fileExt === '.mts' || fileExt === '.cts') {
+            return ts.transpileModule(fileCode, {
+              compilerOptions: tsconfig.options,
+              fileName: fileId,
+            }).outputText;
+          }
           if (IMAGE_EXTS.has(fileExt)) {
             return createImageTransformCode(fileId, fileExt);
           }
@@ -295,7 +283,7 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
         },
       );
     },
-  } satisfies Plugin;
+  };
 }
 
 export function rollupPlugin(
@@ -309,5 +297,5 @@ export function rolldownPlugin(
   opt: CompileOpt,
   output: transformCtx['output'],
 ): RolldownPlugin {
-  return createMcxPlugin(opt, output) as unknown as RolldownPlugin;
+  return createMcxPlugin(opt, output);
 }

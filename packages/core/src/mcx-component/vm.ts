@@ -45,7 +45,6 @@ export class RunScript {
   private _module;
   private _pluginContext;
   private _moduleResolver: ModuleResolver | undefined;
-  private _nativeRequire;
   constructor(
     public filePath: string = '<repl>',
     public module: 'esm' | 'cjs' = 'cjs',
@@ -54,9 +53,6 @@ export class RunScript {
   ) {
     this._module = new Module.Module(this.filePath);
     this._pluginContext = pluginContext || {};
-    this._nativeRequire = Module.createRequire
-      ? Module.createRequire(this.filePath)
-      : require;
     this._moduleResolver = moduleResolver;
     this._context = this.getContext(this._pluginContext);
   }

@@ -3,12 +3,17 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import * as vm from 'node:vm';
+import ts from 'typescript';
 import {
   ModuleResolver,
   createImageTransformCode,
 } from '../src/mcx-component/moduleResolver';
 
 const IMAGE_EXTS = new Set(['.png', '.svg', '.jpg', '.jpeg', '.gif']);
+
+function importTransform(code: string): string {
+  return ts.transpileModule(code, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+}
 
 function createVmContext(): vm.Context {
   const ctx: vm.Context = Object.create(null);
@@ -39,7 +44,9 @@ describe('ModuleResolver', () => {
   });
 
   it('should resolve and transpile a .ts file to CJS and return its exports', () => {
-    const resolver = new ModuleResolver({}, new Map());
+    const resolver = new ModuleResolver(new Map(), (code, id) =>
+      id.endsWith('.ts') ? importTransform(code) : code,
+    );
     const tsPath = join(tmpDir, 'helper.ts');
     writeFileSync(
       tsPath,
@@ -61,7 +68,9 @@ describe('ModuleResolver', () => {
   });
 
   it('should transpile default exports correctly', () => {
-    const resolver = new ModuleResolver({}, new Map());
+    const resolver = new ModuleResolver(new Map(), (code, id) =>
+      id.endsWith('.ts') ? importTransform(code) : code,
+    );
     const tsPath = join(tmpDir, 'greeter.ts');
     writeFileSync(
       tsPath,
@@ -92,7 +101,9 @@ describe('ModuleResolver', () => {
       'utf-8',
     );
 
-    const resolver = new ModuleResolver({}, new Map());
+    const resolver = new ModuleResolver(new Map(), (code, id) =>
+      id.endsWith('.ts') ? importTransform(code) : code,
+    );
     const context = createVmContext();
 
     const mod1 = resolver.ensureModule(tsPath, tmpDir, context);
@@ -111,7 +122,9 @@ describe('ModuleResolver', () => {
   });
 
   it('should handle relative imports in transpiled code', () => {
-    const resolver = new ModuleResolver({}, new Map());
+    const resolver = new ModuleResolver(new Map(), (code, id) =>
+      id.endsWith('.ts') ? importTransform(code) : code,
+    );
     const utilsPath = join(tmpDir, 'utils.ts');
     writeFileSync(
       utilsPath,
@@ -153,7 +166,6 @@ describe('ModuleResolver', () => {
   it('should use transformFile callback for image files', () => {
     const cache = new Map<string, string>();
     const resolver = new ModuleResolver(
-      {},
       cache,
       (code: string, id: string) => {
         const ext = id.split('.').pop()?.toLowerCase();
@@ -185,7 +197,9 @@ describe('ModuleResolver', () => {
 
   it('should share cache with external map', () => {
     const cache = new Map<string, string>();
-    const resolver = new ModuleResolver({}, cache);
+    const resolver = new ModuleResolver(cache, (code, id) =>
+      id.endsWith('.ts') ? importTransform(code) : code,
+    );
     const tsPath = join(tmpDir, 'shared.ts');
     writeFileSync(tsPath, 'export const x = 1;', 'utf-8');
 

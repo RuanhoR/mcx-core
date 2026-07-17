@@ -1,24 +1,19 @@
 import { readFileSync } from 'node:fs';
-import { extname, resolve, dirname, sep } from 'node:path';
+import { dirname } from 'node:path';
 import * as vm from 'node:vm';
-import ts from 'typescript';
-
-const TS_EXTS = new Set(['.ts', '.mts', '.cts']);
+import { resolveSync as sharedResolve } from '../compile-mcx/compiler/resolve';
 
 export type FileTransformFn = (code: string, id: string) => string;
 
 export class ModuleResolver {
   private cache: Map<string, string>;
   private loadingModules = new Set<string>();
-  private tsconfigOptions: ts.CompilerOptions;
-  private transformFile?: FileTransformFn;
+  private transformFile: FileTransformFn;
 
   constructor(
-    tsconfigOptions: ts.CompilerOptions,
     cache: Map<string, string>,
-    transformFile?: FileTransformFn,
+    transformFile: FileTransformFn,
   ) {
-    this.tsconfigOptions = tsconfigOptions;
     this.cache = cache;
     this.transformFile = transformFile;
   }
@@ -46,7 +41,7 @@ export class ModuleResolver {
       }
     }
 
-    const resolved = this.resolveSync(specifier, importerPath);
+    const resolved = sharedResolve(specifier, importerPath);
     if (!resolved) {
       throw new Error(
         `[mcx component]: cannot resolve '${specifier}' from '${importerPath}'`,
@@ -64,61 +59,13 @@ export class ModuleResolver {
 
     try {
       const code = readFileSync(resolved, 'utf-8');
-      const ext = extname(resolved);
-      const compiled = TS_EXTS.has(ext)
-        ? this.transformModule(code, resolved)
-        : this.transformFile
-          ? this.transformFile(code, resolved)
-          : code;
+      const compiled = this.transformFile(code, resolved);
 
       this.cache.set(resolved, compiled);
       return this.executeInContext(resolved, context);
     } finally {
       this.loadingModules.delete(resolved);
     }
-  }
-
-  private resolveSync(specifier: string, importerPath: string): string | null {
-    if (specifier.startsWith('.') || specifier.startsWith('/')) {
-      const baseDir = dirname(importerPath);
-      return this.tryResolvePath(resolve(baseDir, specifier));
-    }
-    try {
-      return require.resolve(specifier, { paths: [dirname(importerPath)] });
-    } catch {
-      return null;
-    }
-  }
-
-  private tryResolvePath(filePath: string): string | null {
-    const exts = ['.ts', '.mts', '.cts', '.js', '.mjs', '.cjs', ''];
-    for (const ext of exts) {
-      try {
-        const fullPath = filePath + ext;
-        readFileSync(fullPath);
-        return fullPath;
-      } catch {}
-    }
-    if (filePath.endsWith(sep) || !extname(filePath)) {
-      for (const ext of exts) {
-        try {
-          const fullPath = filePath + '/index' + ext;
-          readFileSync(fullPath);
-          return fullPath;
-        } catch {}
-      }
-    }
-    return null;
-  }
-
-  private transformModule(code: string, fileName: string): string {
-    return ts.transpileModule(code, {
-      compilerOptions: {
-        ...this.tsconfigOptions,
-        module: ts.ModuleKind.CommonJS,
-      },
-      fileName,
-    }).outputText;
   }
 
   private executeInContext(resolvedPath: string, context: vm.Context): unknown {
@@ -147,11 +94,6 @@ export class ModuleResolver {
       context.module = savedModule;
     }
   }
-}
-
-export function isNonJSRequire(id: string): boolean {
-  const ext = extname(id).toLowerCase();
-  return ext === '.ts' || ext === '.mts' || ext === '.cts' || ext === '.tsx';
 }
 
 export function createImageTransformCode(

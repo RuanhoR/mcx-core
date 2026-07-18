@@ -31,7 +31,7 @@
     "registry": "https://registry.npmjs.org",
     "access": "public"
   },
-    "peerDependencies": {
+  "peerDependencies": {
     "@minecraft/server": "^2.6.0",
     "@minecraft/server-ui": "^2.0.0"
   },

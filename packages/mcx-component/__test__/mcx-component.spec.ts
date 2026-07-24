@@ -198,11 +198,12 @@ describe('RecipeComponent', () => {
       key: { X: { item: 'minecraft:iron_ingot' }, '#': { item: 'minecraft:stick' } },
       result: { item: 'minecraft:iron_sword', count: 1 },
     });
-    const json = recipe.toJSON();
+    const json = recipe.toJSON() as Record<string, unknown>;
     expect(json.format_version).toBe('1.20.0');
-    expect(json['minecraft:recipe_shaped']).toBeDefined();
-    expect(json['minecraft:recipe_shaped'].description.identifier).toBe('test:iron_sword');
-    expect(json['minecraft:recipe_shaped'].pattern).toEqual(['X', 'X', '#']);
+    const shaped = json['minecraft:recipe_shaped'] as Record<string, unknown>;
+    expect(shaped).toBeDefined();
+    expect((shaped.description as Record<string, unknown>).identifier).toBe('test:iron_sword');
+    expect(shaped.pattern).toEqual(['X', 'X', '#']);
   });
 
   it('should create shapeless recipe JSON', () => {
@@ -214,9 +215,9 @@ describe('RecipeComponent', () => {
       ingredients: [{ item: 'minecraft:blaze_rod' }],
       result: { item: 'minecraft:blaze_powder', count: 2 },
     });
-    const json = recipe.toJSON();
+    const json = recipe.toJSON() as Record<string, unknown>;
     expect(json['minecraft:recipe_shapeless']).toBeDefined();
-    expect(json['minecraft:recipe_shapeless'].ingredients).toHaveLength(1);
+    expect((json['minecraft:recipe_shapeless'] as Record<string, unknown>).ingredients).toHaveLength(1);
   });
 
   it('should create furnace recipe JSON', () => {
@@ -228,9 +229,9 @@ describe('RecipeComponent', () => {
       input: { item: 'minecraft:iron_ore' },
       output: 'minecraft:iron_ingot',
     });
-    const json = recipe.toJSON();
+    const json = recipe.toJSON() as Record<string, unknown>;
     expect(json['minecraft:recipe_furnace']).toBeDefined();
-    expect(json['minecraft:recipe_furnace'].output).toBe('minecraft:iron_ingot');
+    expect((json['minecraft:recipe_furnace'] as Record<string, unknown>).output).toBe('minecraft:iron_ingot');
   });
 
   it('should create smithing_transform recipe JSON', () => {
@@ -244,9 +245,9 @@ describe('RecipeComponent', () => {
       addition: 'minecraft:netherite_ingot',
       result: 'minecraft:netherite_boots',
     });
-    const json = recipe.toJSON();
+    const json = recipe.toJSON() as Record<string, unknown>;
     expect(json['minecraft:recipe_smithing_transform']).toBeDefined();
-    expect(json['minecraft:recipe_smithing_transform'].base).toBe('minecraft:diamond_boots');
+    expect((json['minecraft:recipe_smithing_transform'] as Record<string, unknown>).base).toBe('minecraft:diamond_boots');
   });
 
   it('should create smithing_trim recipe JSON', () => {
@@ -259,7 +260,7 @@ describe('RecipeComponent', () => {
       base: 'minecraft:diamond_boots',
       addition: 'minecraft:quartz',
     });
-    const json = recipe.toJSON();
+    const json = recipe.toJSON() as Record<string, unknown>;
     expect(json['minecraft:recipe_smithing_trim']).toBeDefined();
   });
 
@@ -273,7 +274,7 @@ describe('RecipeComponent', () => {
       reagent: 'minecraft:gunpowder',
       output: 'minecraft:splash_potion',
     });
-    const json = recipe.toJSON();
+    const json = recipe.toJSON() as Record<string, unknown>;
     expect(json['minecraft:recipe_brewing_container']).toBeDefined();
   });
 
@@ -287,7 +288,7 @@ describe('RecipeComponent', () => {
       reagent: 'minecraft:blaze_powder',
       output: 'minecraft:potion_type:strength',
     });
-    const json = recipe.toJSON();
+    const json = recipe.toJSON() as Record<string, unknown>;
     expect(json['minecraft:recipe_brewing_mix']).toBeDefined();
   });
 

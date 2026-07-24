@@ -40,7 +40,8 @@
     "typescript": "5.9.3"
   },
   "devDependencies": {
-    "@mbler/mcx-component": "workspace:*"
+    "@mbler/mcx-component": "workspace:*",
+    "rollup": "^4.62.2"
   },
   "files": [
     "dist",

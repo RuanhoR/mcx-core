@@ -4533,9 +4533,11 @@ class ItemComponent {
     }
 
     // Handle deprecated properties (with format version checks)
+    const fmtParts = this.#opt.format.split('.');
+    const fmtVer = parseFloat(fmtParts[0]! + '.' + fmtParts[1]!);
     if (config.plant_at_any_solid_surface !== undefined) {
       if (typeof config.plant_at_any_solid_surface === 'boolean') {
-        if (formatVersion >= 1.19) {
+        if (fmtVer >= 1.19) {
           throw new Error(
             '[set error]: seed: plant_at_any_solid_surface is deprecated and no longer works after format versions of at least 1.19.0',
           );
@@ -4556,7 +4558,7 @@ class ItemComponent {
             "[set error]: seed: plant_at_face must be either 'UP' or 'DOWN'",
           );
         }
-        if (formatVersion >= 1.19) {
+        if (fmtVer >= 1.19) {
           throw new Error(
             '[set error]: seed: plant_at_face is deprecated and no longer works after format versions of at least 1.19.0',
           );
@@ -5373,15 +5375,15 @@ class ItemComponent {
   }
 
   public setSwingSounds(config: { sound: string } | { attack_critical_hit?: string; attack_hit?: string; attack_miss?: string }) {
-    this.#opt.components['minecraft:swing_sounds'] = config;
+    (this.#opt.components as Record<string, unknown>)['minecraft:swing_sounds'] = config;
   }
 
-  public setWeapon(config: {}) {
-    this.#opt.components['minecraft:weapon'] = config;
+  public setWeapon(config: Record<string, unknown>) {
+    (this.#opt.components as Record<string, unknown>)['minecraft:weapon'] = config;
   }
 
   public setKnockbackResistance(config: { value?: number; protection?: number }) {
-    this.#opt.components['minecraft:knockback_resistance'] = config;
+    (this.#opt.components as Record<string, unknown>)['minecraft:knockback_resistance'] = config;
   }
 
   public getIcon() {

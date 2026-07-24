@@ -243,7 +243,7 @@ class RecipeComponent {
     };
   }
 
-  public toJSON() {
+  public toJSON(): { format_version: string } & Record<string, unknown> {
     if (!this.#opt) throw new Error('[mcx component]: cannot read component');
     const type = this.#opt.type;
 

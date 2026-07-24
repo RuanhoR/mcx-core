@@ -1,8 +1,4 @@
 import lib, {
-  ItemComponent,
-  BlockComponent,
-  EntityComponent,
-  RecipeComponent,
   PNGImageComponent,
   JPGImageComponent,
   SVGImageComponent,
@@ -11,10 +7,6 @@ import lib, {
 
 export default lib;
 export {
-  ItemComponent,
-  BlockComponent,
-  EntityComponent,
-  RecipeComponent,
   PNGImageComponent,
   JPGImageComponent,
   SVGImageComponent,

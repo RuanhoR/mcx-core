@@ -1,15 +1,29 @@
 import { statSync } from 'node:fs';
 import { extname } from 'node:path';
-import { BlockComponent } from './components/block';
-import { EntityComponent } from './components/entity';
-import { ItemComponent } from './components/item';
-import { RecipeComponent } from './components/recipe';
-
-const lib = {
-  item: ItemComponent,
-  entity: EntityComponent,
-  block: BlockComponent,
-  recipe: RecipeComponent,
+const lib = new Proxy(
+  {
+    item: () => require('./components/item').ItemComponent,
+    entity: () => require('./components/entity').EntityComponent,
+    block: () => require('./components/block').BlockComponent,
+    recipe: () => require('./components/recipe').RecipeComponent,
+  },
+  {
+    get(target, prop, receiver) {
+      const value = target[prop as keyof typeof target];
+      if (typeof value === 'function') {
+        return value();
+      }
+      return value;
+    },
+    set() {
+      return false;
+    },
+  },
+) as unknown as {
+  item: (typeof import('./components/item'))['ItemComponent'];
+  block: (typeof import('./components/block'))['BlockComponent'];
+  entity: (typeof import('./components/entity'))['EntityComponent'];
+  recipe: (typeof import('./components/recipe'))['RecipeComponent'];
 };
 
 class ImageComponent {
@@ -59,10 +73,6 @@ class GIFImageComponent extends ImageComponent {
 
 export default lib;
 export {
-  ItemComponent,
-  BlockComponent,
-  EntityComponent,
-  RecipeComponent,
   PNGImageComponent,
   JPGImageComponent,
   SVGImageComponent,

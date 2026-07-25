@@ -1,7 +1,7 @@
 import type { MCXCompileData } from './compile-mcx/compiler/compileData';
-import type { ModuleResolver } from './mcx-component/moduleResolver';
 import { CompileOpt } from '@mbler/mcx-types';
 import * as t from '@babel/types';
+import { TransformPluginContext } from 'rollup';
 interface BaseToken {
   data: string;
   type: TokenType;
@@ -22,7 +22,6 @@ interface CommentToken extends BaseToken {
 }
 type Token = TagToken | TagEndToken | ContentToken | CommentToken;
 type AttributeMap = Record<string, string | boolean>;
-/** 统一的位置信息结构 */
 interface MCXPosition {
   line: number;
   column: number;
@@ -94,13 +93,9 @@ export type {
   MCXLoc,
   MCXPosition,
 };
-export interface McxPluginContext {
-  error: (err: string | { message: string; [key: string]: unknown }, extra?: number | { column: number; line: number }) => void;
-  warn: (warning: string | { message: string }) => void;
-}
 
 export interface transformCtx {
-  rollupContext: McxPluginContext;
+  rollupContext: TransformPluginContext;
   compiledCode: MCXCompileData;
   cache: Map<string, MCXCompileData>;
   currentId: string;
@@ -117,7 +112,6 @@ export interface transformCtx {
     behavior: string;
     resources: string;
   };
-  moduleResolver?: ModuleResolver;
 }
 export interface transformParseCtx {
   prop: t.ObjectProperty[];

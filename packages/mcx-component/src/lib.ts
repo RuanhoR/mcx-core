@@ -33,11 +33,10 @@ class ImageComponent {
     public imageType: string[],
   ) {
     try {
-      statSync(filePath);
       const ext = extname(filePath);
       if (!imageType.includes(ext.slice(1)))
         throw new Error(
-          '[image type]: file extname: ' + ext + ' !includes' + imageType,
+          '[image type]: file extname: ' + ext + ' !includes ' + imageType,
         );
     } catch (err) {
       throw new Error(

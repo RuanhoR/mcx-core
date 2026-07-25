@@ -95,7 +95,6 @@ function generateMain(
                 expBody.push(t.spreadElement(item.exported));
                 return t.importNamespaceSpecifier(item.exported);
               }
-              // 这也不是那也不是, 你是个登啊(ts也是galgame)
               throw new Error(
                 '[build import]: unexpected export specifier type',
               );

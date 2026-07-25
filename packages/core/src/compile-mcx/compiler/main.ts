@@ -9,25 +9,21 @@ import { readFile } from 'node:fs/promises';
 import MagicString from 'magic-string';
 import * as path from 'node:path';
 import { createRequire } from 'node:module';
-import { transformCtx, McxPluginContext } from '../../types';
+import { transformCtx } from '../../types';
 import ts from 'typescript';
 import { readFileSync } from 'node:fs';
 import {
   generateItemTextureJson,
   clearCachedOptions,
 } from '../../mcx-component';
-import {
-  ModuleResolver,
-  createImageTransformCode,
-} from '../../mcx-component/moduleResolver';
 import { resolveFileAsync } from './resolve';
-
-const IMAGE_EXTS = new Set(['.png', '.svg', '.jpg', '.jpeg', '.gif']);
-
-function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
+import { createImageTransformCode, IMAGE_EXTS } from './image';
+function createMcxPlugin(
+  opt: CompileOpt,
+  output: transformCtx['output'],
+): Plugin {
   let cache: Map<string, MCXCompileData> = new Map();
   let moduleTransformCache: Map<string, string>;
-  let moduleResolver: ModuleResolver;
   let tsconfig: ts.ParsedCommandLine;
   try {
     const configResult = ts.readConfigFile(opt.tsconfigPath, path => {
@@ -103,7 +99,7 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
             return path.join(
               pkgDir,
               (targetObj.default as string) ||
-              (Object.values(targetObj)[0] as string),
+                (Object.values(targetObj)[0] as string),
             );
           }
         }
@@ -184,11 +180,7 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
         return path.join(d, pkgJson.main as string);
       }
     },
-    transform: async function (
-      this: McxPluginContext,
-      code: string,
-      id: string,
-    ) {
+    async transform(code: string, id: string) {
       const magic = new MagicString(code);
       const ext = extname(id).slice(1);
       const tsRegex = /^.+?\.(ts|mts|cts)$/;
@@ -211,7 +203,7 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
                 ? `${err.message} : ${err.stack}`
                 : String(err),
             );
-          };
+          }
           return;
         }
         compileData.setFilePath(id);
@@ -222,18 +214,12 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
           this,
           opt,
           output,
-          moduleResolver,
         );
         return {
           code: compiledCode,
-          ...(opt.sourcemap ? { map: magic.generateMap({ hires: true, source: id }) } : {}),
-        };
-      }
-      const cached = moduleTransformCache.get(id);
-      if (cached) {
-        return {
-          code: cached,
-          ...(opt.sourcemap ? { map: magic.generateMap({ hires: true, source: id }) } : {}),
+          ...(opt.sourcemap
+            ? { map: magic.generateMap({ hires: true, source: id }) }
+            : {}),
         };
       }
       let compiledCode: string | null = null;
@@ -252,36 +238,21 @@ function createMcxPlugin(opt: CompileOpt, output: transformCtx['output']) {
         moduleTransformCache.set(id, compiledCode);
         return {
           code: compiledCode,
-          ...(opt.sourcemap ? { map: magic.generateMap({ hires: true, source: id }) } : {}),
+          ...(opt.sourcemap
+            ? { map: magic.generateMap({ hires: true, source: id }) }
+            : {}),
         };
       }
       return null;
     },
     async buildEnd() {
       cache.clear();
-      moduleResolver?.clear();
       await generateItemTextureJson(output);
       clearCachedOptions();
     },
     buildStart() {
       cache = new Map();
       moduleTransformCache = new Map();
-      moduleResolver = new ModuleResolver(
-        moduleTransformCache,
-        (fileCode: string, fileId: string) => {
-          const fileExt = extname(fileId).toLowerCase();
-          if (fileExt === '.ts' || fileExt === '.mts' || fileExt === '.cts') {
-            return ts.transpileModule(fileCode, {
-              compilerOptions: tsconfig.options,
-              fileName: fileId,
-            }).outputText;
-          }
-          if (IMAGE_EXTS.has(fileExt)) {
-            return createImageTransformCode(fileId, fileExt);
-          }
-          return fileCode;
-        },
-      );
     },
   };
 }
@@ -297,5 +268,5 @@ export function rolldownPlugin(
   opt: CompileOpt,
   output: transformCtx['output'],
 ): RolldownPlugin {
-  return createMcxPlugin(opt, output);
+  return createMcxPlugin(opt, output) as unknown as RolldownPlugin;
 }

@@ -8,7 +8,6 @@ import * as generator from '@babel/generator';
  */
 function transformESMToCJS(
   code: string,
-  pluginContext?: Record<string, string | null | boolean | number>,
   hook?: (
     data: t.CallExpression | t.MemberExpression,
     setData?: (newData: t.Expression) => void,
@@ -30,25 +29,6 @@ function transformESMToCJS(
     }
     defines.push(importDefine);
   }
-  // add plugin context
-  if (pluginContext) {
-    defines.push(
-      ...Object.entries(pluginContext).map(
-        ([key, value]): t.VariableDeclarator =>
-          t.variableDeclarator(
-            t.identifier(key),
-            typeof value == 'string'
-              ? t.stringLiteral(value)
-              : typeof value == 'boolean'
-                ? t.booleanLiteral(value)
-                : typeof value == 'number'
-                  ? t.numericLiteral(value)
-                  : t.nullLiteral(),
-          ),
-      ),
-    );
-  }
-
   const exportsArr = compileData.BuildCache.export
     .map(i => {
       if (t.isExportAllDeclaration(i)) {

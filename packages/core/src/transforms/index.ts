@@ -1,24 +1,21 @@
 import { MCXCompileData } from '../compile-mcx/compiler/compileData';
 import { CompileOpt } from '@mbler/mcx-types';
-import { transformCtx, McxPluginContext } from '../types';
+import { transformCtx } from '../types';
 import { _transform } from './main';
 import { program } from '@babel/types';
-import type { ModuleResolver } from '../mcx-component/moduleResolver';
+import { TransformPluginContext } from 'rollup';
 function toMcxError(err: unknown, id: string): { message: string } {
   return {
-    message: err instanceof Error
-      ? `${err.message} (At ${id})`
-      : String(err),
+    message: err instanceof Error ? `${err.message} (At ${id})` : String(err),
   };
 }
 export async function transform(
   code: MCXCompileData,
   cache: Map<string, MCXCompileData>,
   id: string,
-  context: McxPluginContext,
+  context: TransformPluginContext,
   opt: CompileOpt,
   output: transformCtx['output'],
-  moduleResolver?: ModuleResolver,
 ): Promise<string> {
   try {
     const scriptTag = code.raw.find(node => {
@@ -40,12 +37,10 @@ export async function transform(
         body: [],
       },
       output,
-      ...(moduleResolver ? { moduleResolver } : {}),
     };
     const result = await _transform(transformContext);
     return result;
   } catch (err) {
     context.error(toMcxError(err, id));
-    return '';
   }
 }

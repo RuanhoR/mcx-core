@@ -2,7 +2,6 @@ import * as t from '@babel/types';
 import {
   _MCXstructureLocComponentTypes,
   ImportList,
-  ImportListImport,
   MCXstructureLoc,
   MCXstructureLocComponentType,
 } from '../types';

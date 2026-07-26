@@ -73,9 +73,12 @@ export async function _transform(ctx: transformCtx): Promise<string> {
     enableSetup();
     await UIComp(parseCtx);
   }
-  if (
-    Object.getOwnPropertyNames(ctx.compiledCode.strLoc.Component).length >= 1
-  ) {
+  let hasComponent = false;
+  for (const _key in ctx.compiledCode.strLoc.Component) {
+    hasComponent = true;
+    break;
+  }
+  if (hasComponent) {
     type = 'component';
     await compileComponent(ctx.compiledCode, ctx);
     return `export default {type:'component',setup:null,app:{}}`;

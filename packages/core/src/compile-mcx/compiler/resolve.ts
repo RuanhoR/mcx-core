@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { accessSync, constants } from 'node:fs';
+import { access } from 'node:fs/promises';
 import { extname, resolve, dirname, sep } from 'node:path';
 
 export const RESOLVE_EXTS = ['.ts', '.mts', '.cts', '.js', '.mjs', '.cjs', ''];
@@ -8,7 +8,7 @@ export function resolveFileSync(filePath: string): string | null {
   for (const ext of RESOLVE_EXTS) {
     try {
       const fullPath = filePath + ext;
-      readFileSync(fullPath);
+      accessSync(fullPath, constants.F_OK);
       return fullPath;
     } catch {}
   }
@@ -16,7 +16,7 @@ export function resolveFileSync(filePath: string): string | null {
     for (const ext of RESOLVE_EXTS) {
       try {
         const fullPath = filePath + '/index' + ext;
-        readFileSync(fullPath);
+        accessSync(fullPath, constants.F_OK);
         return fullPath;
       } catch {}
     }
@@ -28,7 +28,7 @@ export async function resolveFileAsync(filePath: string): Promise<string | null>
   for (const ext of RESOLVE_EXTS) {
     try {
       const fullPath = filePath + ext;
-      await readFile(fullPath, 'utf-8');
+      await access(fullPath, constants.F_OK);
       return fullPath;
     } catch {}
   }
@@ -36,7 +36,7 @@ export async function resolveFileAsync(filePath: string): Promise<string | null>
     for (const ext of RESOLVE_EXTS) {
       try {
         const fullPath = filePath + '/index' + ext;
-        await readFile(fullPath, 'utf-8');
+        await access(fullPath, constants.F_OK);
         return fullPath;
       } catch {}
     }

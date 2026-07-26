@@ -30,6 +30,16 @@ const TAG_ATTRS: Record<string, Set<string>> = {
   'button-m': new Set(['click', ':click']),
 };
 
+// Precomputed combined allowed-attrs per tag (COMMON_ATTRS ∪ TAG_ATTRS[tag])
+const COMBINED_ATTRS = new Map<string, Set<string>>();
+for (const [tag, specific] of Object.entries(TAG_ATTRS)) {
+  const combined = new Set(COMMON_ATTRS);
+  for (const attr of specific) combined.add(attr);
+  COMBINED_ATTRS.set(tag, combined);
+}
+
+const MODAL_FORM_TAGS = new Set(['input', 'dropdown', 'submit', 'toggle', 'slider']);
+
 /**
  * Shared layout generation for both <Form> and <Ui>.
  * Generates layout config with (s) => expr functions for content and params.
@@ -108,11 +118,8 @@ export function generateLayout(
   // Build layout objects
   for (const el of elements) {
     const name = el.type;
-    const cleanedArr = { ...el.arr };
-    delete cleanedArr.for;
-    delete cleanedArr.if;
 
-    // Validate tag name and attributes
+    // Validate tag name
     const validTags = mode === 'ui' ? UI_TAGS : FORM_TAGS;
     if (!validTags.has(name)) {
       internalCtx.rollupContext.error(
@@ -124,24 +131,19 @@ export function generateLayout(
       continue;
     }
 
-    // Validate attributes
-    const allowedAttrs = new Set(COMMON_ATTRS);
-    const tagSpecific = TAG_ATTRS[name];
-    if (tagSpecific) {
-      for (const attr of tagSpecific) {
-        allowedAttrs.add(attr);
-      }
-    }
-    for (const key of Object.keys(cleanedArr)) {
-      if (key === 'for' || key === 'if') continue;
-      if (!allowedAttrs.has(key)) {
-        internalCtx.rollupContext.error(
-          `[${tagName}]: tag '${name}' does not support attribute '${key}'`,
-          el.loc
-            ? { line: el.loc.start.line, column: el.loc.start.column }
-            : void 0,
-        );
-        continue;
+    // Validate attributes using precomputed set
+    const allowedAttrs = COMBINED_ATTRS.get(name);
+    if (allowedAttrs) {
+      for (const key of Object.keys(el.arr)) {
+        if (key === 'for' || key === 'if') continue;
+        if (!allowedAttrs.has(key)) {
+          internalCtx.rollupContext.error(
+            `[${tagName}]: tag '${name}' does not support attribute '${key}'`,
+            el.loc
+              ? { line: el.loc.start.line, column: el.loc.start.column }
+              : void 0,
+          );
+        }
       }
     }
 
@@ -154,7 +156,7 @@ export function generateLayout(
     const _paramCtx = t.identifier('ctx');
 
     const paramsObj = t.objectExpression(
-      Object.entries(cleanedArr)
+      Object.entries(el.arr)
         .filter(([key]) => key !== 'for' && key !== 'if')
         .map(([key, value]) => {
           const isDynamic = key.startsWith(':');
@@ -238,11 +240,11 @@ export function generateLayout(
       formTypeStr = typeMap[explicitType] || 'ActionFormData';
     } else {
       formTypeStr = 'ActionFormData';
-      if (typeTags.some(t => ['input', 'dropdown', 'submit', 'toggle', 'slider'].includes(t))) {
+      if (typeTags.some(t => MODAL_FORM_TAGS.has(t))) {
         formTypeStr = 'ModalFormData';
-      } else if (typeTags.some(t => t === 'button-m')) {
+      } else if (typeTags.includes('button-m')) {
         formTypeStr = 'MessageFormData';
-      } else if (typeTags.some(t => t === 'button')) {
+      } else if (typeTags.includes('button')) {
         formTypeStr = 'ActionFormData';
       }
     }
@@ -254,15 +256,15 @@ export function generateLayout(
   return { parsedObj, formTypeStr };
 }
 
+const SHARED_FORM_TAGS = new Set(['body', 'divider', 'title', 'label', 'header', 'spacer', 'close-button']);
+
 function detectFormType(
   tag: string,
 ): 'modal' | 'message' | 'action' | 'shared' | 'invalid' | null {
-  if (['input', 'dropdown', 'submit', 'toggle', 'slider'].includes(tag))
-    return 'modal';
+  if (MODAL_FORM_TAGS.has(tag)) return 'modal';
   if (tag === 'button-m') return 'message';
   if (tag === 'button') return 'action';
-  if (['body', 'divider', 'title', 'label', 'header', 'spacer', 'close-button'].includes(tag))
-    return 'shared';
+  if (SHARED_FORM_TAGS.has(tag)) return 'shared';
   return 'invalid';
 }
 

@@ -7,11 +7,8 @@ import { transformCtx } from '../types';
 import { existsSync } from 'node:fs';
 import type { BaseJson } from './types';
 import type lib from '@mbler/mcx-component';
-import { clearCachedOptions } from './cache';
 import { execEdit } from './fileEdit';
 import { collectExportSources, checkComponentImports } from './importScan';
-import { generateItemTextureJson } from './texture';
-
 export { clearCachedOptions } from './cache';
 export { resolveFilePoint, execEdit } from './fileEdit';
 export { collectExportSources, checkComponentImports } from './importScan';

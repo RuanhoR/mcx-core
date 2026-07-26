@@ -73,24 +73,16 @@ export class CompileJS {
     }
   }
   private writeBuildCache() {
-    const build: ImportList[] = [];
+    const sourceMap = new Map<string, ImportList>();
     for (const [as, data] of Object.entries(this.indexTemp)) {
-      let found = false;
-      for (const i of build) {
-        if (i.source === data.source) {
-          i.imported.push({ as, isAll: data.isAll, import: data.import });
-          found = true;
-          break;
-        }
+      let entry = sourceMap.get(data.source);
+      if (!entry) {
+        entry = { source: data.source, imported: [] };
+        sourceMap.set(data.source, entry);
       }
-      if (!found) {
-        build.push({
-          source: data.source,
-          imported: [{ as, import: data.import, isAll: data.isAll }],
-        });
-      }
+      entry.imported.push({ as, isAll: data.isAll, import: data.import });
     }
-    this.CompileData.BuildCache.import = build;
+    this.CompileData.BuildCache.import = [...sourceMap.values()];
   }
   private CompileData: CompileData.JsCompileData;
   public getCompileData(): CompileData.JsCompileData {
@@ -269,7 +261,8 @@ export class CompileJS {
 }
 
 export const compileJSFn = ((code: string): CompileData.JsCompileData => {
-  if (compileJSFn.cache[code]) return compileJSFn.cache[code];
+  const cached = compileJSFn.cache.get(code);
+  if (cached) return cached;
   let parsedCode: t.File;
   try {
     parsedCode = parse(code, {
@@ -293,11 +286,10 @@ export const compileJSFn = ((code: string): CompileData.JsCompileData => {
     throw makeError(`[parse error]: ${String(err)}`);
   }
   const comiler = new CompileJS(parsedCode.program);
-  comiler.run();
   const data = comiler.getCompileData();
-  compileJSFn.cache[code] = data;
+  compileJSFn.cache.set(code, data);
   return data;
 }) as ((code: string) => CompileData.JsCompileData) & {
-  cache: Record<string, CompileData.JsCompileData>;
+  cache: Map<string, CompileData.JsCompileData>;
 };
-compileJSFn.cache = {};
+compileJSFn.cache = new Map();

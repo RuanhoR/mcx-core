@@ -2,7 +2,7 @@ import type { Plugin } from 'rollup';
 import type { Plugin as RolldownPlugin } from 'rolldown';
 import { CompileOpt } from '../types';
 import { extname } from 'node:path';
-import { CompileError, compileMCXFn } from '.';
+import { CompileError, compileMCXFn, clearCompileCaches } from '.';
 import { transform } from '../../transforms';
 import type { MCXCompileData } from './compileData';
 import { readFile } from 'node:fs/promises';
@@ -181,7 +181,6 @@ function createMcxPlugin(
       }
     },
     async transform(code: string, id: string) {
-      const magic = new MagicString(code);
       const ext = extname(id).slice(1);
       const tsRegex = /^.+?\.(ts|mts|cts)$/;
       if (ext == 'mcx') {
@@ -218,7 +217,7 @@ function createMcxPlugin(
         return {
           code: compiledCode,
           ...(opt.sourcemap
-            ? { map: magic.generateMap({ hires: true, source: id }) }
+            ? { map: new MagicString(code).generateMap({ hires: true, source: id }) }
             : {}),
         };
       }
@@ -239,7 +238,7 @@ function createMcxPlugin(
         return {
           code: compiledCode,
           ...(opt.sourcemap
-            ? { map: magic.generateMap({ hires: true, source: id }) }
+            ? { map: new MagicString(code).generateMap({ hires: true, source: id }) }
             : {}),
         };
       }
@@ -253,6 +252,7 @@ function createMcxPlugin(
     buildStart() {
       cache = new Map();
       moduleTransformCache = new Map();
+      clearCompileCaches();
     },
   };
 }

@@ -125,10 +125,9 @@ async function execEditInternal(
             );
           if (!cachedOption['item_texture'])
             cachedOption['item_texture'] = [];
-          cachedOption['item_texture'] = [
-            ...(cachedOption['item_texture'] as [string, string][]),
+          (cachedOption['item_texture'] as [string, string][]).push(
             ...(execResult as [string, string][]),
-          ];
+          );
         }
       } else {
         throw new Error(

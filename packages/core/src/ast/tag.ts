@@ -24,28 +24,38 @@ function getExpressionContent(expr: { content?: string } | undefined): string {
   return expr?.content ?? 'true';
 }
 
-/** Convert absolute character offset in source to MCX position (line: 1-indexed, column: 0-indexed) */
-function absOffsetToMCXPos(
-  source: string,
-  absOffset: number,
-): { line: number; column: number } {
-  let line = 1;
-  let col = 0;
-  const len = Math.min(absOffset, source.length);
-  for (let i = 0; i < len; i++) {
+/** Build a line-offset index: lineStarts[i] = char offset where line i starts */
+function buildLineIndex(source: string): number[] {
+  const starts = [0];
+  for (let i = 0; i < source.length; i++) {
     if (source.charCodeAt(i) === 10) {
-      line++;
-      col = 0;
-    } else {
-      col++;
+      starts.push(i + 1);
     }
   }
-  return { line, column: col };
+  return starts;
+}
+
+/** Convert absolute character offset to MCX position using prebuilt line index */
+function absOffsetToMCXPos(
+  lineIndex: number[],
+  absOffset: number,
+): { line: number; column: number } {
+  const len = Math.min(absOffset, lineIndex.length > 0 ? absOffset : 0);
+  // Binary search for the line containing absOffset
+  let lo = 0;
+  let hi = lineIndex.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (lineIndex[mid]! <= absOffset) lo = mid;
+    else hi = mid - 1;
+  }
+  return { line: lo + 1, column: absOffset - lineIndex[lo]! };
 }
 
 export default class McxAst {
   private text: string;
   private includeComments: boolean;
+  private lineIndex: number[] = [];
 
   constructor(text: string, includeComments: boolean = false) {
     this.text = text;
@@ -53,6 +63,7 @@ export default class McxAst {
   }
 
   parseAST(): ParsedTagNode[] {
+    this.lineIndex = buildLineIndex(this.text);
     const ast: RootNode = baseParse(this.text, {
       comments: true,
       whitespace: 'preserve',
@@ -124,7 +135,7 @@ export default class McxAst {
     }
     const children = this.convertVueChildren(node.children);
 
-    const fullSource = this.text;
+    const lineIndex = this.lineIndex;
     const baseOffset = node.loc.start.offset;
     const elementSource = node.loc.source;
 
@@ -168,8 +179,8 @@ export default class McxAst {
       endToken = {
         data: elementSource.slice(closeStart),
         type: 'TagEnd',
-        start: absOffsetToMCXPos(fullSource, closeTagStartAbs),
-        end: absOffsetToMCXPos(fullSource, closeTagEndAbs),
+        start: absOffsetToMCXPos(lineIndex, closeTagStartAbs),
+        end: absOffsetToMCXPos(lineIndex, closeTagEndAbs),
       };
     }
 
@@ -177,8 +188,8 @@ export default class McxAst {
       start: {
         data: elementSource.slice(0, openEnd),
         type: 'Tag',
-        start: absOffsetToMCXPos(fullSource, openTagStartAbs),
-        end: absOffsetToMCXPos(fullSource, openTagEndAbs),
+        start: absOffsetToMCXPos(lineIndex, openTagStartAbs),
+        end: absOffsetToMCXPos(lineIndex, openTagEndAbs),
       },
       name: node.tag,
       arr: attrs,

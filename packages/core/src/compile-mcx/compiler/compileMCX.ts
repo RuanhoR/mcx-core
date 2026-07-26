@@ -248,12 +248,13 @@ class CompileMCX {
 }
 
 export const compileMCXFn = ((mcxCode: string): CompileData.MCXCompileData => {
-  if (compileMCXFn.cache[mcxCode]) return compileMCXFn.cache[mcxCode];
+  const cached = compileMCXFn.cache.get(mcxCode);
+  if (cached) return cached;
   const compiler = new CompileMCX(mcxCode);
   const data = compiler.getCompileData();
-  compileMCXFn.cache[mcxCode] = data;
+  compileMCXFn.cache.set(mcxCode, data);
   return data;
 }) as ((mcxCode: string) => CompileData.MCXCompileData) & {
-  cache: Record<string, CompileData.MCXCompileData>;
+  cache: Map<string, CompileData.MCXCompileData>;
 };
-compileMCXFn.cache = {};
+compileMCXFn.cache = new Map();

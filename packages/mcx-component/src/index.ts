@@ -1,4 +1,8 @@
 import { createLazyClass } from './lazy';
+import type { ItemComponent as ItemComponentClass } from './components/item';
+import type { BlockComponent as BlockComponentClass } from './components/block';
+import type { EntityComponent as EntityComponentClass } from './components/entity';
+import type { RecipeComponent as RecipeComponentClass } from './components/recipe';
 import {
   ImageComponent,
   PNGImageComponent,
@@ -15,16 +19,16 @@ export {
   GIFImageComponent,
 };
 
-export const ItemComponent = createLazyClass(
+export const ItemComponent = createLazyClass<typeof ItemComponentClass>(
   () => require('./components/item').ItemComponent,
 );
-export const BlockComponent = createLazyClass(
+export const BlockComponent = createLazyClass<typeof BlockComponentClass>(
   () => require('./components/block').BlockComponent,
 );
-export const EntityComponent = createLazyClass(
+export const EntityComponent = createLazyClass<typeof EntityComponentClass>(
   () => require('./components/entity').EntityComponent,
 );
-export const RecipeComponent = createLazyClass(
+export const RecipeComponent = createLazyClass<typeof RecipeComponentClass>(
   () => require('./components/recipe').RecipeComponent,
 );
 

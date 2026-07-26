@@ -818,7 +818,7 @@ interface FoodEffect {
 
 interface ItemComponentOptions {
   id: string;
-  name: string;
+  name?: string;
   format: string;
   components: Partial<{
     offHand: boolean;

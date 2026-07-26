@@ -44,7 +44,7 @@ export class RunScript {
   ): Promise<unknown> {
     if (this.module === 'esm') {
       if (esmExecMethod == execESMMethod.importESM) {
-        let processedCode = code;
+        const processedCode = code;
         const dataUrl = `data:application/javascript;base64,${Buffer.from(processedCode).toString('base64')}`;
         return await import(dataUrl);
       } else if (esmExecMethod == execESMMethod.transformCjs) {
@@ -103,7 +103,7 @@ export class RunScript {
           resolved?.endsWith('.mts') ||
           resolved?.endsWith('.cts')
         ) {
-          const transformd = ts.transpileModule(
+          const transformed = ts.transpileModule(
             readFileSync(resolved, 'utf-8'),
             {
               compilerOptions: {
@@ -112,18 +112,18 @@ export class RunScript {
               },
             },
           ).outputText;
-          const compiledCode = transformESMToCJS(transformd);
+          const compiledCode = transformESMToCJS(transformed);
           const script = new vm.Script(compiledCode, { filename: resolved });
           const rel = script.runInContext(context);
           return context.module.exports || rel;
         } else {
           const ext = extname(resolved as string);
           if (IMAGE_EXTS.has(ext)) {
-            const transformd = createImageTransformCode(
+            const transformed = createImageTransformCode(
               resolved as string,
               ext,
             );
-            const script = new vm.Script(transformd, {
+            const script = new vm.Script(transformed, {
               filename: resolved as string,
             });
             const rel = script.runInContext(context);
@@ -131,7 +131,7 @@ export class RunScript {
           }
         }
       }
-      throw new TypeError('Unkown File ' + resolved);
+      throw new TypeError('Unknown File ' + resolved);
     };
   }
   private getContext(): vm.Context {

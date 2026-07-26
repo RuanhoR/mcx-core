@@ -10,7 +10,7 @@ export async function Comp(ctx: transformParseCtx) {
           node => node.name === 'Event', // compileMCXFn had verify, don't verify
         ) as ParsedTagNode,
         ctx.ctx,
-        ctx.impBody,
+        ctx.importDecls,
       ),
     ),
   ];

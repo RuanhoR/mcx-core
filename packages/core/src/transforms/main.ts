@@ -3,8 +3,8 @@ import * as t from '@babel/types';
 import { generate } from '@babel/generator';
 import config from './config';
 import {
-  _enable,
-  _enableWithData,
+  createOnceGuard,
+  createOnceData,
   generateMain,
   processDefineProp,
   collectSetupDeclarations,
@@ -36,12 +36,12 @@ export async function _transform(ctx: transformCtx): Promise<string> {
   const _temp_main = generateMain(ctx.compiledCode.JSIR);
   const mainFn = (ctx.mainFn.body = _temp_main[0]);
   const prop: t.ObjectProperty[] = [];
-  const app = _enableWithData<t.ObjectProperty[]>();
+  const app = createOnceData<t.ObjectProperty[]>();
   const params: t.FunctionParameter[] = (ctx.mainFn.param = [
     t.identifier(config.paramCtx),
   ]);
   const parseCtx: transformParseCtx = {
-    impBody: _temp_main[1],
+    importDecls: _temp_main[1],
     mainFn,
     prop,
     ctx: ctx,
@@ -51,11 +51,11 @@ export async function _transform(ctx: transformCtx): Promise<string> {
 
   // Process defineProp for setup mode before component handlers
   if (isSetupMode && modeType) {
-    processDefineProp(ctx.compiledCode.JSIR, modeType, parseCtx.impBody);
+    processDefineProp(ctx.compiledCode.JSIR, modeType, parseCtx.importDecls);
   }
 
   // enable setup fn: use to generate setup
-  const enableSetup = _enable();
+  const enableSetup = createOnceGuard();
   if (ctx.compiledCode.strLoc.Event.isLoad) {
     // handler event type mcx
     type = 'event';
@@ -147,7 +147,7 @@ export async function _transform(ctx: transformCtx): Promise<string> {
   const code = generate(
     // create program
     t.program([
-      ...parseCtx.impBody,
+      ...parseCtx.importDecls,
       t.functionDeclaration(
         t.identifier(config.scriptCompileFn),
         params,

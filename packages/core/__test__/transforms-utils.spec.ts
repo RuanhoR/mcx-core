@@ -3,8 +3,8 @@ import * as t from '@babel/types';
 import {
   extractIdList,
   extractVarDefIdList,
-  _enable,
-  _enableWithData,
+  createOnceGuard,
+  createOnceData,
 } from '../src/transforms/utils';
 
 describe('extractVarDefIdList', () => {
@@ -77,31 +77,31 @@ describe('extractIdList', () => {
   });
 });
 
-describe('_enable', () => {
+describe('createOnceGuard', () => {
   it('should create a function that succeeds on first call', () => {
-    const fn = _enable();
+    const fn = createOnceGuard();
     expect(fn.prototype.enable).toBe(false);
     fn();
     expect(fn.prototype.enable).toBe(true);
   });
 
   it('should throw on second call', () => {
-    const fn = _enable();
+    const fn = createOnceGuard();
     fn();
     expect(() => fn()).toThrow("can't enable again");
   });
 });
 
-describe('_enableWithData', () => {
+describe('createOnceData', () => {
   it('should create a function that stores data on first call', () => {
-    const fn = _enableWithData<string>();
+    const fn = createOnceData<string>();
     expect(fn.prototype.enable).toBeNull();
     fn('hello');
     expect(fn.prototype.enable).toBe('hello');
   });
 
   it('should throw on second call', () => {
-    const fn = _enableWithData<string>();
+    const fn = createOnceData<string>();
     fn('hello');
     expect(() => fn('world')).toThrow("can't enable again");
   });

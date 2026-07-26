@@ -275,25 +275,4 @@ class MCXUtils {
   static isParseNode(node: unknown): node is ParsedTagNode[] {
     return Array.isArray(node) && (node as unknown[]).every(MCXUtils.isTagNode);
   }
-  static isToken(_obj: unknown): boolean {
-    return false;
-  }
-  static isTagToken(_obj: unknown): boolean {
-    return false;
-  }
-  static isTagEndToken(_obj: unknown): boolean {
-    return false;
-  }
-  static isContentToken(_obj: unknown): boolean {
-    return false;
-  }
-  static isCommentToken(_obj: unknown): boolean {
-    return false;
-  }
-  static isBaseToken(_obj: unknown): boolean {
-    return false;
-  }
-  static isTokenType(_value: unknown): boolean {
-    return false;
-  }
 }

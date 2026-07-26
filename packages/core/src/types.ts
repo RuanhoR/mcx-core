@@ -115,7 +115,7 @@ export interface transformCtx {
 }
 export interface transformParseCtx {
   prop: t.ObjectProperty[];
-  impBody: t.ImportDeclaration[];
+  importDecls: t.ImportDeclaration[];
   mainFn: t.Statement[];
   ctx: transformCtx;
   app: ((data: t.ObjectProperty[]) => void) & {

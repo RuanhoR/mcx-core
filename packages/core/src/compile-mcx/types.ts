@@ -52,7 +52,7 @@ interface MCXstructureLoc {
     string,
     {
       type: MCXstructureLocComponentType;
-      useExpore: string;
+      useExport: string;
       loc: { line: number; column: number };
     }
   >;

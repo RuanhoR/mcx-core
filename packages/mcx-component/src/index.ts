@@ -1,3 +1,4 @@
+import { createLazyClass } from './lazy';
 import {
   ImageComponent,
   PNGImageComponent,
@@ -14,10 +15,20 @@ export {
   GIFImageComponent,
 };
 
-export { ItemComponent } from './components/item';
-export { BlockComponent } from './components/block';
-export { EntityComponent } from './components/entity';
-export { RecipeComponent } from './components/recipe';
+export const ItemComponent = createLazyClass(
+  () => require('./components/item').ItemComponent,
+);
+export const BlockComponent = createLazyClass(
+  () => require('./components/block').BlockComponent,
+);
+export const EntityComponent = createLazyClass(
+  () => require('./components/entity').EntityComponent,
+);
+export const RecipeComponent = createLazyClass(
+  () => require('./components/recipe').RecipeComponent,
+);
+
+export { createLazyClass } from './lazy';
 
 export {
   ParticleTypeEnum,

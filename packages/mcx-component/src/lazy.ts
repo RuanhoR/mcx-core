@@ -7,18 +7,15 @@
  *     () => import('./components/item').then(m => m.ItemComponent)
  *   );
  */
-export function createLazyClass<T extends new (...args: any[]) => any>(
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ClassConstructor = new (...args: any[]) => any;
+
+export function createLazyClass<T extends ClassConstructor>(
   loader: () => T | Promise<T>,
 ): T {
   let RealClass: T | null = null;
   let loadingPromise: Promise<T> | null = null;
-
-  function ensureSync(): T {
-    if (RealClass) return RealClass;
-    throw new Error(
-      '[lazy] Class not loaded yet. It will be available after first new() call.',
-    );
-  }
 
   async function ensureAsync(): Promise<T> {
     if (RealClass) return RealClass;
@@ -30,7 +27,6 @@ export function createLazyClass<T extends new (...args: any[]) => any>(
     return RealClass;
   }
 
-  // Eagerly kick off the load in the background
   const initPromise = (async () => {
     try {
       const result = loader();
@@ -40,39 +36,38 @@ export function createLazyClass<T extends new (...args: any[]) => any>(
     }
   })();
 
-  const DummyConstructor = function (this: any, ...args: any[]) {
-    // If already loaded synchronously, use it
+  function DummyConstructor(this: Record<string, unknown>, ...args: unknown[]) {
     if (RealClass) {
-      const instance = new RealClass(...args);
-      return new Proxy(instance, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const instance = new (RealClass as any)(...args);
+      return new Proxy(instance as Record<string, unknown>, {
         get(target, prop, receiver) {
           const value = Reflect.get(target, prop, receiver);
-          if (typeof value === 'function') return value.bind(target);
+          if (typeof value === 'function') return (value as Function).bind(target);
           return value;
         },
       });
     }
-    // Not loaded yet — throw with helpful message
     throw new Error(
       '[lazy] Class not loaded yet. Wait for initialization or use createLazyClass with sync loader.',
     );
-  } as unknown as T;
+  }
 
-  // Expose async initializer on the proxy
-  (DummyConstructor as any).ensureAsync = ensureAsync;
-  (DummyConstructor as any).ready = initPromise;
+  // Attach static members
+  (DummyConstructor as unknown as Record<string, unknown>)['ensureAsync'] = ensureAsync;
+  (DummyConstructor as unknown as Record<string, unknown>)['ready'] = initPromise;
 
-  return new Proxy(DummyConstructor, {
+  return new Proxy(DummyConstructor as unknown as T, {
     get(_target, prop, _receiver) {
-      // Don't intercept 'then' (prevents Promise detection)
       if (prop === 'then') return undefined;
       if (prop === Symbol.toPrimitive) return undefined;
       if (prop === 'ensureAsync') return ensureAsync;
       if (prop === 'ready') return initPromise;
 
       if (RealClass) {
-        const value = (RealClass as any)[prop];
-        if (typeof value === 'function') return value.bind(RealClass);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const value = (RealClass as any)[prop as string];
+        if (typeof value === 'function') return (value as Function).bind(RealClass);
         return value;
       }
       return undefined;

@@ -6,7 +6,7 @@ import { MCXstructureLocComponentType } from '../compile-mcx/types';
 import { transformCtx } from '../types';
 import { existsSync } from 'node:fs';
 import type { BaseJson } from './types';
-import type lib from '@mbler/mcx-component';
+import type { ItemComponent, BlockComponent, EntityComponent } from '@mbler/mcx-component';
 import { execEdit } from './fileEdit';
 import { collectExportSources, checkComponentImports } from './importScan';
 export { clearCachedOptions } from './cache';
@@ -35,7 +35,7 @@ export async function compileComponent(
     execESMMethod.transformCjs,
   )) as Record<
     string,
-    InstanceType<(typeof lib)[MCXstructureLocComponentType]> | undefined
+    InstanceType<typeof ItemComponent | typeof BlockComponent | typeof EntityComponent> | undefined
   >;
   if (!component)
     throw new Error(
@@ -55,7 +55,7 @@ export async function compileComponent(
 
     const pointExport = entryData.useExport;
     const pointData = scriptRunResult[pointExport] as InstanceType<
-      (typeof lib)[keyof typeof lib]
+      typeof ItemComponent | typeof BlockComponent | typeof EntityComponent
     >;
     if (!pointExport) {
       throw new Error(

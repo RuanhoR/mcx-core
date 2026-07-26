@@ -6,23 +6,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./item": {
-      "types": "./dist/item.d.ts",
-      "import": "./dist/item.js"
-    },
-    "./block": {
-      "types": "./dist/block.d.ts",
-      "import": "./dist/block.js"
-    },
-    "./entity": {
-      "types": "./dist/entity.d.ts",
-      "import": "./dist/entity.js"
-    },
-    "./recipe": {
-      "types": "./dist/recipe.d.ts",
-      "import": "./dist/recipe.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "scripts": {

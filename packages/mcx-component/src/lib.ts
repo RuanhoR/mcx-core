@@ -1,6 +1,32 @@
 import { statSync } from 'node:fs';
 import { extname } from 'node:path';
 
+const lib = new Proxy(
+  {
+    item: () => require('./components/item').ItemComponent,
+    entity: () => require('./components/entity').EntityComponent,
+    block: () => require('./components/block').BlockComponent,
+    recipe: () => require('./components/recipe').RecipeComponent,
+  },
+  {
+    get(target, prop) {
+      const value = target[prop as keyof typeof target];
+      if (typeof value === 'function') {
+        return value();
+      }
+      return value;
+    },
+    set() {
+      return false;
+    },
+  },
+) as unknown as {
+  item: (typeof import('./components/item'))['ItemComponent'];
+  block: (typeof import('./components/block'))['BlockComponent'];
+  entity: (typeof import('./components/entity'))['EntityComponent'];
+  recipe: (typeof import('./components/recipe'))['RecipeComponent'];
+};
+
 export class ImageComponent {
   public classId = 'mcx_image_0918392' as string;
   constructor(
@@ -50,3 +76,5 @@ export class GIFImageComponent extends ImageComponent {
     super(filePath, ['gif']);
   }
 }
+
+export default lib;

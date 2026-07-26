@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
+import { ItemComponent } from '../src/components/item';
+import { BlockComponent } from '../src/components/block';
+import { EntityComponent } from '../src/components/entity';
+import { RecipeComponent } from '../src/components/recipe';
+import compareVar from '../src/utils';
 import {
-  ItemComponent,
-  BlockComponent,
-  EntityComponent,
-  RecipeComponent,
   ParticleTypeEnum,
   SoundEventEnum,
   EnchantableSlotEnum,
   EnchantableSlotArray,
-} from '../src/index';
-import compareVar from '../src/utils';
+} from '../src/types';
 
 describe('ItemComponent', () => {
   it('should throw on missing format', () => {

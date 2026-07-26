@@ -1,47 +1,54 @@
-export { ItemComponent } from './components/item';
-export { BlockComponent } from './components/block';
-export { EntityComponent } from './components/entity';
-export { RecipeComponent } from './components/recipe';
-
-export {
-  ImageComponent,
+import type { BlockComponent } from './components/block';
+import type { EntityComponent } from './components/entity';
+import type { ItemComponent } from './components/item';
+import type { RecipeComponent } from './components/recipe';
+import lib, {
   PNGImageComponent,
   JPGImageComponent,
   SVGImageComponent,
   GIFImageComponent,
 } from './lib';
 
-export {
-  ParticleTypeEnum,
-  SoundEventEnum,
-  EnchantableSlotArray,
-  EnchantableSlotEnum,
-  AttackCriticalHitChoicesEnum,
-  StartSoundChoicesEnum,
-  createFileEdit,
-} from './types';
+type TypeModuleExport = typeof import('./types');
 
-export type {
-  ParticleType,
-  SoundEvent,
-  EnchantableSlot,
-  AttackCriticalHitChoices,
-  StartSoundChoices,
-  Rarity,
-  FoodEffect,
-  ItemComponentOptions,
-  BlockComponentOptions,
-  EntityComponentOptions,
-  AddRiderConfig,
-  MobEffectConfig,
-  JumpMovementConfig,
-  NavigationConfig,
-  NavigationFloatConfig,
-  BaseJson,
-  EntityJson,
-  ItemJson,
-  JSONValue,
-  FileEditExpression,
-} from './types';
+interface Export extends TypeModuleExport {
+  PNGImageComponent: typeof PNGImageComponent;
+  JPGImageComponent: typeof JPGImageComponent;
+  SVGImageComponent: typeof SVGImageComponent;
+  GIFImageComponent: typeof GIFImageComponent;
+  ItemComponent: typeof ItemComponent;
+  RecipeComponent: typeof RecipeComponent;
+  BlockComponent: typeof BlockComponent;
+  EntityComponent: typeof EntityComponent;
+  default: typeof lib;
+}
 
-export { default as compareVar } from './utils';
+const LAZY_LOADERS: Record<string, () => unknown> = {
+  ItemComponent: () => require('./components/item').ItemComponent,
+  BlockComponent: () => require('./components/block').BlockComponent,
+  RecipeComponent: () => require('./components/recipe').RecipeComponent,
+  EntityComponent: () => require('./components/entity').EntityComponent,
+};
+
+export default new Proxy(
+  {
+    PNGImageComponent,
+    JPGImageComponent,
+    SVGImageComponent,
+    GIFImageComponent,
+  },
+  {
+    get(target, prop, receiver) {
+      if (prop in target) {
+        return Reflect.get(target, prop, receiver);
+      }
+      if (prop === 'lib') return lib;
+      const loader = LAZY_LOADERS[prop as string];
+      if (loader) return loader();
+      return undefined;
+    },
+    set() {
+      return false;
+    },
+  },
+) as unknown as Export;

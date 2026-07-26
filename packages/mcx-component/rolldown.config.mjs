@@ -3,13 +3,7 @@ import { dts } from 'rolldown-plugin-dts';
 import path from 'node:path';
 
 export default defineConfig({
-  input: {
-    index: 'src/index.ts',
-    item: 'src/components/item.ts',
-    block: 'src/components/block.ts',
-    entity: 'src/components/entity.ts',
-    recipe: 'src/components/recipe.ts',
-  },
+  input: 'src/index.ts',
   output: {
     dir: './dist',
     entryFileNames: '[name].js',
@@ -18,6 +12,10 @@ export default defineConfig({
     manualChunks(mid) {
       if (mid.includes('node_modules')) {
         return 'vendor';
+      }
+      if (mid.includes('components')) {
+        const fileName = mid.split(path.sep).pop();
+        if (fileName?.endsWith('.ts')) return fileName.slice(0, fileName.length - 3);
       }
     },
   },

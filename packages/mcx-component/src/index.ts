@@ -1,4 +1,3 @@
-import { createLazyClass } from './lazy';
 import {
   ImageComponent,
   PNGImageComponent,
@@ -15,23 +14,10 @@ export {
   GIFImageComponent,
 };
 
-// Loader: try require() first (works in bundled CJS), fall back to import() (vitest ESM)
-function lazyComponent(path: string, name: string) {
-  return createLazyClass(() => {
-    try {
-      return require(path)[name];
-    } catch {
-      return import(/* @vite-ignore */ path).then(m => m[name]);
-    }
-  });
-}
-
-export const ItemComponent = lazyComponent('./components/item', 'ItemComponent');
-export const BlockComponent = lazyComponent('./components/block', 'BlockComponent');
-export const EntityComponent = lazyComponent('./components/entity', 'EntityComponent');
-export const RecipeComponent = lazyComponent('./components/recipe', 'RecipeComponent');
-
-export { createLazyClass } from './lazy';
+export { ItemComponent } from './components/item';
+export { BlockComponent } from './components/block';
+export { EntityComponent } from './components/entity';
+export { RecipeComponent } from './components/recipe';
 
 export {
   ParticleTypeEnum,

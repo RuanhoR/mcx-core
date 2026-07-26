@@ -1,54 +1,66 @@
-import type { BlockComponent } from './components/block';
-import type { EntityComponent } from './components/entity';
-import type { ItemComponent } from './components/item';
-import type { RecipeComponent } from './components/recipe';
-import lib, {
+import { createLazyClass } from './lazy';
+import {
+  ImageComponent,
   PNGImageComponent,
   JPGImageComponent,
   SVGImageComponent,
   GIFImageComponent,
 } from './lib';
 
-type TypeModuleExport = typeof import('./types');
-
-interface Export extends TypeModuleExport {
-  PNGImageComponent: typeof PNGImageComponent;
-  JPGImageComponent: typeof JPGImageComponent;
-  SVGImageComponent: typeof SVGImageComponent;
-  GIFImageComponent: typeof GIFImageComponent;
-  ItemComponent: typeof ItemComponent;
-  RecipeComponent: typeof RecipeComponent;
-  BlockComponent: typeof BlockComponent;
-  EntityComponent: typeof EntityComponent;
-  default: typeof lib;
-}
-
-const LAZY_LOADERS: Record<string, () => unknown> = {
-  ItemComponent: () => require('./components/item').ItemComponent,
-  BlockComponent: () => require('./components/block').BlockComponent,
-  RecipeComponent: () => require('./components/recipe').RecipeComponent,
-  EntityComponent: () => require('./components/entity').EntityComponent,
+export {
+  ImageComponent,
+  PNGImageComponent,
+  JPGImageComponent,
+  SVGImageComponent,
+  GIFImageComponent,
 };
 
-export default new Proxy(
-  {
-    PNGImageComponent,
-    JPGImageComponent,
-    SVGImageComponent,
-    GIFImageComponent,
-  },
-  {
-    get(target, prop, receiver) {
-      if (prop in target) {
-        return Reflect.get(target, prop, receiver);
-      }
-      if (prop === 'lib') return lib;
-      const loader = LAZY_LOADERS[prop as string];
-      if (loader) return loader();
-      return undefined;
-    },
-    set() {
-      return false;
-    },
-  },
-) as unknown as Export;
+export const ItemComponent = createLazyClass(
+  () => import('./components/item').then(m => m.ItemComponent),
+);
+export const BlockComponent = createLazyClass(
+  () => import('./components/block').then(m => m.BlockComponent),
+);
+export const EntityComponent = createLazyClass(
+  () => import('./components/entity').then(m => m.EntityComponent),
+);
+export const RecipeComponent = createLazyClass(
+  () => import('./components/recipe').then(m => m.RecipeComponent),
+);
+
+export { createLazyClass } from './lazy';
+
+export {
+  ParticleTypeEnum,
+  SoundEventEnum,
+  EnchantableSlotArray,
+  EnchantableSlotEnum,
+  AttackCriticalHitChoicesEnum,
+  StartSoundChoicesEnum,
+  createFileEdit,
+} from './types';
+
+export type {
+  ParticleType,
+  SoundEvent,
+  EnchantableSlot,
+  AttackCriticalHitChoices,
+  StartSoundChoices,
+  Rarity,
+  FoodEffect,
+  ItemComponentOptions,
+  BlockComponentOptions,
+  EntityComponentOptions,
+  AddRiderConfig,
+  MobEffectConfig,
+  JumpMovementConfig,
+  NavigationConfig,
+  NavigationFloatConfig,
+  BaseJson,
+  EntityJson,
+  ItemJson,
+  JSONValue,
+  FileEditExpression,
+} from './types';
+
+export { default as compareVar } from './utils';

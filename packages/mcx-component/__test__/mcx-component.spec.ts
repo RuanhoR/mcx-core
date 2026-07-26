@@ -1,8 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { ItemComponent } from '../src/components/item';
-import { BlockComponent } from '../src/components/block';
-import { EntityComponent } from '../src/components/entity';
-import { RecipeComponent } from '../src/components/recipe';
+import { describe, it, expect, beforeAll } from 'vitest';
+import {
+  ItemComponent,
+  BlockComponent,
+  EntityComponent,
+  RecipeComponent,
+} from '../src/index';
 import compareVar from '../src/utils';
 import {
   ParticleTypeEnum,
@@ -10,6 +12,16 @@ import {
   EnchantableSlotEnum,
   EnchantableSlotArray,
 } from '../src/types';
+
+// Wait for lazy-loaded classes to be ready
+beforeAll(async () => {
+  await Promise.all([
+    (ItemComponent as any).ready,
+    (BlockComponent as any).ready,
+    (EntityComponent as any).ready,
+    (RecipeComponent as any).ready,
+  ]);
+});
 
 describe('ItemComponent', () => {
   it('should throw on missing format', () => {

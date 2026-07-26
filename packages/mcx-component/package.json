@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-component",
-  "version": "0.0.0-alpha.4",
+  "version": "0.0.0-alpha.5",
   "description": "MCX Component Runtime Classes",
   "main": "dist/index.js",
   "exports": {

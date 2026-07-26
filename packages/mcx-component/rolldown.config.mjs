@@ -1,7 +1,10 @@
 import { defineConfig } from 'rolldown';
 import { dts } from 'rolldown-plugin-dts';
 import path from 'node:path';
-
+import { rmSync } from 'node:fs';
+try {
+  rmSync(path.resolve("dist"))
+} catch {}
 export default defineConfig({
   input: 'src/index.ts',
   output: {

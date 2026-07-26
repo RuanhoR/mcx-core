@@ -1,3 +1,4 @@
+import { rmSync } from 'node:fs';
 import { defineConfig } from 'rolldown';
 import { dts } from "rolldown-plugin-dts"
 const external = [
@@ -13,7 +14,9 @@ const external = [
   'typescript',
   /@vue\/*/
 ];
-
+try {
+  rmSync(path.resolve("dist"))
+} catch {}
 export default defineConfig({
   input: 'src/index.ts',
   output: {

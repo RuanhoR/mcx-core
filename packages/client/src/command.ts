@@ -72,6 +72,9 @@ function registryCommand(command: Command): void {
         try {
           registry.registerCommand(cmd.toCustomCommand(), cmd.getCallback());
         } catch (e) {
+          if (String(e).includes('again')) {
+            continue;
+          }
           console.error(
             `[mcx command]: Failed to register command '${cmd.getName()}'`,
             e,
@@ -196,7 +199,8 @@ class Command {
 
     if (param.type === 'enum' && param.options && param.options.length > 0) {
       this.enums.push({ name, values: param.options });
-      (result as CustomCommandParameter & { enumName?: string }).enumName = name;
+      (result as CustomCommandParameter & { enumName?: string }).enumName =
+        name;
     }
 
     return result;

@@ -20,7 +20,7 @@ export default defineConfig({
     dir: "./dist",
     entryFileNames: "[name].js",
     format: "esm",
-    sourcemap: true,
+    sourcemap: false,
     minify: process.env.BUILD_MODEL == "release"
   },
   external,

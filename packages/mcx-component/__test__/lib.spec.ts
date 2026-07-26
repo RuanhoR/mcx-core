@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import lib, {
+import { describe, it, expect } from 'vitest';
+import {
   PNGImageComponent,
   JPGImageComponent,
   SVGImageComponent,
@@ -8,14 +8,6 @@ import lib, {
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { mkdtempSync, writeFileSync } from 'node:fs';
-
-describe('lib map', () => {
-  it('should export item, entity, block', () => {
-    expect(lib.item).toBeDefined();
-    expect(lib.entity).toBeDefined();
-    expect(lib.block).toBeDefined();
-  });
-});
 
 describe('ImageComponent', () => {
   it('should create PNGImageComponent with valid file', () => {

@@ -1,22 +1,25 @@
 import { defineConfig } from 'rolldown';
 import { dts } from 'rolldown-plugin-dts';
-import path from "node:path"
+import path from 'node:path';
+
 export default defineConfig({
-  input: 'src/index.ts',
+  input: {
+    index: 'src/index.ts',
+    item: 'src/components/item.ts',
+    block: 'src/components/block.ts',
+    entity: 'src/components/entity.ts',
+    recipe: 'src/components/recipe.ts',
+  },
   output: {
     dir: './dist',
     entryFileNames: '[name].js',
     format: 'esm',
     sourcemap: false,
     manualChunks(mid) {
-      if (mid.includes("node_modules")) {
-        return "vendor"
-      };
-      if (mid.includes("components")) {
-        const fileName = mid.split(path.sep).pop()
-        if (fileName.endsWith(".ts")) return fileName.slice(0, fileName.length - 3)
+      if (mid.includes('node_modules')) {
+        return 'vendor';
       }
-    }
+    },
   },
   external: ['@mbler/mcx-types'],
   platform: 'node',

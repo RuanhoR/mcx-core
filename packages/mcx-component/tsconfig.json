@@ -4,12 +4,8 @@
     "outDir": "./dist",
     "module": "esnext",
     "target": "esnext",
-    "lib": [
-      "esnext"
-    ],
-    "types": [
-      "node"
-    ],
+    "lib": ["esnext"],
+    "types": ["node"],
     "sourceMap": true,
     "declaration": false,
     "noEmit": true,
@@ -24,8 +20,5 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "include": [
-    "./src/**/*",
-    "./__test__/**/*"
-  ]
+  "include": ["./src/**/*", "./__test__/**/*"]
 }

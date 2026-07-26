@@ -16,7 +16,10 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@mbler/mcx-component": ["../mcx-component/src/index.ts"]
+    }
   },
   "include": ["./src/**/*", "./__test__/**/*"],
   "exclude": ["node_modules", "dist"]

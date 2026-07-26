@@ -13,13 +13,12 @@ import {
   EnchantableSlotArray,
 } from '../src/types';
 
-// Wait for lazy-loaded classes to be ready
 beforeAll(async () => {
   await Promise.all([
-    (ItemComponent as any).ready,
-    (BlockComponent as any).ready,
-    (EntityComponent as any).ready,
-    (RecipeComponent as any).ready,
+    (ItemComponent as Record<string, unknown>).ready,
+    (BlockComponent as Record<string, unknown>).ready,
+    (EntityComponent as Record<string, unknown>).ready,
+    (RecipeComponent as Record<string, unknown>).ready,
   ]);
 });
 

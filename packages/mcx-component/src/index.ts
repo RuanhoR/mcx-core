@@ -15,18 +15,21 @@ export {
   GIFImageComponent,
 };
 
-export const ItemComponent = createLazyClass(
-  () => import('./components/item').then(m => m.ItemComponent),
-);
-export const BlockComponent = createLazyClass(
-  () => import('./components/block').then(m => m.BlockComponent),
-);
-export const EntityComponent = createLazyClass(
-  () => import('./components/entity').then(m => m.EntityComponent),
-);
-export const RecipeComponent = createLazyClass(
-  () => import('./components/recipe').then(m => m.RecipeComponent),
-);
+// Loader: try require() first (works in bundled CJS), fall back to import() (vitest ESM)
+function lazyComponent(path: string, name: string) {
+  return createLazyClass(() => {
+    try {
+      return require(path)[name];
+    } catch {
+      return import(/* @vite-ignore */ path).then(m => m[name]);
+    }
+  });
+}
+
+export const ItemComponent = lazyComponent('./components/item', 'ItemComponent');
+export const BlockComponent = lazyComponent('./components/block', 'BlockComponent');
+export const EntityComponent = lazyComponent('./components/entity', 'EntityComponent');
+export const RecipeComponent = lazyComponent('./components/recipe', 'RecipeComponent');
 
 export { createLazyClass } from './lazy';
 

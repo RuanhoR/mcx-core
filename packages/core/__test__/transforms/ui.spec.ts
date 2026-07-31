@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { compileMCXFn } from '../../src/compile-mcx/compiler/index';
 import { transform } from '../../src/transforms/index';
-import type { CustomPluginOptions, ModuleInfo, RollupFsModule, SourceMap, TransformPluginContext } from 'rollup';
+import type {
+  CustomPluginOptions,
+  ModuleInfo,
+  RollupFsModule,
+  SourceMap,
+  TransformPluginContext,
+} from 'rollup';
 import type { CompileOpt } from '@mbler/mcx-types';
 import type { transformCtx } from '../../src/types';
 function createMockOutput(): transformCtx['output'] {
@@ -16,34 +22,42 @@ function compileMCX(mcxSource: string): Promise<string> {
   const compileData = compileMCXFn(mcxSource);
   const cache = new Map();
   const output = createMockOutput();
-  return transform(compileData, cache, 'test.ui.mcx', {
-    error: (err) => {
-      const msg = typeof err === 'string' ? err : err?.message ?? String(err);
-      throw new Error(msg);
-    },
-    warn: (_msg) => { },
-    parse: (_input) => {
-      throw new Error('Not implemented');
-    },
-    resolve: async (_source, _importer, _options) => null,
-    emitFile: (_file) => '',
-    getFileName: (_ref: string) => '',
-    getModuleInfo: (_id: string) => null,
-    info: (_log) => { },
-    debug: (_log) => { },
-    fs: {} as unknown as RollupFsModule,
-    load: (_opt) => null as unknown as Promise<ModuleInfo>,
-    meta: {
-      rollupVersion: "",
-      watchMode: false
-    },
-    getWatchFiles: () => [],
-    setAssetSource: () => { },
-    getModuleIds: () => null as unknown as IterableIterator<string>,
-    addWatchFile: (_id: string) => { },
-    getCombinedSourcemap: () => null as unknown as SourceMap,
-    cache: new Map,
-  } as TransformPluginContext, {} as unknown as CompileOpt, output);
+  return transform(
+    compileData,
+    cache,
+    'test.ui.mcx',
+    {
+      error: err => {
+        const msg =
+          typeof err === 'string' ? err : (err?.message ?? String(err));
+        throw new Error(msg);
+      },
+      warn: _msg => {},
+      parse: _input => {
+        throw new Error('Not implemented');
+      },
+      resolve: async (_source, _importer, _options) => null,
+      emitFile: _file => '',
+      getFileName: (_ref: string) => '',
+      getModuleInfo: (_id: string) => null,
+      info: _log => {},
+      debug: _log => {},
+      fs: {} as unknown as RollupFsModule,
+      load: _opt => null as unknown as Promise<ModuleInfo>,
+      meta: {
+        rollupVersion: '',
+        watchMode: false,
+      },
+      getWatchFiles: () => [],
+      setAssetSource: () => {},
+      getModuleIds: () => null as unknown as IterableIterator<string>,
+      addWatchFile: (_id: string) => {},
+      getCombinedSourcemap: () => null as unknown as SourceMap,
+      cache: new Map(),
+    } as TransformPluginContext,
+    {} as unknown as CompileOpt,
+    output,
+  );
 }
 
 describe('UI Transform - Computation import', () => {
@@ -58,9 +72,11 @@ describe('UI Transform - Computation import', () => {
 </script>`;
 
     const code = await compileMCX(mcxSource);
-    expect(code).toContain("Computation");
-    expect(code).toContain("import { ui as __mcx__ui, Computation } from \"@mbler/mcx\"");
-    expect(code).toContain("content: ctx => `hello ${ctx[0].a}`");
+    expect(code).toContain('Computation');
+    expect(code).toContain(
+      'import { ui as __mcx__ui, Computation } from "@mbler/mcx"',
+    );
+    expect(code).toContain('content: ctx => `hello ${ctx[0].a}`');
   });
 
   it('should use arrow function for static content (Ui mode)', async () => {
@@ -74,9 +90,11 @@ describe('UI Transform - Computation import', () => {
 </script>`;
 
     const code = await compileMCX(mcxSource);
-    expect(code).toContain("Computation");
-    expect(code).toContain("import { ui as __mcx__ui, Computation } from \"@mbler/mcx\"");
-    expect(code).toContain("content: ctx => \"hello\"");
+    expect(code).toContain('Computation');
+    expect(code).toContain(
+      'import { ui as __mcx__ui, Computation } from "@mbler/mcx"',
+    );
+    expect(code).toContain('content: ctx => "hello"');
   });
 
   it('should NOT add Computation import in Form mode, even with {{ }}', async () => {
@@ -89,11 +107,11 @@ describe('UI Transform - Computation import', () => {
 </script>`;
 
     const code = await compileMCX(mcxSource);
-    expect(code).not.toContain("Computation");
-    expect(code).not.toContain("new Computation");
-    expect(code).toContain("import { ui as __mcx__ui } from \"@mbler/mcx\"");
+    expect(code).not.toContain('Computation');
+    expect(code).not.toContain('new Computation');
+    expect(code).toContain('import { ui as __mcx__ui } from "@mbler/mcx"');
     // Form mode should use plain arrow function for interpolation
-    expect(code).toContain("ctx => `hello ${ctx[0].a}`");
+    expect(code).toContain('ctx => `hello ${ctx[0].a}`');
   });
 
   it('should reject invalid tags in Ui mode', async () => {
@@ -105,7 +123,9 @@ describe('UI Transform - Computation import', () => {
   export { a };
 </script>`;
 
-    await expect(compileMCX(mcxSource)).rejects.toThrow("don't support tag: invalidTag");
+    await expect(compileMCX(mcxSource)).rejects.toThrow(
+      "don't support tag: invalidTag",
+    );
   });
 
   it('should reject invalid tags in Form mode', async () => {
@@ -117,7 +137,9 @@ describe('UI Transform - Computation import', () => {
   export { a };
 </script>`;
 
-    await expect(compileMCX(mcxSource)).rejects.toThrow("don't support tag: invalidTag");
+    await expect(compileMCX(mcxSource)).rejects.toThrow(
+      "don't support tag: invalidTag",
+    );
   });
 
   it('should reject unsupported attributes', async () => {
@@ -129,7 +151,9 @@ describe('UI Transform - Computation import', () => {
   export { a };
 </script>`;
 
-    await expect(compileMCX(mcxSource)).rejects.toThrow("does not support attribute 'invalidAttr'");
+    await expect(compileMCX(mcxSource)).rejects.toThrow(
+      "does not support attribute 'invalidAttr'",
+    );
   });
 
   it('should accept valid Ui tags and attributes', async () => {
@@ -153,6 +177,22 @@ describe('UI Transform - Computation import', () => {
 </script>`;
 
     const code = await compileMCX(mcxSource);
-    expect(code).toContain("type: \"ui\"");
+    expect(code).toContain('type: "ui"');
+  });
+
+  it('should allow TS generics in script without breaking compilation', async () => {
+    const mcxSource = `<Ui setup>
+  <input :value="name">Name {{ name }}</input>
+  <toggle :value="flag">Flag</toggle>
+</Ui>
+<script lang="ts">
+  import { ref } from "@mbler/mcx";
+  const name = ref<string>("Steve");
+  const flag = ref<boolean>(true);
+  export { name, flag };
+</script>`;
+
+    const code = await compileMCX(mcxSource);
+    expect(code).toContain('type: "ui"');
   });
 });

@@ -52,10 +52,42 @@ function absOffsetToMCXPos(
   return { line: lo + 1, column: absOffset - lineIndex[lo]! };
 }
 
+/**
+ * Replace the content of every <script>...</script> with equal-length spaces so
+ * the HTML parser doesn't misread TS code (generics, comparisons) as tags.
+ * Keeps character offsets identical to the original source.
+ * `scriptContents` maps the script open-tag start offset to its raw content.
+ */
+function scrubScriptContent(
+  text: string,
+  scriptContents: Map<number, string>,
+): string {
+  const openRe = /<script\b[^>]*>/gi;
+  const closeRe = /<\/script\s*>/gi;
+  let result = '';
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = openRe.exec(text)) !== null) {
+    const openStart = m.index;
+    const openEnd = m.index + m[0].length;
+    closeRe.lastIndex = openEnd;
+    const close = closeRe.exec(text);
+    if (!close) break;
+    const closeStart = close.index;
+    result += text.slice(last, openEnd);
+    scriptContents.set(openStart, text.slice(openEnd, closeStart));
+    result += ' '.repeat(closeStart - openEnd);
+    last = closeStart;
+  }
+  result += text.slice(last);
+  return result;
+}
+
 export default class McxAst {
   private text: string;
   private includeComments: boolean;
   private lineIndex: number[] = [];
+  private scriptContents = new Map<number, string>();
 
   constructor(text: string, includeComments: boolean = false) {
     this.text = text;
@@ -64,7 +96,9 @@ export default class McxAst {
 
   parseAST(): ParsedTagNode[] {
     this.lineIndex = buildLineIndex(this.text);
-    const ast: RootNode = baseParse(this.text, {
+    this.scriptContents.clear();
+    const scrubbed = scrubScriptContent(this.text, this.scriptContents);
+    const ast: RootNode = baseParse(scrubbed, {
       comments: true,
       whitespace: 'preserve',
     });
@@ -133,10 +167,19 @@ export default class McxAst {
         }
       }
     }
-    const children = this.convertVueChildren(node.children);
+    let children = this.convertVueChildren(node.children);
 
     const lineIndex = this.lineIndex;
     const baseOffset = node.loc.start.offset;
+
+    // Script content was scrubbed before parsing (equal-length spaces) so TS
+    // generics like ref<string> don't break the HTML parser; restore the raw text.
+    if (node.tag === 'script' && this.scriptContents.has(baseOffset)) {
+      children = [
+        { data: this.scriptContents.get(baseOffset)!, type: 'TagContent' },
+      ];
+    }
+
     const elementSource = node.loc.source;
 
     // Find the end of the opening tag (first unquoted >)

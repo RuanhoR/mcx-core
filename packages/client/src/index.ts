@@ -8,3 +8,4 @@ export { ref, Ref, Computation } from './ref';
 export { watch } from './watch';
 export { onStartup, onMounted, defineProp } from './lifecycle';
 export { Command, registryCommand } from './command';
+export * as packCall from './lib/packCall';

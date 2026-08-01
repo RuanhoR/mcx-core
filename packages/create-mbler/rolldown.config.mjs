@@ -8,11 +8,9 @@ export default defineConfig({
     dir: './dist',
     entryFileNames: '[name].mjs',
     format: 'esm',
-    minify: true
+    minify: true,
   },
-  external: ['inquirer', 'commander'],
+  external: ['inquirer', 'cac'],
   platform: 'node',
-  plugins: [
-    dts(),
-  ],
+  plugins: [dts()],
 });

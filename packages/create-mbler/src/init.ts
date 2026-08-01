@@ -97,17 +97,23 @@ export async function initProject(inputOpt: InputResult) {
       dev: 'mbler watch',
       build: 'cross-env BUILD_MODULE=release mbler build',
       'dev-build': 'mbler build',
-      'type-check': 'mcx-tsc'
+      'type-check': 'mcx-tsc',
     },
     type: 'module',
     dependencies: {
-      '@minecraft/server': await sapi.generateVersion("@minecraft/server", inputOpt.McVersion, inputOpt.OtherModule.includes("beta-api"), true),
+      '@minecraft/server': await sapi.generateVersion(
+        '@minecraft/server',
+        inputOpt.McVersion,
+        inputOpt.OtherModule.includes('beta-api'),
+        true,
+      ),
     },
     devDependencies: {
       'cross-env': '^10.1.0',
       mbler: '^' + (await getLatestPackageVersion('mbler')),
       '@mbler/mcx-types':
         '^' + (await getLatestPackageVersion('@mbler/mcx-types')),
+      rolldown: '^1.1.0',
     },
   };
   if (isMcx) {
@@ -117,10 +123,17 @@ export async function initProject(inputOpt: InputResult) {
       await getLatestPackageVersion('@mbler/mcx-component');
     packageJson.devDependencies['@mbler/mcx-core'] =
       await getLatestPackageVersion('@mbler/mcx-core');
-  } const ui = inputOpt.OtherModule.includes('ui');
+  }
+  const ui = inputOpt.OtherModule.includes('ui');
   const beta = inputOpt.OtherModule.includes('beta-api');
   if (ui) {
-    packageJson.dependencies["@minecraft/server-ui"] = await sapi.generateVersion("@minecraft/server-ui", inputOpt.McVersion, beta, true)
+    packageJson.dependencies['@minecraft/server-ui'] =
+      await sapi.generateVersion(
+        '@minecraft/server-ui',
+        inputOpt.McVersion,
+        beta,
+        true,
+      );
   }
   await writeFile(
     path.join(dir, 'package.json'),

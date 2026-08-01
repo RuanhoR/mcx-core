@@ -1,6 +1,6 @@
 {
   "name": "create-mbler",
-  "description": "Create a mbler with cli",
+  "description": "Create a mbler project with cli",
   "license": "MIT",
   "author": {
     "name": "ruanhor",
@@ -23,7 +23,7 @@
   },
   "version": "0.0.3-rc.4",
   "dependencies": {
-    "commander": "14.0.3",
+    "cac": "7.0.0",
     "inquirer": "13.4.3"
   },
   "scripts": {

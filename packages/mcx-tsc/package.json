@@ -48,7 +48,9 @@
   "dependencies": {
     "@mbler/mcx-server": "^0.1.2-rc.5",
     "@volar/language-core": "2.4.28",
-    "@volar/typescript": "2.4.28",
+    "@volar/typescript": "2.4.28"
+  },
+  "peerDependencies": {
     "typescript": "^5.9.3"
   }
 }

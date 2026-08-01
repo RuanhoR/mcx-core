@@ -41,11 +41,6 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "@mbler/mcx-types": "workspace:*"
-  },
-  "devDependencies": {
-    "rolldown": "1.0.0-rc.18",
-    "rolldown-plugin-dts": "0.25.2",
-    "vitest": "^4.1.8"
+    "@mbler/mcx-server": "^0.1.2-rc.5"
   }
 }

@@ -21,7 +21,7 @@
   "engines": {
     "node": ">= 20"
   },
-  "version": "0.0.3-rc.4",
+  "version": "0.0.4",
   "dependencies": {
     "cac": "7.0.0",
     "inquirer": "13.4.3"

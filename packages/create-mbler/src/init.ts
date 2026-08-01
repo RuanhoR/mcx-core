@@ -113,6 +113,7 @@ export async function initProject(inputOpt: InputResult) {
       mbler: '^' + (await getLatestPackageVersion('mbler')),
       '@mbler/mcx-types':
         '^' + (await getLatestPackageVersion('@mbler/mcx-types')),
+      'mcx-tsc': '^' + (await getLatestPackageVersion('mcx-tsc')),
       rolldown: '^1.1.0',
     },
   };

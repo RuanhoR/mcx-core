@@ -33,6 +33,7 @@
     "packages/client",
     "packages/types",
     "packages/core",
+    "packages/mcx-component",
     "packages/create-mbler",
     "packages/mcx-tsc"
   ],

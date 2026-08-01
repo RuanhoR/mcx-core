@@ -1,6 +1,6 @@
 {
   "name": "mcx-tsc",
-  "version": "0.0.1",
+  "version": "0.0.2-rc.1",
   "description": "Type check for mcx",
   "main": "dist/index.js",
   "exports": {
@@ -46,7 +46,7 @@
     "mcx-tsc": "bin/mcx-tsc.cjs"
   },
   "dependencies": {
-    "@mbler/mcx-server": "^0.1.2-rc.5",
+    "@mbler/mcx-server": "^0.1.3",
     "@volar/language-core": "2.4.28",
     "@volar/typescript": "2.4.28"
   },

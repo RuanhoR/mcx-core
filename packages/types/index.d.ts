@@ -117,9 +117,24 @@ interface ItemJson extends BaseJson {
   'minecraft:item': {
     description: {
       identifier: string;
+      menu_category?: MenuCategory;
+      group?: string;
+      is_hidden_in_commands?: boolean;
     };
     components: Record<string, any>;
   };
+}
+
+/**
+ * Creative inventory placement of an item definition.
+ * - category: The Creative Category that includes the specified item.
+ * - group: The Creative Group that includes the specified item (max 256 chars).
+ * - is_hidden_in_commands: Whether this item can be used with commands.
+ */
+interface MenuCategory {
+  category?: string;
+  group?: string;
+  is_hidden_in_commands?: boolean;
 }
 
 type JSONValue<T> = { value: T };
@@ -820,6 +835,9 @@ interface ItemComponentOptions {
   id: string;
   name?: string;
   format: string;
+  menu_category?: MenuCategory;
+  group?: string;
+  is_hidden_in_commands?: boolean;
   components: Partial<{
     offHand: boolean;
     damage: number;
@@ -1490,6 +1508,7 @@ export type {
   Rarity,
   FoodEffect,
   ItemComponentOptions,
+  MenuCategory,
   BlockComponentOptions,
   AddRiderConfig,
   MobEffectConfig,

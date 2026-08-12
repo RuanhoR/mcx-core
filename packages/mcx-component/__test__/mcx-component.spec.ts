@@ -36,6 +36,63 @@ describe('ItemComponent', () => {
     expect(json['minecraft:item'].components['minecraft:damage'].value).toBe(5);
     expect(json['minecraft:item'].components['minecraft:allow_off_hand'].value).toBe(true);
   });
+
+  it('should emit item definition description properties from options', () => {
+    const item = new ItemComponent({
+      id: 'test:item',
+      format: '1.21.0',
+      group: 'itemGroup.name.test',
+      is_hidden_in_commands: true,
+      menu_category: { category: 'equipment', group: 'itemGroup.name.blaze' },
+      components: {},
+    });
+    const json = item.toJSON();
+    const desc = json['minecraft:item'].description;
+    expect(desc.group).toBe('itemGroup.name.test');
+    expect(desc.is_hidden_in_commands).toBe(true);
+    expect(desc.menu_category).toEqual({
+      category: 'equipment',
+      group: 'itemGroup.name.blaze',
+    });
+  });
+
+  it('should get/set menu_category, group, and is_hidden_in_commands', () => {
+    const item = new ItemComponent({
+      id: 'test:item', format: '1.21.0', components: {},
+    });
+    item.setMenuCategory('construction');
+    expect(item.getMenuCategory()).toEqual({ category: 'construction' });
+    item.setMenuCategory({ group: 'itemGroup.name.test', is_hidden_in_commands: true });
+    expect(item.getMenuCategory()).toEqual({
+      category: 'construction',
+      group: 'itemGroup.name.test',
+      is_hidden_in_commands: true,
+    });
+    item.setGroup('itemGroup.name.another');
+    item.setIsHiddenInCommands(false);
+    expect(item.getGroup()).toBe('itemGroup.name.another');
+    expect(item.getIsHiddenInCommands()).toBe(false);
+    const json = item.toJSON();
+    const desc = json['minecraft:item'].description;
+    expect(desc.menu_category).toEqual({
+      category: 'construction',
+      group: 'itemGroup.name.test',
+      is_hidden_in_commands: true,
+    });
+    expect(desc.group).toBe('itemGroup.name.another');
+    expect(desc.is_hidden_in_commands).toBe(false);
+  });
+
+  it('should throw when group exceeds 256 characters', () => {
+    const item = new ItemComponent({
+      id: 'test:item', format: '1.21.0', components: {},
+    });
+    expect(() => item.setGroup('x'.repeat(257))).toThrow('256');
+    item.setGroup('valid');
+    expect(() =>
+      item.setMenuCategory({ group: 'y'.repeat(257) }),
+    ).toThrow('256');
+  });
 });
 
 describe('BlockComponent', () => {

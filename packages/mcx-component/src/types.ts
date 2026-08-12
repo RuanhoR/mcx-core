@@ -22,6 +22,7 @@ export type {
   Rarity,
   FoodEffect,
   ItemComponentOptions,
+  MenuCategory,
   BlockComponentOptions,
   EntityComponentOptions,
   AddRiderConfig,

@@ -38,6 +38,45 @@ class ItemComponent {
     } else {
       throw new Error('[compile component]: no id');
     }
+    const description = result['minecraft:item'].description;
+    if (typeof this.#opt.group == 'string' && this.#opt.group.trim()) {
+      if (this.#opt.group.length > 256) {
+        throw new Error(
+          '[compile component]: description: group name limited to 256 characters',
+        );
+      }
+      description.group = this.#opt.group;
+    }
+    if (typeof this.#opt.is_hidden_in_commands == 'boolean') {
+      description.is_hidden_in_commands = this.#opt.is_hidden_in_commands;
+    }
+    if (this.#opt.menu_category) {
+      const menuCategory: Record<string, unknown> = {};
+      if (
+        typeof this.#opt.menu_category.category == 'string' &&
+        this.#opt.menu_category.category.trim()
+      ) {
+        menuCategory.category = this.#opt.menu_category.category;
+      }
+      if (
+        typeof this.#opt.menu_category.group == 'string' &&
+        this.#opt.menu_category.group.trim()
+      ) {
+        if (this.#opt.menu_category.group.length > 256) {
+          throw new Error(
+            '[compile component]: menu_category: group name limited to 256 characters',
+          );
+        }
+        menuCategory.group = this.#opt.menu_category.group;
+      }
+      if (typeof this.#opt.menu_category.is_hidden_in_commands == 'boolean') {
+        menuCategory.is_hidden_in_commands =
+          this.#opt.menu_category.is_hidden_in_commands;
+      }
+      if (Object.keys(menuCategory).length > 0) {
+        description.menu_category = menuCategory as t.MenuCategory;
+      }
+    }
     const ApplyComponents = result['minecraft:item'].components;
     if (typeof this.#opt.name == 'string') {
       ApplyComponents['minecraft:display_name'] = {
@@ -2930,6 +2969,92 @@ class ItemComponent {
    */
   public getId() {
     return this.#opt.id;
+  }
+  /**
+   * set creative menu category
+   * @param config {string | {category?: string, group?: string, is_hidden_in_commands?: boolean}} category or full menu_category config
+   */
+  public setMenuCategory(
+    config:
+      | string
+      | {
+          category?: string;
+          group?: string;
+          is_hidden_in_commands?: boolean;
+        },
+  ): void {
+    if (typeof config == 'string') {
+      if (!config.trim()) throw new TypeError('[set error]: menuCategory: category type error');
+      this.#opt.menu_category = {
+        ...this.#opt.menu_category,
+        category: config,
+      };
+      return;
+    }
+    if (typeof config != 'object' || config === null) {
+      throw new TypeError('[set error]: menuCategory: config type error');
+    }
+    const existing = this.#opt.menu_category || {};
+    if (config.category !== undefined) {
+      if (typeof config.category != 'string' || !config.category.trim())
+        throw new TypeError('[set error]: menuCategory: category type error');
+      existing.category = config.category;
+    }
+    if (config.group !== undefined) {
+      if (typeof config.group != 'string' || !config.group.trim())
+        throw new TypeError('[set error]: menuCategory: group type error');
+      if (config.group.length > 256)
+        throw new Error(
+          '[set error]: menuCategory: group name limited to 256 characters',
+        );
+      existing.group = config.group;
+    }
+    if (config.is_hidden_in_commands !== undefined) {
+      if (typeof config.is_hidden_in_commands != 'boolean')
+        throw new TypeError(
+          '[set error]: menuCategory: is_hidden_in_commands type error',
+        );
+      existing.is_hidden_in_commands = config.is_hidden_in_commands;
+    }
+    this.#opt.menu_category = existing;
+  }
+  /**
+   * get creative menu category
+   */
+  public getMenuCategory(): t.MenuCategory | undefined {
+    return this.#opt.menu_category;
+  }
+  /**
+   * set description creative group
+   * @param group {string} group name (max 256 chars)
+   */
+  public setGroup(group: string): void {
+    if (typeof group != 'string' || !group.trim())
+      throw new TypeError('[set error]: group: type error');
+    if (group.length > 256)
+      throw new Error('[set error]: group: name limited to 256 characters');
+    this.#opt.group = group;
+  }
+  /**
+   * get description creative group
+   */
+  public getGroup(): string | undefined {
+    return this.#opt.group;
+  }
+  /**
+   * set description is_hidden_in_commands
+   * @param value {boolean} whether this item can be used with commands
+   */
+  public setIsHiddenInCommands(value: boolean): void {
+    if (typeof value != 'boolean')
+      throw new TypeError('[set error]: isHiddenInCommands: type error');
+    this.#opt.is_hidden_in_commands = value;
+  }
+  /**
+   * get description is_hidden_in_commands
+   */
+  public getIsHiddenInCommands(): boolean | undefined {
+    return this.#opt.is_hidden_in_commands;
   }
   /**
    * setAllowOffHand

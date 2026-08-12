@@ -2,11 +2,8 @@ import * as Module from 'node:module';
 import * as vm from 'node:vm';
 import { Buffer } from 'node:buffer';
 import * as t from '@babel/types';
-import { parse } from '@babel/parser';
-import * as generator from '@babel/generator';
 import { transformESMToCJS } from './cjsTransform';
-import { TransformPluginContext } from 'rollup';
-import { resolveFileSync, resolveSync } from '../compile-mcx/compiler/resolve';
+import { resolveSync } from '../compile-mcx/compiler/resolve';
 import ts from 'typescript';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
@@ -14,6 +11,7 @@ import {
   createImageTransformCode,
   IMAGE_EXTS,
 } from '../compile-mcx/compiler/image';
+import { MINECRAFT_MOCK, MINECRAFT_MOCK_SCOPE } from './minecraftMock';
 // Enumerate the methods for converting ESM to CJS
 export enum execESMMethod {
   transformCjs = 0,
@@ -74,23 +72,15 @@ export class RunScript {
       return this._context.exports || rel;
     }
   }
-  private proxyRequire(origin: typeof require) {
+  private proxyRequire(origin: typeof require, basePath: string = this.filePath) {
     return (id: string) => {
-      const exports = {};
-      const module = {
-        exports,
-        filename: this.filePath,
-        path: this.filePath,
-        paths: require.resolve.paths(this.filePath) || [],
-        id: this.filePath,
-      };
-      const context = vm.createContext({
-        exports,
-        module,
-        require: this.proxyRequire(Module.createRequire(this.filePath)),
-      });
-      const resolved = resolveSync(id, this.filePath);
-      if (!resolved) throw new TypeError('Cannot find module ' + id);
+      const resolved = resolveSync(id, basePath);
+      if (!resolved) {
+        if (id.startsWith(MINECRAFT_MOCK_SCOPE)) {
+          return MINECRAFT_MOCK;
+        }
+        throw new TypeError('Cannot find module ' + id);
+      }
       if (
         resolved?.endsWith('.js') ||
         resolved?.endsWith('.mjs') ||
@@ -113,6 +103,7 @@ export class RunScript {
             },
           ).outputText;
           const compiledCode = transformESMToCJS(transformed);
+          const context = this.createModuleContext(resolved);
           const script = new vm.Script(compiledCode, { filename: resolved });
           const rel = script.runInContext(context);
           return context.module.exports || rel;
@@ -123,6 +114,7 @@ export class RunScript {
               resolved as string,
               ext,
             );
+            const context = this.createModuleContext(resolved);
             const script = new vm.Script(transformed, {
               filename: resolved as string,
             });
@@ -133,6 +125,21 @@ export class RunScript {
       }
       throw new TypeError('Unknown File ' + resolved);
     };
+  }
+  private createModuleContext(basePath: string): vm.Context {
+    const exports = {};
+    const module = {
+      exports,
+      filename: basePath,
+      path: basePath,
+      paths: require.resolve.paths(basePath) || [],
+      id: basePath,
+    };
+    return vm.createContext({
+      exports,
+      module,
+      require: this.proxyRequire(Module.createRequire(basePath), basePath),
+    });
   }
   private getContext(): vm.Context {
     // CJS context setup

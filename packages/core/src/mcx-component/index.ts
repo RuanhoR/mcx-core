@@ -14,6 +14,11 @@ export { resolveFilePoint, execEdit } from './fileEdit';
 export { collectExportSources, checkComponentImports } from './importScan';
 export { generateItemTextureJson } from './texture';
 export * from './vm';
+export {
+  MINECRAFT_MOCK,
+  MINECRAFT_MOCK_SCOPE,
+  createMock,
+} from './minecraftMock';
 
 /**
  * Compile a single MCX component: parse its source, validate imports, execute

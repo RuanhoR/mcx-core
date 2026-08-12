@@ -662,7 +662,9 @@ class EntityComponent {
           mobEffectConfig !== void 0 &&
           mobEffectConfig.mob_effect !== void 0
         ) {
-          const effectConfig: Record<string, unknown> = { mob_effect: mobEffectConfig.mob_effect };
+          const effectConfig: Record<string, unknown> = {
+            mob_effect: mobEffectConfig.mob_effect,
+          };
           if (mobEffectConfig.ambient !== void 0)
             effectConfig.ambient = mobEffectConfig.ambient;
           if (mobEffectConfig.cooldown_time !== void 0)
@@ -771,11 +773,12 @@ class EntityComponent {
                 range_min: delayObj.range_min,
                 range_max: delayObj.range_max,
               };
-              const jumpDelay = jumpMovementConfig.jump_delay as { range_min?: number; range_max?: number };
-              if (jumpDelay.range_min === void 0)
-                delete jumpDelay.range_min;
-              if (jumpDelay.range_max === void 0)
-                delete jumpDelay.range_max;
+              const jumpDelay = jumpMovementConfig.jump_delay as {
+                range_min?: number;
+                range_max?: number;
+              };
+              if (jumpDelay.range_min === void 0) delete jumpDelay.range_min;
+              if (jumpDelay.range_max === void 0) delete jumpDelay.range_max;
               if (Object.keys(jumpDelay).length === 0)
                 delete jumpMovementConfig.jump_delay;
             }
@@ -837,7 +840,8 @@ class EntityComponent {
                       event: action.on_named.event,
                     };
                     if (action.on_named.target !== void 0)
-                      (actionObj.on_named as Record<string, unknown>).target = action.on_named.target;
+                      (actionObj.on_named as Record<string, unknown>).target =
+                        action.on_named.target;
                   }
                 }
                 return actionObj;
@@ -2396,12 +2400,16 @@ class EntityComponent {
     breeds_with?:
       | Array<{
           baby_type?: string;
-          breed_event?: string | { event: string; filters?: Record<string, unknown> };
+          breed_event?:
+            | string
+            | { event: string; filters?: Record<string, unknown> };
           mate_type?: string;
         }>
       | {
           baby_type?: string;
-          breed_event?: string | { event: string; filters?: Record<string, unknown> };
+          breed_event?:
+            | string
+            | { event: string; filters?: Record<string, unknown> };
           mate_type?: string;
         };
     causes_pregnancy?: boolean;

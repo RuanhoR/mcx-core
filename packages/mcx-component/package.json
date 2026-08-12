@@ -41,6 +41,7 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "@mbler/mcx-server": "^0.1.2-rc.5"
+    "@mbler/mcx-server": "^0.1.2-rc.5",
+    "@mbler/mcx-types": "workspace:*"
   }
 }

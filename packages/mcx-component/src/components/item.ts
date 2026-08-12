@@ -72,7 +72,11 @@ class ItemComponent {
         const minor = parseInt(formatParts[1]!);
         const patch = parseInt(formatParts[2] || '0');
 
-        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+        function isVersionGE(
+          reqMajor: number,
+          reqMinor: number,
+          reqPatch: number,
+        ): boolean {
           if (major > reqMajor) return true;
           if (major < reqMajor) return false;
           if (minor > reqMinor) return true;
@@ -146,7 +150,11 @@ class ItemComponent {
         const minor = parseInt(formatParts[1]!);
         const patch = parseInt(formatParts[2] || '0');
 
-        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+        function isVersionGE(
+          reqMajor: number,
+          reqMinor: number,
+          reqPatch: number,
+        ): boolean {
           if (major > reqMajor) return true;
           if (major < reqMajor) return false;
           if (minor > reqMinor) return true;
@@ -189,7 +197,11 @@ class ItemComponent {
         const minor = parseInt(formatParts[1]!);
         const patch = parseInt(formatParts[2] || '0');
 
-        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+        function isVersionGE(
+          reqMajor: number,
+          reqMinor: number,
+          reqPatch: number,
+        ): boolean {
           if (major > reqMajor) return true;
           if (major < reqMajor) return false;
           if (minor > reqMinor) return true;
@@ -238,7 +250,11 @@ class ItemComponent {
         const minor = parseInt(formatParts[1]!);
         const patch = parseInt(formatParts[2] || '0');
 
-        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+        function isVersionGE(
+          reqMajor: number,
+          reqMinor: number,
+          reqPatch: number,
+        ): boolean {
           if (major > reqMajor) return true;
           if (major < reqMajor) return false;
           if (minor > reqMinor) return true;
@@ -423,7 +439,11 @@ class ItemComponent {
         const minor = parseInt(formatParts[1]!);
         const patch = parseInt(formatParts[2] || '0');
 
-        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+        function isVersionGE(
+          reqMajor: number,
+          reqMinor: number,
+          reqPatch: number,
+        ): boolean {
           if (major > reqMajor) return true;
           if (major < reqMajor) return false;
           if (minor > reqMinor) return true;
@@ -543,7 +563,11 @@ class ItemComponent {
         const minor = parseInt(formatParts[1]!);
         const patch = parseInt(formatParts[2] || '0');
 
-        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+        function isVersionGE(
+          reqMajor: number,
+          reqMinor: number,
+          reqPatch: number,
+        ): boolean {
           if (major > reqMajor) return true;
           if (major < reqMajor) return false;
           if (minor > reqMinor) return true;
@@ -839,7 +863,11 @@ class ItemComponent {
         const minor = parseInt(formatParts[1]!);
         const patch = parseInt(formatParts[2] || '0');
 
-        function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+        function isVersionGE(
+          reqMajor: number,
+          reqMinor: number,
+          reqPatch: number,
+        ): boolean {
           if (major > reqMajor) return true;
           if (major < reqMajor) return false;
           if (minor > reqMinor) return true;
@@ -2811,20 +2839,22 @@ class ItemComponent {
       if (!this.#edit) this.#edit = [];
       let idx: number = -1;
       const idKey = '__icon_key__';
-      const found = this.#edit.find((v, i: number) => {
-        if (
-          v.type == 'batch' &&
-          v.options[0] &&
-          v.options[1] &&
-          v.options[0].id &&
-          v.options[0].id == idKey &&
-          v.options[1].id &&
-          v.options[1].id == `_w_${idKey}`
-        ) {
-          idx = i;
-          return true;
-        }
-      });
+      const found = this.#edit.find(
+        (v, i: number) => {
+          if (
+            v.type == 'batch' &&
+            v.options[0] &&
+            v.options[1] &&
+            v.options[0].id &&
+            v.options[0].id == idKey &&
+            v.options[1].id &&
+            v.options[1].id == `_w_${idKey}`
+          ) {
+            idx = i;
+            return true;
+          }
+        },
+      );
       if (found && idx !== -1) {
         this.#edit.splice(idx, 1);
       }
@@ -2881,7 +2911,7 @@ class ItemComponent {
    * get name
    * @returns {string} name
    */
-  public getName(): string {
+  public getName(): string | undefined {
     return this.#opt.name;
   }
   /**
@@ -4481,7 +4511,11 @@ class ItemComponent {
     const minor = parseInt(formatParts[1]!);
     const patch = parseInt(formatParts[2] || '0');
 
-    function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+    function isVersionGE(
+      reqMajor: number,
+      reqMinor: number,
+      reqPatch: number,
+    ): boolean {
       if (major > reqMajor) return true;
       if (major < reqMajor) return false;
       if (minor > reqMinor) return true;
@@ -4669,7 +4703,11 @@ class ItemComponent {
     const minor = parseInt(formatParts[1]!);
     const patch = parseInt(formatParts[2] || '0');
 
-    function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+    function isVersionGE(
+      reqMajor: number,
+      reqMinor: number,
+      reqPatch: number,
+    ): boolean {
       if (major > reqMajor) return true;
       if (major < reqMajor) return false;
       if (minor > reqMinor) return true;
@@ -4850,7 +4888,11 @@ class ItemComponent {
     const minor = parseInt(formatParts[1]!);
     const patch = parseInt(formatParts[2] || '0');
 
-    function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+    function isVersionGE(
+      reqMajor: number,
+      reqMinor: number,
+      reqPatch: number,
+    ): boolean {
       if (major > reqMajor) return true;
       if (major < reqMajor) return false;
       if (minor > reqMinor) return true;
@@ -4904,7 +4946,11 @@ class ItemComponent {
     const minor = parseInt(formatParts[1]!);
     const patch = parseInt(formatParts[2] || '0');
 
-    function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+    function isVersionGE(
+      reqMajor: number,
+      reqMinor: number,
+      reqPatch: number,
+    ): boolean {
       if (major > reqMajor) return true;
       if (major < reqMajor) return false;
       if (minor > reqMinor) return true;
@@ -4965,7 +5011,11 @@ class ItemComponent {
     const minor = parseInt(formatParts[1]!);
     const patch = parseInt(formatParts[2] || '0');
 
-    function isVersionGE(reqMajor: number, reqMinor: number, reqPatch: number): boolean {
+    function isVersionGE(
+      reqMajor: number,
+      reqMinor: number,
+      reqPatch: number,
+    ): boolean {
       if (major > reqMajor) return true;
       if (major < reqMajor) return false;
       if (minor > reqMinor) return true;
@@ -5374,16 +5424,32 @@ class ItemComponent {
     this.#opt.components.canDestroyInCreative = value;
   }
 
-  public setSwingSounds(config: { sound: string } | { attack_critical_hit?: string; attack_hit?: string; attack_miss?: string }) {
-    (this.#opt.components as Record<string, unknown>)['minecraft:swing_sounds'] = config;
+  public setSwingSounds(
+    config:
+      | { sound: string }
+      | {
+          attack_critical_hit?: string;
+          attack_hit?: string;
+          attack_miss?: string;
+        },
+  ) {
+    (this.#opt.components as Record<string, unknown>)[
+      'minecraft:swing_sounds'
+    ] = config;
   }
 
   public setWeapon(config: Record<string, unknown>) {
-    (this.#opt.components as Record<string, unknown>)['minecraft:weapon'] = config;
+    (this.#opt.components as Record<string, unknown>)['minecraft:weapon'] =
+      config;
   }
 
-  public setKnockbackResistance(config: { value?: number; protection?: number }) {
-    (this.#opt.components as Record<string, unknown>)['minecraft:knockback_resistance'] = config;
+  public setKnockbackResistance(config: {
+    value?: number;
+    protection?: number;
+  }) {
+    (this.#opt.components as Record<string, unknown>)[
+      'minecraft:knockback_resistance'
+    ] = config;
   }
 
   public getIcon() {
@@ -5526,10 +5592,14 @@ class ItemComponent {
     return this.#opt.components['minecraft:swing_sounds'];
   }
   public getWeapon() {
-    return (this.#opt.components as Record<string, unknown>)['minecraft:weapon'];
+    return (this.#opt.components as Record<string, unknown>)[
+      'minecraft:weapon'
+    ];
   }
   public getKnockbackResistance() {
-    return (this.#opt.components as Record<string, unknown>)['minecraft:knockback_resistance'];
+    return (this.#opt.components as Record<string, unknown>)[
+      'minecraft:knockback_resistance'
+    ];
   }
 }
 export { ItemComponent };

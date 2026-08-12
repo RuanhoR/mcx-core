@@ -22,7 +22,7 @@ export function generateMain(
       return Utils.CacheToImportNode(item);
     },
   );
-  const programBody: t.Statement[] = code.node.body;
+  const programBody: t.Statement[] = [...code.node.body];
   for (const exp of code.BuildCache.export) {
     if (t.isExportNamedDeclaration(exp)) {
       if (

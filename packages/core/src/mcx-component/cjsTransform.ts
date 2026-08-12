@@ -3,6 +3,31 @@ import { ImportList } from '../compile-mcx/types';
 import * as t from '@babel/types';
 import { generateFileId } from '../transforms/file_id';
 import * as generator from '@babel/generator';
+
+/**
+ * Insert a declaration into body at the source position of the statement it
+ * was extracted from, so execution order (and const TDZ) is preserved.
+ */
+function insertAtSourcePosition(
+  body: t.Statement[],
+  node: t.Node,
+  start?: number | null,
+): void {
+  if (start == null) {
+    body.push(node as t.Statement);
+    return;
+  }
+  let index = body.length;
+  for (let j = 0; j < body.length; j++) {
+    const s = (body[j] as t.Node).start;
+    if (s != null && s > start) {
+      index = j;
+      break;
+    }
+  }
+  node.start = start;
+  body.splice(index, 0, node as t.Statement);
+}
 /**
  * ESM => CJS
  */
@@ -14,7 +39,7 @@ function transformESMToCJS(
   ) => void,
 ): string {
   const compileData = compileJSFn(code);
-  const body = compileData.node.body;
+  const body = [...compileData.node.body];
   const defines: t.VariableDeclarator[] = [];
   // import transform
   const importDefines = transformImportIRtoRequire(
@@ -67,7 +92,7 @@ function transformESMToCJS(
         }
         if (!i.declaration.id)
           i.declaration.id = t.identifier(generateFileId());
-        body.push(i.declaration);
+        insertAtSourcePosition(body, i.declaration, i.start);
         return t.assignmentExpression(
           '=',
           t.memberExpression(t.identifier('exports'), t.identifier('default')),
@@ -129,7 +154,7 @@ function transformESMToCJS(
               t.isVariableDeclaration(i.declaration)
             ) {
               if (t.isVariableDeclaration(i.declaration)) {
-                body.push(i.declaration);
+                insertAtSourcePosition(body, i.declaration, i.start);
                 const assignExprs = i.declaration.declarations.map(decl => {
                   const varName = (decl.id as t.Identifier).name;
                   return t.assignmentExpression(
@@ -154,7 +179,7 @@ function transformESMToCJS(
                   i.declaration.generator,
                   i.declaration.async,
                 );
-                body.push(funcDecl);
+                insertAtSourcePosition(body, funcDecl, i.start);
                 return t.assignmentExpression(
                   '=',
                   t.memberExpression(

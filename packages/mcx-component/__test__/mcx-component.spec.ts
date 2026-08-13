@@ -33,8 +33,17 @@ describe('ItemComponent', () => {
     });
     const json = item.toJSON();
     expect(json['minecraft:item'].description.identifier).toBe('test:item');
-    expect(json['minecraft:item'].components['minecraft:damage'].value).toBe(5);
-    expect(json['minecraft:item'].components['minecraft:allow_off_hand'].value).toBe(true);
+    expect(
+      (json['minecraft:item'].components['minecraft:damage'] as { value: number })
+        .value,
+    ).toBe(5);
+    expect(
+      (
+        json['minecraft:item'].components['minecraft:allow_off_hand'] as {
+          value: boolean;
+        }
+      ).value,
+    ).toBe(true);
   });
 
   it('should emit item definition description properties from options', () => {
@@ -87,11 +96,13 @@ describe('ItemComponent', () => {
     const item = new ItemComponent({
       id: 'test:item', format: '1.21.0', components: {},
     });
-    expect(() => item.setGroup('x'.repeat(257))).toThrow('256');
+    expect(() => {
+      item.setGroup('x'.repeat(257));
+    }).toThrow('256');
     item.setGroup('valid');
-    expect(() =>
-      item.setMenuCategory({ group: 'y'.repeat(257) }),
-    ).toThrow('256');
+    expect(() => {
+      item.setMenuCategory({ group: 'y'.repeat(257) });
+    }).toThrow('256');
   });
 });
 

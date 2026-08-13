@@ -88,7 +88,9 @@ describe('createOnceGuard', () => {
   it('should throw on second call', () => {
     const fn = createOnceGuard();
     fn();
-    expect(() => fn()).toThrow("can't enable again");
+    expect(() => {
+      fn();
+    }).toThrow("can't enable again");
   });
 });
 
@@ -103,6 +105,8 @@ describe('createOnceData', () => {
   it('should throw on second call', () => {
     const fn = createOnceData<string>();
     fn('hello');
-    expect(() => fn('world')).toThrow("can't enable again");
+    expect(() => {
+      fn('world');
+    }).toThrow("can't enable again");
   });
 });

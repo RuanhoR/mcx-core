@@ -76,9 +76,13 @@ export class Computation {
     for (const depFn of this.__deps) {
       const dep = depFn(ctx);
       if (dep instanceof Ref) {
-        const handler = () => fn();
+        const handler = () => {
+          fn();
+        };
         dep.subscribe(handler);
-        this.__cleanupFns.push(() => dep.unsubscribe(handler));
+        this.__cleanupFns.push(() => {
+          dep.unsubscribe(handler);
+        });
       }
     }
   }

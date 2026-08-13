@@ -2880,14 +2880,16 @@ class ItemComponent {
       const idKey = '__icon_key__';
       const found = this.#edit.find(
         (v, i: number) => {
+          const options = v.options as Array<{ id?: string }> | undefined;
           if (
             v.type == 'batch' &&
-            v.options[0] &&
-            v.options[1] &&
-            v.options[0].id &&
-            v.options[0].id == idKey &&
-            v.options[1].id &&
-            v.options[1].id == `_w_${idKey}`
+            options &&
+            options[0] &&
+            options[1] &&
+            options[0].id &&
+            options[0].id == idKey &&
+            options[1].id &&
+            options[1].id == `_w_${idKey}`
           ) {
             idx = i;
             return true;

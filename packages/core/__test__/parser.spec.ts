@@ -15,8 +15,8 @@ describe('AST tag parser - error handling', () => {
     );
     const result = ast.parseAST();
     expect(result.length).toBe(2);
-    expect(result[1]!.name).toBe('parent');
-    const child = result[1]!.content[0] as ParsedTagNode;
+    expect(result[1]?.name).toBe('parent');
+    const child = result[1]?.content[0] as ParsedTagNode;
     expect(child.name).toBe('child');
     const text = child.content[0] as ParsedTagContentNode;
     expect(text.data).toBe('text');

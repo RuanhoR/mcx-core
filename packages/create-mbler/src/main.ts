@@ -64,7 +64,8 @@ export function createCliApp() {
       },
     ])) as InputResult;
     if (await fileExists(resolve(inputResult.createAt))) {
-      return console.error('Dir is exists, cannot create again');
+      console.error('Dir is exists, cannot create again');
+      return;
     }
     await initProject(inputResult);
   });

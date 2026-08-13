@@ -27,7 +27,7 @@ export class App {
     return new Event(eventOpt, mcx => this._loadEventMCX(mcx));
   }
   private _exec_setup(
-    MCXSetup: (ctx: MCXCtx) => Record<string, unknown>,
+    MCXSetup: (ctx: MCXCtx) => unknown,
     opt: MCXCtx,
   ): Record<string, unknown> {
     const ctx: MCXCtx = opt;
@@ -37,7 +37,7 @@ export class App {
         "[mcx runtime]: can't exec setup: setup response is not object",
       );
     }
-    return response;
+    return response as Record<string, unknown>;
   }
   public mount(world: World) {
     const ctx: MCXCtx = {};

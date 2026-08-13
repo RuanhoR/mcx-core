@@ -91,8 +91,14 @@ describe('RunScript: nested relative module resolution', () => {
 
 describe('minecraftMock', () => {
   it('should return stubs for arbitrary member access', () => {
-    const value = (MINECRAFT_MOCK as Record<string, unknown>).world.system
-      .run;
+    const value = (
+      (
+        (MINECRAFT_MOCK as Record<string, unknown>).world as Record<
+          string,
+          unknown
+        >
+      ).system as Record<string, unknown>
+    ).run;
     expect(typeof value).toBe('function');
   });
 

@@ -82,16 +82,16 @@ export class RunScript {
         throw new TypeError('Cannot find module ' + id);
       }
       if (
-        resolved?.endsWith('.js') ||
-        resolved?.endsWith('.mjs') ||
-        resolved?.endsWith('.cjs')
+        resolved.endsWith('.js') ||
+        resolved.endsWith('.mjs') ||
+        resolved.endsWith('.cjs')
       ) {
         return origin(resolved);
       } else {
         if (
-          resolved?.endsWith('.ts') ||
-          resolved?.endsWith('.mts') ||
-          resolved?.endsWith('.cts')
+          resolved.endsWith('.ts') ||
+          resolved.endsWith('.mts') ||
+          resolved.endsWith('.cts')
         ) {
           const transformed = ts.transpileModule(
             readFileSync(resolved, 'utf-8'),

@@ -13,7 +13,7 @@ interface CompileOpt {
 }
 interface EventOpt {
   on: 'after' | 'before';
-  data: Record<string, (event: any) => void>;
+  data: Record<string, (event: unknown) => void>;
   extends?: MCXFile<'event'>[];
   tick?: number;
 }
@@ -35,7 +35,7 @@ interface MCXUIOpt {
 declare class ui {
   constructor(
     UIConfig: MCXUIOpt,
-    mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, any> }) => any,
+    mcxSrcFn: (ctx: MCXCtx & { $prop?: Record<string, unknown> }) => any,
   );
   show(player: Player, prop?: Record<string, unknown>): Promise<void>;
 }
@@ -57,7 +57,7 @@ type MCXCtx = {
 
 interface MCXFileBase {
   type: MCXFileType;
-  setup: (ctx: MCXCtx) => any;
+  setup: (ctx: MCXCtx) => unknown;
 }
 interface AppMCXContent {
   event: MCXFile<'event'>[];
@@ -88,7 +88,7 @@ interface BaseJson {
   format_version: string;
   _meta: {
     type: 'item' | 'entity';
-    file_edit?: Array<Record<string, any>>;
+    file_edit?: Array<Record<string, unknown>>;
   };
 }
 
@@ -103,9 +103,9 @@ interface EntityJson extends BaseJson {
       is_spawnable?: boolean;
       is_summonable?: boolean;
     };
-    component_groups?: Record<string, any>;
-    components?: Record<string, any>;
-    events?: Record<string, any>;
+    component_groups?: Record<string, unknown>;
+    components?: Record<string, unknown>;
+    events?: Record<string, unknown>;
   };
 }
 
@@ -121,7 +121,7 @@ interface ItemJson extends BaseJson {
       group?: string;
       is_hidden_in_commands?: boolean;
     };
-    components: Record<string, any>;
+    components: Record<string, unknown>;
   };
 }
 
@@ -1146,7 +1146,7 @@ interface MobEffectConfig {
   cooldown_time?: number;
   effect_range?: number;
   effect_time?: number | 'infinite';
-  entity_filter?: Record<string, any>;
+  entity_filter?: Record<string, unknown>;
 }
 
 interface JumpMovementConfig {
@@ -1481,14 +1481,53 @@ interface EntityComponentOptions {
     'minecraft:navigation.hover'?: NavigationConfig;
     'minecraft:navigation.swim'?: NavigationConfig;
     'minecraft:navigation.walk'?: NavigationConfig;
-    'minecraft:offspring'?: Record<string, any>;
+    'minecraft:offspring'?: OffspringConfig;
     'minecraft:out_of_control'?: Record<string, unknown>;
     'minecraft:peek'?: Record<string, unknown>;
     'minecraft:persistent'?: Record<string, unknown>;
     'minecraft:physics'?: Record<string, unknown>;
     'minecraft:player.exhaustion'?: { max?: number; value?: number };
-    'minecraft:preferred_path'?: Record<string, any>;
+    'minecraft:preferred_path'?: PreferredPathConfig;
   }>;
+}
+
+interface OffspringConfig {
+  born_event?: string;
+  cooldown?: number;
+  mutation_factor?: {
+    color?: number;
+    gene?: number;
+    extra?: number;
+    health?: number;
+    speed?: number;
+  };
+  breed_event?: string;
+  breed_items?: Array<{ item?: string; entity_type?: string }>;
+  delayed_growth?: boolean;
+  deny_parents_baby_variant?: boolean;
+  grow_up_duration?: number;
+  initial_variant?: number;
+  inheritance_chance?: {
+    angry?: number;
+    attacker?: number;
+    color?: number;
+    gene?: number;
+    variant?: number;
+  };
+  num_variants?: number;
+  parent_centric_attribute_blending?: {
+    attribute?: string;
+    dampening?: number;
+  };
+  should_baby_face_parent?: boolean;
+  variants?: Record<string, unknown>;
+}
+
+interface PreferredPathConfig {
+  default_block_cost?: number;
+  jump_cost?: number;
+  max_fall_blocks?: number;
+  preferred_path_blocks?: Array<string | { name?: string; tags?: string[] }>;
 }
 
 export type {
@@ -1515,6 +1554,8 @@ export type {
   JumpMovementConfig,
   NavigationConfig,
   NavigationFloatConfig,
+  OffspringConfig,
+  PreferredPathConfig,
   EntityComponentOptions,
   BaseJson,
   EntityJson,

@@ -313,8 +313,8 @@ function parseContentForm(raw: string): t.Expression {
 
   const parts = splitInterpolation(raw);
 
-  if (parts.length === 1 && parts[0]!.type === 'expr') {
-    return simpleFn(parts[0]!.value);
+  if (parts.length === 1 && parts[0]?.type === 'expr') {
+    return simpleFn(parts[0]?.value);
   }
 
   const quasis: t.TemplateElement[] = [];
@@ -348,8 +348,8 @@ function parseContent(raw: string): t.Expression {
 
   const parts = splitInterpolation(raw);
 
-  if (parts.length === 1 && parts[0]!.type === 'expr') {
-    return simpleFn(parts[0]!.value);
+  if (parts.length === 1 && parts[0]?.type === 'expr') {
+    return simpleFn(parts[0]?.value);
   }
 
   const quasis: t.TemplateElement[] = [];

@@ -59,7 +59,7 @@ export default class Utils {
   public static CacheToImportNode(ir: ImportList): t.ImportDeclaration {
     if (!ir) throw new TypeError('plase call use right ImportList');
     // first verify ir.raw
-    if (ir?.raw && Utils.CheckImportNode(ir?.raw, ir)) return ir.raw;
+    if (ir.raw && Utils.CheckImportNode(ir?.raw, ir)) return ir.raw;
     const result: Array<
       t.ImportNamespaceSpecifier | t.ImportSpecifier | t.ImportDefaultSpecifier
     > = [];

@@ -240,7 +240,9 @@ describe('App', () => {
       app: { event: [eventMcx] },
     } as unknown as MCXFile<'app'>);
     const { world: w } = await import('@minecraft/server');
-    expect(() => app.mount(w)).toThrow();
+    expect(() => {
+      app.mount(w);
+    }).toThrow();
   });
 
   it('should handle mount without events', async () => {
@@ -250,7 +252,9 @@ describe('App', () => {
       app: {},
     } as unknown as MCXFile<'app'>);
     const { world: w } = await import('@minecraft/server');
-    expect(() => app.mount(w)).not.toThrow();
+    expect(() => {
+      app.mount(w);
+    }).not.toThrow();
   });
 });
 
@@ -483,8 +487,8 @@ describe('Command', () => {
     cmd.addMandatoryParameter('target', 'player');
     const customCmd = cmd.toCustomCommand();
     expect(customCmd.mandatoryParameters).toHaveLength(1);
-    expect(customCmd.mandatoryParameters![0]!.name).toBe('target');
-    expect(customCmd.mandatoryParameters![0]!.type).toBe('PlayerSelector');
+    expect(customCmd.mandatoryParameters![0]?.name).toBe('target');
+    expect(customCmd.mandatoryParameters![0]?.type).toBe('PlayerSelector');
   });
 
   it('should add optional parameters with object type', () => {
@@ -492,8 +496,8 @@ describe('Command', () => {
     cmd.addOptionalParameter('count', { type: 'number', min: 0, max: 99 });
     const customCmd = cmd.toCustomCommand();
     expect(customCmd.optionalParameters).toHaveLength(1);
-    expect(customCmd.optionalParameters![0]!.name).toBe('count');
-    expect(customCmd.optionalParameters![0]!.type).toBe('Float');
+    expect(customCmd.optionalParameters![0]?.name).toBe('count');
+    expect(customCmd.optionalParameters![0]?.type).toBe('Float');
   });
 
   it('should support builder pattern', () => {
@@ -521,17 +525,17 @@ describe('Command', () => {
       .addMandatoryParameter('j', 'enum')
       .addOptionalParameter('k', 'integer');
     const customCmd = cmd.toCustomCommand();
-    expect(customCmd.mandatoryParameters![0]!.type).toBe('Boolean');
-    expect(customCmd.mandatoryParameters![1]!.type).toBe('Float');
-    expect(customCmd.mandatoryParameters![2]!.type).toBe('String');
-    expect(customCmd.mandatoryParameters![3]!.type).toBe('PlayerSelector');
-    expect(customCmd.mandatoryParameters![4]!.type).toBe('EntitySelector');
-    expect(customCmd.mandatoryParameters![5]!.type).toBe('EntityType');
-    expect(customCmd.mandatoryParameters![6]!.type).toBe('BlockType');
-    expect(customCmd.mandatoryParameters![7]!.type).toBe('ItemType');
-    expect(customCmd.mandatoryParameters![8]!.type).toBe('Location');
-    expect(customCmd.mandatoryParameters![9]!.type).toBe('Enum');
-    expect(customCmd.optionalParameters![0]!.type).toBe('Integer');
+    expect(customCmd.mandatoryParameters![0]?.type).toBe('Boolean');
+    expect(customCmd.mandatoryParameters![1]?.type).toBe('Float');
+    expect(customCmd.mandatoryParameters![2]?.type).toBe('String');
+    expect(customCmd.mandatoryParameters![3]?.type).toBe('PlayerSelector');
+    expect(customCmd.mandatoryParameters![4]?.type).toBe('EntitySelector');
+    expect(customCmd.mandatoryParameters![5]?.type).toBe('EntityType');
+    expect(customCmd.mandatoryParameters![6]?.type).toBe('BlockType');
+    expect(customCmd.mandatoryParameters![7]?.type).toBe('ItemType');
+    expect(customCmd.mandatoryParameters![8]?.type).toBe('Location');
+    expect(customCmd.mandatoryParameters![9]?.type).toBe('Enum');
+    expect(customCmd.optionalParameters![0]?.type).toBe('Integer');
   });
 
   it('should set permission level', () => {
@@ -578,16 +582,16 @@ describe('registryCommand', () => {
   });
 
   it('should register all queued commands at startup', () => {
-    const startupCb = startupSubscribeMock.mock.calls[0]![0];
+    const startupCb = startupSubscribeMock.mock.calls[0]?.[0];
     const mockRegistry = {
       registerCommand: registerCommandMock,
       registerEnum: registerEnumMock,
     };
     startupCb({ customCommandRegistry: mockRegistry });
     expect(registerCommandMock).toHaveBeenCalledTimes(3);
-    expect(registerCommandMock.mock.calls[0]![0]!.name).toBe('my:cmd01');
-    expect(registerCommandMock.mock.calls[1]![0]!.name).toBe('my:cmd02');
-    expect(registerCommandMock.mock.calls[2]![0]!.name).toBe('my:actcmd');
+    expect(registerCommandMock.mock.calls[0]?.[0]?.name).toBe('my:cmd01');
+    expect(registerCommandMock.mock.calls[1]![0]?.name).toBe('my:cmd02');
+    expect(registerCommandMock.mock.calls[2]![0]?.name).toBe('my:actcmd');
   });
 
   it('should error when registering via registryCommand after startup', () => {
@@ -595,7 +599,7 @@ describe('registryCommand', () => {
     const cmd = new Command('my:cmd03');
     registryCommand(cmd);
     expect(consoleSpy).toHaveBeenCalled();
-    expect(consoleSpy.mock.calls[0]![0]).toContain('Cannot register command');
+    expect(consoleSpy.mock.calls[0]?.[0]).toContain('Cannot register command');
     consoleSpy.mockRestore();
   });
 
@@ -604,7 +608,7 @@ describe('registryCommand', () => {
     const cmd = new Command('my:actafter');
     cmd.action(() => ({ status: 0 }));
     expect(consoleSpy).toHaveBeenCalled();
-    expect(consoleSpy.mock.calls[0]![0]).toContain('Cannot register command');
+    expect(consoleSpy.mock.calls[0]?.[0]).toContain('Cannot register command');
     consoleSpy.mockRestore();
   });
 });

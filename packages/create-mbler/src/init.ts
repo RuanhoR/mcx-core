@@ -57,7 +57,7 @@ async function getLatestPackageVersion(
     const data = (await response.json()) as {
       'dist-tags': { latest?: string };
     };
-    const latestVersion = data['dist-tags']?.latest;
+    const latestVersion = data['dist-tags'].latest;
     if (!latestVersion) {
       throw new Error(`No version information found for package "${pkgName}"`);
     }

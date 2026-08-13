@@ -225,7 +225,7 @@ describe('Form transform (legacy FormData)', () => {
       '<script>export const prop = ["name"]; export function handler() {}</script><Form><input placeholderText="input name">{{ name }}</input><title>Form</title></Form>',
     );
     expect(cd.strLoc.Form).toBeDefined();
-    expect(cd.strLoc.Form!.name).toBe('Form');
+    expect(cd.strLoc.Form?.name).toBe('Form');
   });
 
   it('should generate {{ }} content as (s) => expr in output for Form', async () => {
@@ -355,7 +355,7 @@ describe('Ui transform (CustomForm)', () => {
       '<script>export const prop = ["name"]</script><Ui><title>Form</title><input>{{ name }}</input></Ui>',
     );
     expect(cd.strLoc.UI).toBeDefined();
-    expect(cd.strLoc.UI!.name).toBe('Ui');
+    expect(cd.strLoc.UI?.name).toBe('Ui');
   });
 
   it('should generate layout with mode ui for Ui', async () => {
@@ -413,30 +413,30 @@ describe('AST - prop parser', () => {
     const lexer = new Lexer('a=1\nb=2\nc=hello');
     const result = Array.from(lexer.tokenize());
     expect(result).toHaveLength(3);
-    expect(result[0]!.key).toBe('a');
-    expect(result[0]!.value).toBe(1);
-    expect(result[1]!.value).toBe(2);
-    expect(result[2]!.value).toBe('hello');
+    expect(result[0]?.key).toBe('a');
+    expect(result[0]?.value).toBe(1);
+    expect(result[1]?.value).toBe(2);
+    expect(result[2]?.value).toBe('hello');
   });
 
   it('should parse JSON array value props', () => {
     const lexer = new Lexer('data=[1,2,3]');
     const result = Array.from(lexer.tokenize());
-    expect(result[0]!.value).toEqual([1, 2, 3]);
+    expect(result[0]?.value).toEqual([1, 2, 3]);
   });
 
   it('should parse JSON object value props', () => {
     const lexer = new Lexer('obj={"key":"val"}');
     const result = Array.from(lexer.tokenize());
-    expect(result[0]!.value).toEqual({ key: 'val' });
+    expect(result[0]?.value).toEqual({ key: 'val' });
   });
 
   it('should parse single prop without newline', () => {
     const lexer = new Lexer('a=42');
     const result = Array.from(lexer.tokenize());
     expect(result).toHaveLength(1);
-    expect(result[0]!.key).toBe('a');
-    expect(result[0]!.value).toBe(42);
+    expect(result[0]?.key).toBe('a');
+    expect(result[0]?.value).toBe(42);
   });
 });
 
@@ -609,11 +609,11 @@ describe('AST - position/location tracking', () => {
     const result = ast.parseAST();
     const div = result[0]!;
     expect(div.end).not.toBeNull();
-    expect(div.end!.type).toBe('TagEnd');
-    expect(div.end!.start.line).toBe(1);
-    expect(div.end!.start.column).toBe(10);
-    expect(div.end!.end.line).toBe(1);
-    expect(div.end!.end.column).toBe(16);
+    expect(div.end?.type).toBe('TagEnd');
+    expect(div.end?.start.line).toBe(1);
+    expect(div.end?.start.column).toBe(10);
+    expect(div.end?.end.line).toBe(1);
+    expect(div.end?.end.column).toBe(16);
   });
 
   it('should have correct loc start/end on ParsedTagNode', () => {
@@ -637,7 +637,7 @@ describe('AST - position/location tracking', () => {
     expect(div.loc.start.column).toBeGreaterThan(0);
     expect(div.loc.end.line).toBe(3);
     expect(div.end).not.toBeNull();
-    expect(div.end!.start.line).toBe(3);
+    expect(div.end?.start.line).toBe(3);
   });
 
   it('should have correct relative positions for nested elements', () => {

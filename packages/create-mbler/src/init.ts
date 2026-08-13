@@ -1,12 +1,12 @@
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import spawn from 'cross-spawn';
 import { InputResult } from './types';
 import { stat, mkdir, cp, writeFile } from 'node:fs/promises';
 import sapi from './sapi';
 
 function spawnCmd(cmd: string, args: string[], cwd: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, { cwd, stdio: 'inherit', shell: true });
+    const child = spawn(cmd, args, { cwd, stdio: 'inherit' });
     child.on('close', code => {
       if (code === 0) resolve();
       else reject(new Error(`${cmd} exited with code ${code}`));

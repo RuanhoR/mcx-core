@@ -9,6 +9,7 @@ The core monorepo for **MCX** — a domain-specific language (DSL) for building 
   <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
   <img src="https://img.shields.io/badge/MCBE-Addon-7C3AED?style=for-the-badge" alt="MCBE Addon">
+  <a href="https://app.codacy.com/gh/RuanhoR/mcx-core/dashboard"><img src="https://app.codacy.com/project/badge/Grade/RuanhoR/mcx-core" alt="Codacy"></a>
 </p>
 
 </div>

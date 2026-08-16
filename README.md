@@ -3,13 +3,13 @@
 # mcx-core
 
 The core monorepo for **MCX** — a domain-specific language (DSL) for building Minecraft Bedrock Edition (MCBE) addons.
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/48f0484c6291499bad7c9226f0f03679)](https://app.codacy.com/gh/RuanhoR/mcx-core/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 <p>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
-  <img src="https://img.shields.io/badge/MCBE-Addon-7C3AED?style=for-the-badge" alt="MCBE Addon">
-  <a href="https://app.codacy.com/gh/RuanhoR/mcx-core/dashboard"><img src="https://app.codacy.com/project/badge/Grade/RuanhoR/mcx-core" alt="Codacy"></a>
+  <a href="https://learn.microsoft.com/en-us/minecraft/creator/?view=minecraft-bedrock-stable"><img src="https://img.shields.io/badge/MCBE-Addon-7C3AED?style=for-the-badge" alt="MCBE Addon"></a>
+  <a href="https://app.codacy.com/gh/RuanhoR/mcx-core/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="hhttps://app.codacy.com/project/badge/Grade/48f0484c6291499bad7c9226f0f03679" alt="Codacy"></a>
 </p>
 
 </div>
@@ -91,14 +91,14 @@ Below is a complete example showcasing all four MCX file types — Component, Ev
   </items>
 </Component>
 <script lang="ts">
-import { ItemComponent } from "@mbler/mcx-component";
+import { ItemComponent } from '@mbler/mcx-component';
 
 export const sword = new ItemComponent({
-  id: "demo:custom_sword",
-  name: "Custom Sword",
+  id: 'demo:custom_sword',
+  name: 'Custom Sword',
   components: {},
 });
-sword.setDam
+sword.setDam;
 </script>
 ```
 
@@ -109,17 +109,17 @@ sword.setDam
 playerJoin = onPlayerJoin
 </Event>
 <script lang="ts">
-import { world } from "@minecraft/server";
-import { showForm } from "@mbler/mcx";
-import form from "../ui/greeting.mcx"
+import { world } from '@minecraft/server';
+import { showForm } from '@mbler/mcx';
+import form from '../ui/greeting.mcx';
 export function onPlayerJoin(event: PlayerJoinAfterEvent) {
   const player = world.getPlayers({
-    name: event.playerName
+    name: event.playerName,
   });
-  player.sendMessage("Welcome to the server!");
+  player.sendMessage('Welcome to the server!');
   showForm(form, player, {
-    playerName: event.playerName
-  })
+    playerName: event.playerName,
+  });
 }
 </script>
 ```
@@ -153,18 +153,18 @@ Use `<Ui>` for new CustomForm with Observable reactive binding:
   <button click="handleSave">Save</button>
 </Ui>
 <script>
-import { onMounted, onStartup } from "@mbler/mcx";
+import { onMounted, onStartup } from '@mbler/mcx';
 
-const name = defineProp('Player')
-const enabled = defineProp(true)
+const name = defineProp('Player');
+const enabled = defineProp(true);
 
 onStartup(() => {
   // runs once on first show
-})
+});
 
 onMounted(() => {
   // runs every time form is shown
-})
+});
 
 function handleSave() {
   // name.getData() gets current value
@@ -176,21 +176,24 @@ function handleSave() {
 
 ```vue
 <script lang="ts">
-import event from "./events/player_join.mcx";
+import event from './events/player_join.mcx';
 event.subscribe();
 // also can use: event.subscribe("playerJoin")
 </script>
 ```
+
 ### 5. CreateApp in index.ts (`index.ts`)
+
 ```typescript
-import app from "./app.mcx";
-import { createApp } from "@mbler/mcx";
-import { world } from "@minecraft/server";
+import app from './app.mcx';
+import { createApp } from '@mbler/mcx';
+import { world } from '@minecraft/server';
 
 createApp(app).mount(world);
 ```
 
 ### More Usage See [Bedwars Addon](https://github.com/RuanhoR/mcbe-bedwars-addon)
+
 ## Quick Start
 
 ### Create a new project

@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-component",
-  "version": "0.0.1-rc.2",
+  "version": "0.0.2",
   "description": "MCX Component Runtime Classes",
   "main": "dist/index.js",
   "exports": {
@@ -41,7 +41,6 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "@mbler/mcx-server": "^0.1.4",
     "@mbler/mcx-types": "workspace:*"
   }
 }

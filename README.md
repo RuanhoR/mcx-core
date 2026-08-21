@@ -23,8 +23,6 @@ The core monorepo for **MCX** — a domain-specific language (DSL) for building 
 | Language | Link                                       |
 | -------- | ------------------------------------------ |
 | 中文     | [./docs/README.zh.md](./docs/README.zh.md) |
-| 한국어   | [./docs/README.ko.md](./docs/README.ko.md) |
-| 日本語   | [./docs/README.ja.md](./docs/README.ja.md) |
 
 ## Introduction
 

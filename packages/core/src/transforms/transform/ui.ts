@@ -6,8 +6,13 @@ import { buildUIConfig } from './layout';
 export async function Comp(ctx: transformParseCtx) {
   ctx.importDecls.push(
     t.importDeclaration(
-      [t.importSpecifier(t.identifier('__mcx__ui'), t.identifier('ui')),
-        t.importSpecifier(t.identifier('Computation'), t.identifier('Computation'))],
+      [
+        t.importSpecifier(t.identifier('__mcx__ui'), t.identifier('ui')),
+        t.importSpecifier(
+          t.identifier('__mcx__str'),
+          t.identifier('toDisplayString'),
+        ),
+      ],
       t.stringLiteral('@mbler/mcx'),
     ),
     t.importDeclaration(

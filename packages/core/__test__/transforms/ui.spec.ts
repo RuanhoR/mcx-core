@@ -60,8 +60,8 @@ function compileMCX(mcxSource: string): Promise<string> {
   );
 }
 
-describe('UI Transform - Computation import', () => {
-  it('should use arrow function for {{ }} interpolation in content (Ui mode)', async () => {
+describe('UI Transform - content interpolation', () => {
+  it('should wrap {{ }} interpolation with __mcx__str in content (Ui mode)', async () => {
     const mcxSource = `<Ui setup>
   <button :click="handleClick">hello {{ a }}</button>
 </Ui>
@@ -72,11 +72,39 @@ describe('UI Transform - Computation import', () => {
 </script>`;
 
     const code = await compileMCX(mcxSource);
-    expect(code).toContain('Computation');
+    expect(code).not.toContain('Computation');
     expect(code).toContain(
-      'import { ui as __mcx__ui, Computation } from "@mbler/mcx"',
+      'import { ui as __mcx__ui, toDisplayString as __mcx__str } from "@mbler/mcx"',
     );
-    expect(code).toContain('content: ctx => `hello ${ctx[0].a}`');
+    expect(code).toContain('content: ctx => `hello ${__mcx__str(ctx[0].a)}`');
+  });
+
+  it('should support interpolation without spaces around the expression', async () => {
+    const mcxSource = `<Ui setup>
+  <button :click="handleClick">hello {{a}}</button>
+</Ui>
+<script lang="ts">
+  const a = 1;
+  function handleClick() {}
+  export { a, handleClick };
+</script>`;
+
+    const code = await compileMCX(mcxSource);
+    expect(code).toContain('content: ctx => `hello ${__mcx__str(ctx[0].a)}`');
+  });
+
+  it('should wrap single-expression interpolation with __mcx__str', async () => {
+    const mcxSource = `<Ui setup>
+  <button :click="handleClick">{{ a }}</button>
+</Ui>
+<script lang="ts">
+  const a = 1;
+  function handleClick() {}
+  export { a, handleClick };
+</script>`;
+
+    const code = await compileMCX(mcxSource);
+    expect(code).toContain('content: ctx => __mcx__str(ctx[0].a)');
   });
 
   it('should use arrow function for static content (Ui mode)', async () => {
@@ -90,9 +118,8 @@ describe('UI Transform - Computation import', () => {
 </script>`;
 
     const code = await compileMCX(mcxSource);
-    expect(code).toContain('Computation');
     expect(code).toContain(
-      'import { ui as __mcx__ui, Computation } from "@mbler/mcx"',
+      'import { ui as __mcx__ui, toDisplayString as __mcx__str } from "@mbler/mcx"',
     );
     expect(code).toContain('content: ctx => "hello"');
   });

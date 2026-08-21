@@ -28,6 +28,44 @@ class MessageFormDataMock {
   show = vi.fn().mockResolvedValue({ canceled: true });
 }
 
+class ObservableBase {
+  private v: unknown;
+  constructor(v: unknown) {
+    this.v = v;
+  }
+  getData(): unknown {
+    return this.v;
+  }
+  setData(v: unknown): void {
+    this.v = v;
+  }
+  subscribe(_fn: unknown): void {}
+  unsubscribe(_fn: unknown): void {}
+}
+class ObservableString extends ObservableBase {}
+class ObservableBoolean extends ObservableBase {}
+class ObservableNumber extends ObservableBase {}
+
+class CustomFormMock {
+  static instances: CustomFormMock[] = [];
+  textField = vi.fn();
+  toggle = vi.fn();
+  dropdown = vi.fn();
+  slider = vi.fn();
+  button = vi.fn();
+  label = vi.fn();
+  header = vi.fn();
+  divider = vi.fn();
+  spacer = vi.fn();
+  closeButton = vi.fn();
+  close = vi.fn();
+  show = vi.fn().mockResolvedValue({ canceled: true });
+  title = '';
+  constructor(..._args: unknown[]) {
+    CustomFormMock.instances.push(this);
+  }
+}
+
 const mockEvent = vi.hoisted(() => ({
   subscribe: vi.fn(),
   unsubscribe: vi.fn(),
@@ -81,6 +119,10 @@ vi.mock('@minecraft/server-ui', () => ({
   ModalFormData: ModalFormDataMock,
   ActionFormData: ActionFormDataMock,
   MessageFormData: MessageFormDataMock,
+  CustomForm: CustomFormMock,
+  ObservableString,
+  ObservableBoolean,
+  ObservableNumber,
 }));
 
 const { Event } = await import('../src/event');
@@ -90,6 +132,7 @@ const { generateAntiShake } = await import('../src/lib/Utils');
 const { App } = await import('../src/lib/App');
 const { Command, registryCommand } = await import('../src/command');
 const serverUI = await import('@minecraft/server-ui');
+const { ref } = await import('../src/ref');
 
 describe('Event', () => {
   it('should create Event with basic options', () => {
@@ -124,7 +167,7 @@ describe('Event', () => {
     new Event(
       {
         on: 'after',
-        data: { playerJoin: () => { } },
+        data: { playerJoin: () => {} },
         extends: [{} as unknown as MCXFile<'event'>],
       },
       extendLoader,
@@ -313,8 +356,16 @@ describe('ui', () => {
             content: () => 'Name',
             params: { placeholderText: () => 'Enter name' },
           },
-          { type: 'slider', content: () => 'Count', params: { min: () => '0', max: () => '10' } },
-          { type: 'toggle', content: () => 'Enable', params: { default: () => 'true' } },
+          {
+            type: 'slider',
+            content: () => 'Count',
+            params: { min: () => '0', max: () => '10' },
+          },
+          {
+            type: 'toggle',
+            content: () => 'Enable',
+            params: { default: () => 'true' },
+          },
           {
             type: 'dropdown',
             content: () => 'Color',
@@ -322,7 +373,11 @@ describe('ui', () => {
           },
           { type: 'body', content: () => 'Body text', params: {} },
           { type: 'divider', content: () => '', params: {} },
-          { type: 'submit', content: () => 'Go', params: { click: () => () => { } } },
+          {
+            type: 'submit',
+            content: () => 'Go',
+            params: { click: () => () => {} },
+          },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -337,7 +392,11 @@ describe('ui', () => {
         UI: serverUI,
         layout: [
           { type: 'title', content: () => 'Menu', params: {} },
-          { type: 'button', content: () => 'Option 1', params: { click: () => () => { } } },
+          {
+            type: 'button',
+            content: () => 'Option 1',
+            params: { click: () => () => {} },
+          },
           { type: 'body', content: () => 'Select option', params: {} },
           { type: 'divider', content: () => '', params: {} },
         ],
@@ -354,8 +413,16 @@ describe('ui', () => {
         UI: serverUI,
         layout: [
           { type: 'title', content: () => 'Confirm', params: {} },
-          { type: 'button-m', content: () => 'Yes', params: { click: () => () => { } } },
-          { type: 'button-m', content: () => 'No', params: { click: () => () => { } } },
+          {
+            type: 'button-m',
+            content: () => 'Yes',
+            params: { click: () => () => {} },
+          },
+          {
+            type: 'button-m',
+            content: () => 'No',
+            params: { click: () => () => {} },
+          },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -364,7 +431,7 @@ describe('ui', () => {
   });
 
   it('should throw for invalid UI type', async () => {
-    class FakeUI { }
+    class FakeUI {}
     const instance = new ui(
       {
         use: FakeUI as unknown as typeof serverUI.ModalFormData,
@@ -379,7 +446,9 @@ describe('ui', () => {
       },
       () => ({ prop: [] }),
     );
-    await expect(instance.show({} as Player, {})).rejects.toThrow('Invalid form type');
+    await expect(instance.show({} as Player, {})).rejects.toThrow(
+      'Invalid form type',
+    );
   });
 
   it('should accept string click for button as srcResult key', () => {
@@ -389,7 +458,11 @@ describe('ui', () => {
         use: serverUI.ActionFormData,
         UI: serverUI,
         layout: [
-          { type: 'button', content: () => 'Click', params: { click: () => clickFn } },
+          {
+            type: 'button',
+            content: () => 'Click',
+            params: { click: () => clickFn },
+          },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [], handler: clickFn }),
@@ -438,7 +511,11 @@ describe('ui', () => {
           MessageFormData: MessageFormDataMock,
         } as unknown as typeof serverUI,
         layout: [
-          { type: 'button', content: () => 'Go', params: { click: () => clickHandler } },
+          {
+            type: 'button',
+            content: () => 'Go',
+            params: { click: () => clickHandler },
+          },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -465,7 +542,11 @@ describe('ui', () => {
           MessageFormData: MessageMock,
         } as unknown as typeof serverUI,
         layout: [
-          { type: 'button-m', content: () => 'Yes', params: { click: () => clickHandler } },
+          {
+            type: 'button-m',
+            content: () => 'Yes',
+            params: { click: () => clickHandler },
+          },
         ],
       } as unknown as MCXUIOpt,
       () => ({ prop: [] }),
@@ -473,7 +554,115 @@ describe('ui', () => {
     await instance.show({} as Player, {});
     expect(mockShow).toHaveBeenCalled();
   });
+});
 
+describe('ui CustomForm mode (Ui)', () => {
+  beforeEach(() => {
+    CustomFormMock.instances.length = 0;
+  });
+
+  const createCustomUI = (layout: unknown[], setup: Record<string, unknown>) =>
+    new ui(
+      {
+        mode: 'ui',
+        use: serverUI.CustomForm,
+        UI: serverUI,
+        layout,
+      } as unknown as MCXUIOpt,
+      () => setup,
+    );
+
+  it('should bind raw Observable value directly to textField', async () => {
+    const obs = new serverUI.ObservableString('hello');
+    const instance = createCustomUI(
+      [
+        {
+          type: 'input',
+          content: () => 'Name',
+          params: {
+            value: (ctx: unknown[]) => (ctx[0] as { val: unknown }).val,
+          },
+        },
+      ],
+      { val: obs },
+    );
+    await instance.show({} as Player);
+    const form = CustomFormMock.instances[0]!;
+    expect(form.textField).toHaveBeenCalledTimes(1);
+    expect(form.textField.mock.calls[0]![1]).toBe(obs);
+  });
+
+  it('should unwrap Ref content into label string', async () => {
+    const nameRef = ref('Steve');
+    const instance = createCustomUI(
+      [{ type: 'input', content: () => nameRef, params: {} }],
+      {},
+    );
+    await instance.show({} as Player);
+    const form = CustomFormMock.instances[0]!;
+    expect(form.textField.mock.calls[0]![0]).toBe('Steve');
+  });
+
+  it('should pass ObservableBoolean(false) for :if instead of forcing visible', async () => {
+    const flagObs = new serverUI.ObservableBoolean(false);
+    const instance = createCustomUI(
+      [
+        {
+          type: 'input',
+          content: () => 'X',
+          params: {},
+          if: { useSetup: 'flag' },
+        },
+      ],
+      { flag: flagObs },
+    );
+    await instance.show({} as Player);
+    const form = CustomFormMock.instances[0]!;
+    const opts = form.textField.mock.calls[0]![2];
+    expect(opts.visible).toBe(flagObs);
+  });
+
+  it('should not disable element when bound ref is false', async () => {
+    const flagRef = ref(false);
+    const instance = createCustomUI(
+      [
+        {
+          type: 'input',
+          content: () => 'X',
+          params: { disabled: () => flagRef },
+        },
+      ],
+      {},
+    );
+    await instance.show({} as Player);
+    const form = CustomFormMock.instances[0]!;
+    const opts = form.textField.mock.calls[0]![2];
+    expect(opts.disabled).toBe(false);
+  });
+
+  it('should apply :disabled/:tip and :if inside for loops', async () => {
+    const list = ['a', 'b'];
+    const flagObs = new serverUI.ObservableBoolean(true);
+    const instance = createCustomUI(
+      [
+        {
+          type: 'input',
+          content: () => 'Item',
+          params: { disabled: () => true },
+          for: { variable: 'x', useSetup: 'list' },
+          if: { useSetup: 'flag' },
+        },
+      ],
+      { list, flag: flagObs },
+    );
+    await instance.show({} as Player);
+    const form = CustomFormMock.instances[0]!;
+    expect(form.textField).toHaveBeenCalledTimes(2);
+    for (const call of form.textField.mock.calls) {
+      expect(call[2]!.visible).toBe(flagObs);
+      expect(call[2]!.disabled).toBe(true);
+    }
+  });
 });
 
 describe('Command', () => {
@@ -539,8 +728,7 @@ describe('Command', () => {
   });
 
   it('should set permission level', () => {
-    const cmd = new Command('my:cmd')
-      .setPermissionLevel(2);
+    const cmd = new Command('my:cmd').setPermissionLevel(2);
     expect(cmd.toCustomCommand().permissionLevel).toBe(2);
   });
 
@@ -595,7 +783,7 @@ describe('registryCommand', () => {
   });
 
   it('should error when registering via registryCommand after startup', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const cmd = new Command('my:cmd03');
     registryCommand(cmd);
     expect(consoleSpy).toHaveBeenCalled();
@@ -604,7 +792,7 @@ describe('registryCommand', () => {
   });
 
   it('.action() should error when called after startup', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const cmd = new Command('my:actafter');
     cmd.action(() => ({ status: 0 }));
     expect(consoleSpy).toHaveBeenCalled();

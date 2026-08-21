@@ -54,12 +54,33 @@ export function ref<T extends RefValue>(defaultValue: T): Ref<T> {
   return new Ref(defaultValue);
 }
 
+/** Unwrap Ref/Observable values into plain primitives */
+export function unwrapValue(val: unknown): unknown {
+  if (val instanceof Ref) return val.value;
+  if (
+    val instanceof ObservableString ||
+    val instanceof ObservableBoolean ||
+    val instanceof ObservableNumber
+  ) {
+    return val.getData();
+  }
+  return val;
+}
+
+/** Unwrap Ref/Observable values and convert to display string */
+export function toDisplayString(val: unknown): string {
+  return String(unwrapValue(val) ?? '');
+}
+
 export class Computation {
   __deps: ((ctx: unknown[]) => Ref)[];
   __eval: (ctx: unknown[]) => unknown;
   __cleanupFns: (() => void)[] = [];
 
-  constructor(evalFn: (ctx: unknown[]) => unknown, deps: ((ctx: unknown[]) => Ref)[]) {
+  constructor(
+    evalFn: (ctx: unknown[]) => unknown,
+    deps: ((ctx: unknown[]) => Ref)[],
+  ) {
     this.__eval = evalFn;
     this.__deps = deps;
   }

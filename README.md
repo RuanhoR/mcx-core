@@ -146,29 +146,38 @@ Use `<Ui>` for new CustomForm with Observable reactive binding:
 ```vue
 <Ui setup>
   <title>Settings</title>
-  <input>{{ name }}</input>
-  <toggle>{{ enabled }}</toggle>
+  <input :value="name">Player name</input>
+  <toggle :value="enabled">Enabled</toggle>
+  <slider :value="volume" min="0" max="100">Volume</slider>
+  <button :if="advanced" click="onAdvanced">Advanced</button>
   <button click="handleSave">Save</button>
 </Ui>
 <script>
-import { onMounted, onStartup } from '@mbler/mcx';
+import { ref } from '@mbler/mcx';
 
-const name = defineProp('Player');
-const enabled = defineProp(true);
+const name = defineProp('Player'); // → ObservableString
+const enabled = defineProp(false); // → ObservableBoolean
+const volume = defineProp(50); // → ObservableNumber
+const advanced = ref(true); // ref() works too
 
-onStartup(() => {
-  // runs once on first show
-});
-
-onMounted(() => {
-  // runs every time form is shown
-});
+function onAdvanced() {
+  advanced.value = !advanced.value;
+}
 
 function handleSave() {
   // name.getData() gets current value
 }
 </script>
 ```
+
+`defineProp` accepts string / boolean / number literal defaults (including template
+literals and negative numbers) and wraps them in the matching Observable automatically.
+Non-literal defaults are passed through as plain values.
+
+Reactive bindings: `{{ x }}` interpolation unwraps Ref/Observable values,
+`:value` gives two-way binding, `:if` toggles visibility live, and
+`:disabled` / `:tip` / `:description` accept Ref/Observable bindings.
+Elements inside `for="x in list"` loops support `:if` and the other attributes too.
 
 ### 4. Auto subscribe event in App mcx (`app.mcx`)
 

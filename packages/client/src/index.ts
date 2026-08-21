@@ -4,7 +4,7 @@ export { Event } from './event';
 export { createApp } from './createApp';
 export { Utils, types };
 export { ui, showForm } from './ui';
-export { ref, Ref, Computation } from './ref';
+export { ref, Ref, Computation, unwrapValue, toDisplayString } from './ref';
 export { watch } from './watch';
 export { onStartup, onMounted, defineProp } from './lifecycle';
 export { Command, registryCommand } from './command';

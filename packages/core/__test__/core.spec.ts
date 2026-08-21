@@ -26,11 +26,11 @@ describe('compileJSFn', () => {
     expect(result.BuildCache.export.length).toBeGreaterThanOrEqual(1);
   });
   it('should cache result', () => {
-    const script = "console.log('Hello world')"
+    const script = "console.log('Hello world')";
     const resultV1 = MCX.compiler.compileJSFn(script);
     const resultV2 = MCX.compiler.compileJSFn(script);
-    expect(resultV1).toBe(resultV2)
-  })
+    expect(resultV1).toBe(resultV2);
+  });
   it('should handle empty script', () => {
     const result = MCX.compiler.compileJSFn('');
     expect(result).toBeDefined();
@@ -149,9 +149,9 @@ describe('transform', () => {
       error: (msg: unknown) => {
         throw new Error(String(msg));
       },
-      warn: () => { },
-      debug: () => { },
-      info: () => { },
+      warn: () => {},
+      debug: () => {},
+      info: () => {},
       getCombinedSourcemap: () =>
         ({ mappings: '' }) as ReturnType<
           TransformPluginContext['getCombinedSourcemap']
@@ -208,9 +208,9 @@ describe('Form transform (legacy FormData)', () => {
       error: (msg: unknown) => {
         throw new Error(String(msg));
       },
-      warn: () => { },
-      debug: () => { },
-      info: () => { },
+      warn: () => {},
+      debug: () => {},
+      info: () => {},
       getCombinedSourcemap: () =>
         ({ mappings: '' }) as ReturnType<
           TransformPluginContext['getCombinedSourcemap']
@@ -338,9 +338,9 @@ describe('Ui transform (CustomForm)', () => {
       error: (msg: unknown) => {
         throw new Error(String(msg));
       },
-      warn: () => { },
-      debug: () => { },
-      info: () => { },
+      warn: () => {},
+      debug: () => {},
+      info: () => {},
       getCombinedSourcemap: () =>
         ({ mappings: '' }) as ReturnType<
           TransformPluginContext['getCombinedSourcemap']
@@ -386,8 +386,8 @@ describe('Ui transform (CustomForm)', () => {
       { moduleDir: '/dev/null', tsconfigPath: '', sourcemap: false },
       outdirs,
     );
-    expect(code).toContain('Computation');
-    expect(code).toContain('ctx[0].name');
+    expect(code).not.toContain('Computation');
+    expect(code).toContain('__mcx__str(ctx[0].name)');
     expect(code).toContain('"Settings"');
   });
 

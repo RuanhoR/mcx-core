@@ -4,27 +4,87 @@ import * as t from '@babel/types';
 const SETUP_CTX_INDEX = 0;
 
 const UI_TAGS = new Set([
-  'input', 'textField', 'toggle', 'dropdown', 'slider',
-  'button', 'label', 'body', 'header', 'title',
-  'divider', 'spacer', 'close-button',
+  'input',
+  'textField',
+  'toggle',
+  'dropdown',
+  'slider',
+  'button',
+  'label',
+  'body',
+  'header',
+  'title',
+  'divider',
+  'spacer',
+  'close-button',
 ]);
 
 const FORM_TAGS = new Set([
-  'input', 'dropdown', 'submit', 'toggle', 'slider',
-  'button', 'button-m', 'body', 'divider', 'title',
+  'input',
+  'dropdown',
+  'submit',
+  'toggle',
+  'slider',
+  'button',
+  'button-m',
+  'body',
+  'divider',
+  'title',
 ]);
 
 const COMMON_ATTRS = new Set([
-  'id', 'for', 'if', 'tip', 'disabled', 'visible', 'description',
-  ':id', ':for', ':if', ':tip', ':disabled', ':visible', ':description',
+  'id',
+  'for',
+  'if',
+  'tip',
+  'disabled',
+  'visible',
+  'description',
+  ':id',
+  ':for',
+  ':if',
+  ':tip',
+  ':disabled',
+  ':visible',
+  ':description',
 ]);
 
 const TAG_ATTRS: Record<string, Set<string>> = {
-  input: new Set(['placeholderText', 'default', 'value', ':placeholderText', ':default', ':value']),
-  textField: new Set(['placeholderText', 'default', 'value', ':placeholderText', ':default', ':value']),
+  input: new Set([
+    'placeholderText',
+    'default',
+    'value',
+    ':placeholderText',
+    ':default',
+    ':value',
+  ]),
+  textField: new Set([
+    'placeholderText',
+    'default',
+    'value',
+    ':placeholderText',
+    ':default',
+    ':value',
+  ]),
   toggle: new Set(['default', 'value', ':default', ':value']),
-  dropdown: new Set(['default', 'value', 'option', ':default', ':value', ':option']),
-  slider: new Set(['default', 'value', 'min', 'max', ':default', ':value', ':min', ':max']),
+  dropdown: new Set([
+    'default',
+    'value',
+    'option',
+    ':default',
+    ':value',
+    ':option',
+  ]),
+  slider: new Set([
+    'default',
+    'value',
+    'min',
+    'max',
+    ':default',
+    ':value',
+    ':min',
+    ':max',
+  ]),
   button: new Set(['click', 'img', ':click', ':img']),
   submit: new Set(['click', ':click']),
   'button-m': new Set(['click', ':click']),
@@ -38,7 +98,15 @@ for (const [tag, specific] of Object.entries(TAG_ATTRS)) {
   COMBINED_ATTRS.set(tag, combined);
 }
 
-const MODAL_FORM_TAGS = new Set(['input', 'dropdown', 'submit', 'toggle', 'slider']);
+const MODAL_FORM_TAGS = new Set([
+  'input',
+  'dropdown',
+  'submit',
+  'toggle',
+  'slider',
+]);
+
+const INTERPOLATION_RE = /\{\{/;
 
 /**
  * Shared layout generation for both <Form> and <Ui>.
@@ -171,7 +239,8 @@ export function generateLayout(
             t.identifier(paramName),
             isDynamic
               ? simpleFn(String(value))
-              : t.arrowFunctionExpression([_paramCtx],
+              : t.arrowFunctionExpression(
+                  [_paramCtx],
                   typeof value === 'boolean'
                     ? t.booleanLiteral(value)
                     : t.stringLiteral(value),
@@ -181,7 +250,8 @@ export function generateLayout(
     );
 
     // Content: parse {{ }} interpolation, supports mixed text + multiple interpolations
-    const contentExpr = mode === 'form' ? parseContentForm(el.content) : parseContent(el.content);
+    const contentExpr =
+      mode === 'form' ? parseContentForm(el.content) : parseContent(el.content);
 
     const props: t.ObjectProperty[] = [
       t.objectProperty(t.identifier('type'), t.stringLiteral(name)),
@@ -256,7 +326,15 @@ export function generateLayout(
   return { parsedObj, formTypeStr };
 }
 
-const SHARED_FORM_TAGS = new Set(['body', 'divider', 'title', 'label', 'header', 'spacer', 'close-button']);
+const SHARED_FORM_TAGS = new Set([
+  'body',
+  'divider',
+  'title',
+  'label',
+  'header',
+  'spacer',
+  'close-button',
+]);
 
 function detectFormType(
   tag: string,
@@ -277,7 +355,16 @@ function simpleFn(expr: string): t.ArrowFunctionExpression {
 
 /** Extract root identifiers from an expression for dependency tracking */
 function extractIdentifiers(expr: string): string[] {
-  const reserved = new Set(['true', 'false', 'null', 'undefined', 'this', 'new', 'typeof', 'instanceof']);
+  const reserved = new Set([
+    'true',
+    'false',
+    'null',
+    'undefined',
+    'this',
+    'new',
+    'typeof',
+    'instanceof',
+  ]);
   const ids = new Set<string>();
   const regex = /\b([a-zA-Z_$][\w$]*)\b/g;
   let m: RegExpExecArray | null;
@@ -307,7 +394,7 @@ function arrowFn(expr: string): t.NewExpression {
 function parseContentForm(raw: string): t.Expression {
   const ctx = t.identifier('ctx');
 
-  if (!raw.includes('{{ ')) {
+  if (!INTERPOLATION_RE.test(raw)) {
     return t.arrowFunctionExpression([ctx], t.stringLiteral(raw));
   }
 
@@ -336,20 +423,27 @@ function parseContentForm(raw: string): t.Expression {
 /**
  * Parse content string, returns an arrow function (ctx) => result:
  * - "Hello" → (ctx) => "Hello"
- * - "{{ a }}" → (ctx) => ctx[0].a
- * - "Hi {{ a }}" → (ctx) => `Hi ${ctx[0].a}`
+ * - "{{ a }}" → (ctx) => __mcx__str(ctx[0].a)
+ * - "Hi {{ a }}" → (ctx) => `Hi ${__mcx__str(ctx[0].a)}`
+ *
+ * Interpolated expressions are wrapped in __mcx__str so Ref/Observable
+ * values from setup are unwrapped instead of being stringified as
+ * "[object Object]" by template literals.
  */
 function parseContent(raw: string): t.Expression {
   const ctx = t.identifier('ctx');
 
-  if (!raw.includes('{{ ')) {
+  if (!INTERPOLATION_RE.test(raw)) {
     return t.arrowFunctionExpression([ctx], t.stringLiteral(raw));
   }
 
   const parts = splitInterpolation(raw);
 
   if (parts.length === 1 && parts[0]?.type === 'expr') {
-    return simpleFn(parts[0]?.value);
+    return t.arrowFunctionExpression(
+      [ctx],
+      unwrapStr(dotAccess(parts[0].value, ctx)),
+    );
   }
 
   const quasis: t.TemplateElement[] = [];
@@ -359,7 +453,7 @@ function parseContent(raw: string): t.Expression {
     if (part.type === 'text') {
       quasis.push(t.templateElement({ raw: part.value, cooked: part.value }));
     } else {
-      expressions.push(dotAccess(part.value, ctx));
+      expressions.push(unwrapStr(dotAccess(part.value, ctx)));
     }
   }
   quasis.push(t.templateElement({ raw: '', cooked: '' }, true));
@@ -368,7 +462,14 @@ function parseContent(raw: string): t.Expression {
   return t.arrowFunctionExpression([ctx], tpl);
 }
 
-type InterpolationPart = { type: 'text'; value: string } | { type: 'expr'; value: string };
+/** __mcx__str(expr): unwraps Ref/Observable values at runtime */
+function unwrapStr(expr: t.Expression): t.Expression {
+  return t.callExpression(t.identifier('__mcx__str'), [expr]);
+}
+
+type InterpolationPart =
+  | { type: 'text'; value: string }
+  | { type: 'expr'; value: string };
 
 function splitInterpolation(raw: string): InterpolationPart[] {
   const result: InterpolationPart[] = [];
@@ -396,7 +497,11 @@ function splitInterpolation(raw: string): InterpolationPart[] {
 function dotAccess(expr: string, root: t.Identifier): t.Expression {
   const parts = expr.split('.');
   // First part accesses root[SETUP_CTX_INDEX] (the setup object)
-  let node: t.Expression = t.memberExpression(root, t.numericLiteral(SETUP_CTX_INDEX), true);
+  let node: t.Expression = t.memberExpression(
+    root,
+    t.numericLiteral(SETUP_CTX_INDEX),
+    true,
+  );
   for (const part of parts) {
     node = t.memberExpression(node, t.identifier(part));
   }
@@ -410,13 +515,21 @@ export function buildUIConfig(
   tagName: string,
   mode: 'form' | 'ui',
 ): t.ObjectExpression {
-  const { parsedObj, formTypeStr } = generateLayout(ctx, tagNode, tagName, mode);
+  const { parsedObj, formTypeStr } = generateLayout(
+    ctx,
+    tagNode,
+    tagName,
+    mode,
+  );
   return t.objectExpression([
     t.objectProperty(t.identifier('mode'), t.stringLiteral(mode)),
     t.objectProperty(t.identifier('layout'), t.arrayExpression(parsedObj)),
     t.objectProperty(
       t.identifier('use'),
-      t.memberExpression(t.identifier('__minecraft__ui'), t.identifier(formTypeStr)),
+      t.memberExpression(
+        t.identifier('__minecraft__ui'),
+        t.identifier(formTypeStr),
+      ),
     ),
     t.objectProperty(t.identifier('UI'), t.identifier('__minecraft__ui')),
   ]);

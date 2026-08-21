@@ -12,28 +12,36 @@ import {
   type ModalFormResponse,
   CustomForm,
 } from '@minecraft/server-ui';
-import { Ref, Computation } from './ref';
+import { Ref, Computation, unwrapValue } from './ref';
 
 type SetupRecord = Record<string, unknown>;
 type LayoutFn = (ctx: unknown[]) => unknown;
-function toObs(val: unknown): ObservableString | ObservableBoolean | ObservableNumber | undefined {
-  if (val instanceof Ref) return val.__obs;
-  if (val instanceof Computation) {
-    const v = val.value;
-    if (typeof v === 'string') return new ObservableString(v);
-    if (typeof v === 'boolean') return new ObservableBoolean(v);
-    if (typeof v === 'number') return new ObservableNumber(v);
-    return undefined;
-  }
-  if (val instanceof ObservableString || val instanceof ObservableBoolean || val instanceof ObservableNumber) return val;
+
+type ObsKind = 'string' | 'boolean' | 'number';
+
+function obsKindOf(val: unknown): ObsKind | undefined {
+  if (val instanceof ObservableString) return 'string';
+  if (val instanceof ObservableBoolean) return 'boolean';
+  if (val instanceof ObservableNumber) return 'number';
   return undefined;
 }
-interface ObsMap {
-  string: ObservableString,
-  boolean: ObservableBoolean,
-  number: ObservableNumber
+
+function convertToObs(
+  value: unknown,
+  kind: ObsKind,
+): ObservableString | ObservableBoolean | ObservableNumber {
+  if (kind === 'string') return new ObservableString(String(value ?? ''));
+  if (kind === 'boolean') return new ObservableBoolean(Boolean(value));
+  return new ObservableNumber(Number(value));
 }
-function refToObsOrWarn<_, T extends keyof ObsMap>(
+
+interface ObsMap {
+  string: ObservableString;
+  boolean: ObservableBoolean;
+  number: ObservableNumber;
+}
+
+function refToObsOrWarn<_T, T extends keyof ObsMap>(
   val: unknown,
   expectedType: T,
   paramName: string,
@@ -41,21 +49,31 @@ function refToObsOrWarn<_, T extends keyof ObsMap>(
   if (val instanceof Computation) {
     const v = val.value;
     if (typeof v !== expectedType) {
-      console.warn(`[mcx ui]: computation "${paramName}" is ${typeof v}, expected ${expectedType} — converting`);
+      console.warn(
+        `[mcx ui]: computation "${paramName}" is ${typeof v}, expected ${expectedType} — converting`,
+      );
     }
-    if (expectedType === 'string') return new ObservableString(String(v)) as ObsMap[T];
-    if (expectedType === 'boolean') return new ObservableBoolean(Boolean(v)) as ObsMap[T];
-    return new ObservableNumber(Number(v)) as ObsMap[T];
+    return convertToObs(v, expectedType as ObsKind) as ObsMap[T];
+  }
+  // Raw observables (e.g. defineProp compile output) bind directly when the type matches
+  const direct = obsKindOf(val);
+  if (direct && direct === expectedType) return val as ObsMap[T];
+  if (direct) {
+    console.warn(
+      `[mcx ui]: observable "${paramName}" is ${direct}, expected ${expectedType} — converting`,
+    );
+    return convertToObs(unwrapValue(val), expectedType as ObsKind) as ObsMap[T];
   }
   if (!(val instanceof Ref)) return val as undefined;
   const obs = val.__obs;
   const actual = typeof val.value;
   if (actual !== expectedType) {
-    console.warn(`[mcx ui]: ref "${paramName}" is ${actual}, expected ${expectedType} — converting`);
+    console.warn(
+      `[mcx ui]: ref "${paramName}" is ${actual}, expected ${expectedType} — converting`,
+    );
   }
-  if (expectedType === 'string') return obs instanceof ObservableString ? obs as ObsMap[T] : new ObservableString(String(val.value)) as ObsMap[T];
-  if (expectedType === 'boolean') return obs instanceof ObservableBoolean ? obs as ObsMap[T] : new ObservableBoolean(Boolean(val.value)) as ObsMap[T];
-  return obs instanceof ObservableNumber ? obs as ObsMap[T] : new ObservableNumber(Number(val.value)) as ObsMap[T];
+  if (obsKindOf(obs) === expectedType) return obs as unknown as ObsMap[T];
+  return convertToObs(unwrapValue(val), expectedType as ObsKind) as ObsMap[T];
 }
 
 function conditionToObs(val: unknown): ObservableBoolean {
@@ -64,27 +82,49 @@ function conditionToObs(val: unknown): ObservableBoolean {
     val.subscribeAll([], () => obs.setData(Boolean(val.value)));
     return obs;
   }
-  if (val instanceof Ref) return val.__obs instanceof ObservableBoolean ? val.__obs : new ObservableBoolean(Boolean(val.value));
-  return new ObservableBoolean(Boolean(val));
+  // Keep live links whenever possible instead of snapshotting once
+  if (val instanceof ObservableBoolean) return val;
+  if (val instanceof Ref && val.__obs instanceof ObservableBoolean)
+    return val.__obs;
+  const obs = new ObservableBoolean(Boolean(unwrapValue(val)));
+  const mirror = () => obs.setData(Boolean(unwrapValue(val)));
+  if (val instanceof Ref) {
+    val.subscribe(mirror);
+  } else if (
+    val instanceof ObservableString ||
+    val instanceof ObservableBoolean ||
+    val instanceof ObservableNumber
+  ) {
+    val.subscribe(mirror);
+  }
+  return obs;
 }
 
 function callLayoutFn(fn: unknown, ctx: unknown[]): unknown {
   return typeof fn === 'function' ? (fn as LayoutFn)(ctx) : fn;
 }
 
-function buildOpts(item: LayoutItem & { _loopSetup?: SetupRecord }, ctx: unknown[]): Record<string, unknown> {
+function buildOpts(
+  item: LayoutItem & { _loopSetup?: SetupRecord },
+  ctx: unknown[],
+): Record<string, unknown> {
   const opts: Record<string, unknown> = {};
   const p = item.params;
-  if (p.tip) opts.tooltip = String(callLayoutFn(p.tip, ctx));
+  if (p.tip) opts.tooltip = String(unwrapValue(callLayoutFn(p.tip, ctx)) ?? '');
   if (p.disabled) {
     const v = callLayoutFn(p.disabled, ctx);
-    opts.disabled = v instanceof Computation ? Boolean(v.value) : Boolean(v);
+    opts.disabled =
+      v instanceof Computation ? Boolean(v.value) : Boolean(unwrapValue(v));
   }
   if (p.visible) {
     const v = callLayoutFn(p.visible, ctx);
-    opts.visible = v instanceof Computation ? Boolean(v.value) : Boolean(v);
+    opts.visible =
+      v instanceof Computation ? Boolean(v.value) : Boolean(unwrapValue(v));
   }
-  if (p.description) opts.description = String(callLayoutFn(p.description, ctx));
+  if (p.description)
+    opts.description = String(
+      unwrapValue(callLayoutFn(p.description, ctx)) ?? '',
+    );
   return opts;
 }
 
@@ -125,14 +165,15 @@ export class ui implements typesPkg.ui {
     }
   }
 
-  async show(
-    player: Player,
-    prop?: Record<string, unknown>,
-  ): Promise<void> {
+  async show(player: Player, prop?: Record<string, unknown>): Promise<void> {
     // Close any existing form for this player first
     const existing = ui._activeForms.get(player);
     if (existing) {
-      try { existing.close(); } catch { /* ignore */ }
+      try {
+        existing.close();
+      } catch {
+        /* ignore */
+      }
       ui._activeForms.set(player, null);
       // Wait for the old form's show() promise to fully resolve
       // (its finally block also runs here via microtask queue)
@@ -176,29 +217,21 @@ export class ui implements typesPkg.ui {
       const s = item._loopSetup || setup;
       const ctx = [s];
 
-      // === Resolve content (reactive) ===
+      // === Resolve content ===
       const rawContent = callLayoutFn(item.content, ctx);
       let label: string;
       if (rawContent instanceof Computation) {
-        label = String(rawContent.value ?? '');
+        label = String(unwrapValue(rawContent.value) ?? '');
         rawContent.subscribeAll(ctx, () => {});
         computations.push(rawContent);
-      } else if (rawContent instanceof Ref) {
-        label = String(rawContent.value);
       } else {
-        label = String(rawContent ?? '');
+        label = String(unwrapValue(rawContent) ?? '');
       }
 
       if (type === 'title') {
         (form as unknown as { title: string }).title = label;
         continue;
       }
-
-      // === Resolve if condition (reactive) ===
-      const ifObs = item.if ? conditionToObs(setup[item.if.useSetup]) : undefined;
-
-      // === Resolve :value binding ===
-      const rawVal = callLayoutFn(item.params.value, ctx);
 
       // === Resolve for-loop (reactive pre-allocate) ===
       if (item.for && !item._loopSetup) {
@@ -211,22 +244,41 @@ export class ui implements typesPkg.ui {
             const loopContent = callLayoutFn(item.content, loopCtx);
             let loopLabel: string;
             if (loopContent instanceof Computation) {
-              loopLabel = String(loopContent.value ?? '');
+              loopLabel = String(unwrapValue(loopContent.value) ?? '');
               loopContent.subscribeAll(loopCtx, () => {});
               computations.push(loopContent);
-            } else if (loopContent instanceof Ref) {
-              loopLabel = String(loopContent.value);
             } else {
-              loopLabel = String(loopContent ?? '');
+              loopLabel = String(unwrapValue(loopContent) ?? '');
             }
-            const loopRawVal = item.params.value ? callLayoutFn(item.params.value, loopCtx) : undefined;
-            const loopOpts: Record<string, unknown> = {};
-            loopOpts.visible = new ObservableBoolean(true);
-            this._addFormElement(form, type, loopLabel, loopRawVal, item, loopCtx, loopOpts, player);
+            const loopRawVal = item.params.value
+              ? callLayoutFn(item.params.value, loopCtx)
+              : undefined;
+            const loopOpts = buildOpts(item, loopCtx);
+            if (item.if) {
+              loopOpts.visible = conditionToObs(loopSetup[item.if.useSetup]);
+            }
+            this._addFormElement(
+              form,
+              type,
+              loopLabel,
+              loopRawVal,
+              item,
+              loopCtx,
+              loopOpts,
+              player,
+            );
           }
         }
         continue;
       }
+
+      // === Resolve if condition (reactive) ===
+      const ifObs = item.if
+        ? conditionToObs(setup[item.if.useSetup])
+        : undefined;
+
+      // === Resolve :value binding ===
+      const rawVal = callLayoutFn(item.params.value, ctx);
 
       // === Add element ===
       const opts = buildOpts(item, ctx);
@@ -255,27 +307,60 @@ export class ui implements typesPkg.ui {
     player: Player,
   ): void {
     if (type === 'input' || type === 'textField') {
-      const obs = refToObsOrWarn(rawVal, 'string', 'input value') as ObservableString;
-      const ph = String(callLayoutFn(item.params.placeholderText, ctx) ?? '');
+      const obs = refToObsOrWarn(
+        rawVal,
+        'string',
+        'input value',
+      ) as ObservableString;
+      const ph = String(
+        unwrapValue(callLayoutFn(item.params.placeholderText, ctx)) ?? '',
+      );
       if (ph) opts.placeholder = ph;
       form.textField(label, obs, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'toggle') {
-      const obs = refToObsOrWarn(rawVal, 'boolean', 'toggle value') as ObservableBoolean;
+      const obs = refToObsOrWarn(
+        rawVal,
+        'boolean',
+        'toggle value',
+      ) as ObservableBoolean;
       form.toggle(label, obs, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'dropdown') {
-      const obs = refToObsOrWarn(rawVal, 'number', 'dropdown value') as ObservableNumber;
-      const raw = callLayoutFn(item.params.option, ctx);
+      const obs = refToObsOrWarn(
+        rawVal,
+        'number',
+        'dropdown value',
+      ) as ObservableNumber;
+      const raw = unwrapValue(callLayoutFn(item.params.option, ctx));
       const items = Array.isArray(raw)
         ? raw
-        : String(raw).split(',').map((v: string, i: number) => ({ label: v.trim(), value: i }));
-      form.dropdown(label, obs, items, Object.keys(opts).length ? opts : undefined);
+        : String(raw ?? '')
+            .split(',')
+            .map((v: string, i: number) => ({ label: v.trim(), value: i }));
+      form.dropdown(
+        label,
+        obs,
+        items,
+        Object.keys(opts).length ? opts : undefined,
+      );
     } else if (type === 'slider') {
-      const obs = refToObsOrWarn(rawVal, 'number', 'slider value') as ObservableNumber;
-      const min = Number(callLayoutFn(item.params.min, ctx) ?? 0);
-      const max = Number(callLayoutFn(item.params.max, ctx) ?? 100);
-      form.slider(label, obs, min, max, Object.keys(opts).length ? opts : undefined);
+      const obs = refToObsOrWarn(
+        rawVal,
+        'number',
+        'slider value',
+      ) as ObservableNumber;
+      const min = Number(unwrapValue(callLayoutFn(item.params.min, ctx)) ?? 0);
+      const max = Number(
+        unwrapValue(callLayoutFn(item.params.max, ctx)) ?? 100,
+      );
+      form.slider(
+        label,
+        obs,
+        min,
+        max,
+        Object.keys(opts).length ? opts : undefined,
+      );
     } else if (type === 'button') {
-      const handler = callLayoutFn(item.params.click, ctx);
+      const handler = unwrapValue(callLayoutFn(item.params.click, ctx));
       const fn = typeof handler === 'function' ? handler : () => {};
       const onClick = () => fn(undefined, player);
       form.button(label, onClick, Object.keys(opts).length ? opts : undefined);
@@ -283,8 +368,6 @@ export class ui implements typesPkg.ui {
       form.label(label, Object.keys(opts).length ? opts : undefined);
     } else if (type === 'header') {
       form.header(label, Object.keys(opts).length ? opts : undefined);
-    } else if (type === 'title') {
-      (form as unknown as { title: string }).title = label;
     } else if (type === 'divider') {
       form.divider(Object.keys(opts).length ? opts : undefined);
     } else if (type === 'spacer') {
@@ -301,11 +384,14 @@ export class ui implements typesPkg.ui {
     // Build click handler map
     const clickHandlers: Map<number, Function> = new Map();
 
-    const ui = new (this._UI as new (...args: never[]) => InstanceType<NonNullable<typeof this._UI>>)();
+    const ui = new (this._UI as new (
+      ...args: never[]
+    ) => InstanceType<NonNullable<typeof this._UI>>)();
     if (!this._uiType) {
       if (ui instanceof this._mcUI.ModalFormData) this._uiType = 'modal';
       else if (ui instanceof this._mcUI.ActionFormData) this._uiType = 'action';
-      else if (ui instanceof this._mcUI.MessageFormData) this._uiType = 'message';
+      else if (ui instanceof this._mcUI.MessageFormData)
+        this._uiType = 'message';
       else throw new Error('[mcx runtime]: Invalid form type');
     }
 
@@ -321,14 +407,21 @@ export class ui implements typesPkg.ui {
         const f = ui as InstanceType<typeof this._mcUI.ModalFormData>;
         if (item.type === 'input') {
           const def = String(callLayoutFn(item.params.default, ctx) ?? '');
-          const ph = String(callLayoutFn(item.params.placeholderText, ctx) ?? '');
+          const ph = String(
+            callLayoutFn(item.params.placeholderText, ctx) ?? '',
+          );
           const tip = callLayoutFn(item.params.tip, ctx);
-          f.textField(label, ph, { defaultValue: def, ...(tip != null ? { tooltip: String(tip) } : {}) });
+          f.textField(label, ph, {
+            defaultValue: def,
+            ...(tip != null ? { tooltip: String(tip) } : {}),
+          });
         } else if (item.type === 'slider') {
           const min = Number(callLayoutFn(item.params.min, ctx) ?? 0);
           const max = Number(callLayoutFn(item.params.max, ctx) ?? 10);
           const tip = callLayoutFn(item.params.tip, ctx);
-          f.slider(label, min, max, { ...(tip != null ? { tooltip: { text: String(tip) } } : {}) });
+          f.slider(label, min, max, {
+            ...(tip != null ? { tooltip: { text: String(tip) } } : {}),
+          });
         } else if (item.type === 'toggle') {
           const def = Boolean(callLayoutFn(item.params.default, ctx) ?? false);
           f.toggle(label, { defaultValue: def });
@@ -368,21 +461,34 @@ export class ui implements typesPkg.ui {
         if (item.type === 'button-m') {
           if (MsgFormUse === 0) f.button1(label);
           else if (MsgFormUse === 1) f.button2(label);
-          else throw new Error('[mcx runtime]: MessageFormData only supports two buttons');
+          else
+            throw new Error(
+              '[mcx runtime]: MessageFormData only supports two buttons',
+            );
           if (item.params.click) {
             const handler = callLayoutFn(item.params.click, ctx);
-            if (typeof handler === 'function') clickHandlers.set(MsgFormUse, handler);
+            if (typeof handler === 'function')
+              clickHandlers.set(MsgFormUse, handler);
           }
           MsgFormUse++;
         }
       }
 
       if (item.type === 'title') {
-        (ui as InstanceType<typeof this._mcUI.ModalFormData | typeof this._mcUI.ActionFormData | typeof this._mcUI.MessageFormData>).title(label);
+        (
+          ui as InstanceType<
+            | typeof this._mcUI.ModalFormData
+            | typeof this._mcUI.ActionFormData
+            | typeof this._mcUI.MessageFormData
+          >
+        ).title(label);
       }
     }
 
-    const formResponse = await ui.show(player) as ActionFormResponse | ModalFormResponse | MessageFormResponse;
+    const formResponse = (await ui.show(player)) as
+      | ActionFormResponse
+      | ModalFormResponse
+      | MessageFormResponse;
     if (formResponse.canceled) return;
 
     if (this._uiType === 'action') {
@@ -414,7 +520,8 @@ export class ui implements typesPkg.ui {
       if (item.for) {
         if (reactive) {
           // In reactive mode, keep for-binding for runtime expansion
-          resolved.push({ ...item, _loopSetup: setup });
+          // (_loopSetup stays unset so _showCustomForm expands the loop)
+          resolved.push({ ...item });
         } else {
           const arr = setup[item.for.useSetup];
           if (!Array.isArray(arr)) continue;

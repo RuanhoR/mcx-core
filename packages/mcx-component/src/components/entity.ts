@@ -48,6 +48,11 @@ class EntityComponent {
         this.#opt.is_summonable;
     }
 
+    if (typeof this.#opt.is_experimental === 'boolean') {
+      result['minecraft:entity'].description.is_experimental =
+        this.#opt.is_experimental;
+    }
+
     // 处理组件
     if (this.#opt.components) {
       const components = this.#opt.components;
@@ -1579,6 +1584,14 @@ class EntityComponent {
       this.#opt.is_summonable = value;
     } else {
       throw new TypeError('[set error]: is_summonable: type error');
+    }
+  }
+
+  public setIsExperimental(value: boolean): void {
+    if (typeof value === 'boolean') {
+      this.#opt.is_experimental = value;
+    } else {
+      throw new TypeError('[set error]: is_experimental: type error');
     }
   }
 

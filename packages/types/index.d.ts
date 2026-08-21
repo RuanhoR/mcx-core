@@ -102,6 +102,7 @@ interface EntityJson extends BaseJson {
       identifier: string;
       is_spawnable?: boolean;
       is_summonable?: boolean;
+      is_experimental?: boolean;
     };
     component_groups?: Record<string, unknown>;
     components?: Record<string, unknown>;
@@ -1131,6 +1132,8 @@ interface ItemComponentOptions {
     liquid_clipped?: boolean | { value?: boolean };
     'minecraft:max_stack_size'?: number | { value?: number };
     max_stack_size?: number | { value?: number };
+    'minecraft:custom_components'?: string[];
+    custom_components?: string[];
   }>;
 }
 
@@ -1186,6 +1189,22 @@ interface NavigationFloatConfig extends NavigationConfig {}
 interface BlockComponentOptions {
   id: string;
   format: string;
+  menu_category?: {
+    category?: string;
+    group?: string;
+    is_hidden_in_commands?: boolean;
+  };
+  traits?: Record<
+    string,
+    {
+      enabled_states?: string[];
+      [key: string]: unknown;
+    }
+  >;
+  permutations?: Array<{
+    condition: string;
+    components?: Record<string, unknown>;
+  }>;
   components?: Partial<{
     display_name?: string;
     light_emission?: number;
@@ -1332,7 +1351,64 @@ interface BlockComponentOptions {
     replaceable?: Record<string, never>;
     flower_pottable?: Record<string, never>;
     chest_obstruction?: Record<string, never>;
-    icon?: string | { filePath: string; classId: string };
+    icon?: string;
+    breathability?: 'solid' | 'air';
+    block_entity?: { dynamic_properties?: boolean };
+    item_visual?: {
+      geometry: string;
+      material_instances: Record<
+        string,
+        | string
+        | {
+            texture: string;
+            render_method?:
+              | 'opaque'
+              | 'double_sided'
+              | 'blend'
+              | 'alpha_test'
+              | 'alpha_test_single_sided'
+              | 'blend_to_opaque'
+              | 'alpha_test_to_opaque'
+              | 'alpha_test_single_sided_to_opaque';
+            ambient_occlusion?: number;
+            face_dimming?: boolean | string;
+            isotropic?: boolean;
+            tint_method?: string | boolean;
+          }
+      >;
+    };
+    destruction_particles?: {
+      texture: string;
+      particle_count?: number;
+      tint_method?: string;
+    };
+    sound?: string;
+    leashable?: { offset?: [number, number, number] };
+    embedded_visual?: {
+      geometry: string | { identifier: string };
+      material_instances: Record<
+        string,
+        | string
+        | {
+            texture: string;
+            render_method?:
+              | 'opaque'
+              | 'double_sided'
+              | 'blend'
+              | 'alpha_test'
+              | 'alpha_test_single_sided'
+              | 'blend_to_opaque'
+              | 'alpha_test_to_opaque'
+              | 'alpha_test_single_sided_to_opaque';
+            ambient_occlusion?: number;
+            face_dimming?: boolean | string;
+            isotropic?: boolean;
+            tint_method?: string | boolean;
+          }
+      >;
+    };
+    tags?: string[];
+    custom_components?: string[];
   }>;
 }
 
@@ -1341,6 +1417,7 @@ interface EntityComponentOptions {
   format: string;
   is_spawnable?: boolean;
   is_summonable?: boolean;
+  is_experimental?: boolean;
   components?: Partial<{
     physics?: boolean;
     addrider?: AddRiderConfig;

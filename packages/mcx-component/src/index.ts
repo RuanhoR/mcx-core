@@ -3,6 +3,10 @@ import type { ItemComponent as ItemComponentClass } from './components/item';
 import type { BlockComponent as BlockComponentClass } from './components/block';
 import type { EntityComponent as EntityComponentClass } from './components/entity';
 import type { RecipeComponent as RecipeComponentClass } from './components/recipe';
+import type { ItemCatalogComponent as ItemCatalogComponentClass } from './components/itemCatalog';
+import type { FeatureComponent as FeatureComponentClass } from './components/feature';
+import type { FeatureRuleComponent as FeatureRuleComponentClass } from './components/featureRule';
+import type { SpawnRuleComponent as SpawnRuleComponentClass } from './components/spawnRule';
 import {
   ImageComponent,
   PNGImageComponent,
@@ -31,6 +35,18 @@ export const EntityComponent = createLazyClass<typeof EntityComponentClass>(
 export const RecipeComponent = createLazyClass<typeof RecipeComponentClass>(
   () => require('./components/recipe').RecipeComponent,
 );
+export const ItemCatalogComponent = createLazyClass<
+  typeof ItemCatalogComponentClass
+>(() => require('./components/itemCatalog').ItemCatalogComponent);
+export const FeatureComponent = createLazyClass<typeof FeatureComponentClass>(
+  () => require('./components/feature').FeatureComponent,
+);
+export const FeatureRuleComponent = createLazyClass<
+  typeof FeatureRuleComponentClass
+>(() => require('./components/featureRule').FeatureRuleComponent);
+export const SpawnRuleComponent = createLazyClass<
+  typeof SpawnRuleComponentClass
+>(() => require('./components/spawnRule').SpawnRuleComponent);
 
 export { createLazyClass } from './lazy';
 

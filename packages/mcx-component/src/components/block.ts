@@ -1,10 +1,60 @@
+import { PNGImageComponent } from '../lib';
 import * as t from '../types';
 
 class BlockComponent {
   #opt: t.BlockComponentOptions;
+  #edit: t.BaseJson['_meta']['file_edit'] = [];
   constructor(opt: t.BlockComponentOptions) {
     this.#opt = opt;
     if (!this.#opt.components) this.#opt.components = {};
+  }
+
+  #resolveTexture(
+    value: string | PNGImageComponent,
+    prefix: string,
+  ): string {
+    if (typeof value === 'string') return value;
+    if (value.classId !== 'mcx_png_2340192') {
+      throw new Error("[mcx component]: can't handle non-PNG image component");
+    }
+    const filePath = value.filePath;
+    const textureKey = `${prefix}_${Date.now()}`;
+    if (!this.#edit) this.#edit = [];
+    const idKey = `__tex_${textureKey}__`;
+    this.#edit.push({
+      type: 'batch',
+      options: [
+        {
+          type: 'copy_assets',
+          id: idKey,
+          source: { base: 'root', file: filePath },
+          output: {
+            base: 'resources',
+            file: `textures/blocks/${textureKey}.png`,
+          },
+        },
+        {
+          type: 'edit',
+          id: `_w_${idKey}`,
+          source: { type: 'append', bind: 'terrain_texture' },
+          expression: t.createFileEdit({
+            define: {
+              key: { from: 'var', data: textureKey },
+              texture: {
+                from: 'var',
+                data: `textures/blocks/${textureKey}.png`,
+              },
+            } as const,
+            run: async define => {
+              return [
+                [define['key'], `textures/${define['texture']}`],
+              ] satisfies [string, string][];
+            },
+          }),
+        },
+      ],
+    });
+    return textureKey;
   }
 
   getFormat(): string {
@@ -18,6 +68,93 @@ class BlockComponent {
   }
   setId(value: string) {
     this.#opt.id = value;
+  }
+
+  getMenuCategory():
+    | {
+        category?: string;
+        group?: string;
+        is_hidden_in_commands?: boolean;
+      }
+    | undefined {
+    return this.#opt.menu_category;
+  }
+  setMenuCategory(
+    value:
+      | string
+      | {
+          category?: string;
+          group?: string;
+          is_hidden_in_commands?: boolean;
+        },
+  ) {
+    if (typeof value === 'string') {
+      this.#opt.menu_category = { category: value };
+    } else {
+      this.#opt.menu_category = value;
+    }
+  }
+
+  getTraits():
+    | Record<
+        string,
+        {
+          enabled_states?: string[];
+          [key: string]: unknown;
+        }
+      >
+    | undefined {
+    return this.#opt.traits;
+  }
+  setTraits(
+    value: Record<
+      string,
+      {
+        enabled_states?: string[];
+        [key: string]: unknown;
+      }
+    >,
+  ) {
+    this.#opt.traits = value;
+  }
+  addTrait(
+    name: string,
+    config: { enabled_states?: string[]; [key: string]: unknown },
+  ): this {
+    if (!this.#opt.traits) this.#opt.traits = {};
+    this.#opt.traits[name] = config;
+    return this;
+  }
+
+  getPermutations():
+    | Array<{
+        condition: string;
+        components?: Record<string, unknown>;
+      }>
+    | undefined {
+    return this.#opt.permutations;
+  }
+  setPermutations(
+    value: Array<{
+      condition: string;
+      components?: Record<string, unknown>;
+    }>,
+  ) {
+    this.#opt.permutations = value;
+  }
+  addPermutation(
+    condition: string,
+    components?: Record<string, unknown>,
+  ): this {
+    if (!this.#opt.permutations) this.#opt.permutations = [];
+    const perm: { condition: string; components?: Record<string, unknown> } = {
+      condition,
+    };
+    if (components !== undefined) {
+      perm.components = components;
+    }
+    this.#opt.permutations.push(perm);
+    return this;
   }
 
   getDisplayName(): string | undefined {
@@ -195,8 +332,9 @@ class BlockComponent {
     value: Record<
       string,
       | string
+      | PNGImageComponent
       | {
-          texture: string;
+          texture: string | PNGImageComponent;
           render_method?: 'opaque' | 'double_sided' | 'blend' | 'alpha_test'
             | 'alpha_test_single_sided' | 'blend_to_opaque'
             | 'alpha_test_to_opaque' | 'alpha_test_single_sided_to_opaque';
@@ -208,7 +346,46 @@ class BlockComponent {
     >,
   ) {
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.material_instances = value;
+    const resolved: Record<string, unknown> = {};
+    let counter = 0;
+    for (const [key, val] of Object.entries(value)) {
+      if (typeof val === 'string') {
+        resolved[key] = val;
+      } else if (val instanceof PNGImageComponent) {
+        resolved[key] = this.#resolveTexture(val, `mat_${key}_${counter++}`);
+      } else if (typeof val === 'object' && val !== null && 'texture' in val) {
+        const tex =
+          typeof val.texture === 'string'
+            ? val.texture
+            : this.#resolveTexture(
+                val.texture,
+                `mat_${key}_${counter++}`,
+              );
+        resolved[key] = { ...val, texture: tex };
+      } else {
+        resolved[key] = val;
+      }
+    }
+    this.#opt.components.material_instances = resolved as Record<
+      string,
+      | string
+      | {
+          texture: string;
+          render_method?:
+            | 'opaque'
+            | 'double_sided'
+            | 'blend'
+            | 'alpha_test'
+            | 'alpha_test_single_sided'
+            | 'blend_to_opaque'
+            | 'alpha_test_to_opaque'
+            | 'alpha_test_single_sided_to_opaque';
+          ambient_occlusion?: number;
+          face_dimming?: boolean | string;
+          isotropic?: boolean;
+          tint_method?: string | boolean;
+        }
+    >;
   }
   getMapColor(): string | { color: string; tint_method?: string } | undefined {
     return this.#opt.components?.map_color;
@@ -485,20 +662,205 @@ class BlockComponent {
     if (!this.#opt.components) this.#opt.components = {};
     this.#opt.components.chest_obstruction = {};
   }
-  getIcon(): string | { filePath: string; classId: string } | undefined {
+  getIcon(): string | undefined {
     return this.#opt.components?.icon;
   }
-  setIcon(value: string | { filePath: string; classId: string }) {
+  setIcon(value: string) {
     if (!this.#opt.components) this.#opt.components = {};
     this.#opt.components.icon = value;
+  }
+  getBreathability(): 'solid' | 'air' | undefined {
+    return this.#opt.components?.breathability;
+  }
+  setBreathability(value: 'solid' | 'air') {
+    if (!this.#opt.components) this.#opt.components = {};
+    this.#opt.components.breathability = value;
+  }
+  getBlockEntity(): { dynamic_properties?: boolean } | undefined {
+    return this.#opt.components?.block_entity;
+  }
+  setBlockEntity(value: { dynamic_properties?: boolean }) {
+    if (!this.#opt.components) this.#opt.components = {};
+    this.#opt.components.block_entity = value;
+  }
+  getItemVisual():
+    | {
+        geometry: string;
+        material_instances: Record<
+          string,
+          | string
+          | {
+              texture: string;
+              render_method?:
+                | 'opaque'
+                | 'double_sided'
+                | 'blend'
+                | 'alpha_test'
+                | 'alpha_test_single_sided'
+                | 'blend_to_opaque'
+                | 'alpha_test_to_opaque'
+                | 'alpha_test_single_sided_to_opaque';
+              ambient_occlusion?: number;
+              face_dimming?: boolean | string;
+              isotropic?: boolean;
+              tint_method?: string | boolean;
+            }
+        >;
+      }
+    | undefined {
+    return this.#opt.components?.item_visual;
+  }
+  setItemVisual(value: {
+    geometry: string;
+    material_instances: Record<
+      string,
+      | string
+      | {
+          texture: string;
+          render_method?:
+            | 'opaque'
+            | 'double_sided'
+            | 'blend'
+            | 'alpha_test'
+            | 'alpha_test_single_sided'
+            | 'blend_to_opaque'
+            | 'alpha_test_to_opaque'
+            | 'alpha_test_single_sided_to_opaque';
+          ambient_occlusion?: number;
+          face_dimming?: boolean | string;
+          isotropic?: boolean;
+          tint_method?: string | boolean;
+        }
+    >;
+  }) {
+    if (!this.#opt.components) this.#opt.components = {};
+    this.#opt.components.item_visual = value;
+  }
+  getDestructionParticles():
+    | {
+        texture: string;
+        particle_count?: number;
+        tint_method?: string;
+      }
+    | undefined {
+    return this.#opt.components?.destruction_particles;
+  }
+  setDestructionParticles(value: {
+    texture: string;
+    particle_count?: number;
+    tint_method?: string;
+  }) {
+    if (!this.#opt.components) this.#opt.components = {};
+    this.#opt.components.destruction_particles = value;
+  }
+  getSound(): string | undefined {
+    return this.#opt.components?.sound;
+  }
+  setSound(value: string) {
+    if (!this.#opt.components) this.#opt.components = {};
+    this.#opt.components.sound = value;
+  }
+  getLeashable():
+    | { offset?: [number, number, number] }
+    | undefined {
+    return this.#opt.components?.leashable;
+  }
+  setLeashable(value: { offset?: [number, number, number] }) {
+    if (!this.#opt.components) this.#opt.components = {};
+    this.#opt.components.leashable = value;
+  }
+  getEmbeddedVisual():
+    | {
+        geometry: string | { identifier: string };
+        material_instances: Record<
+          string,
+          | string
+          | {
+              texture: string;
+              render_method?:
+                | 'opaque'
+                | 'double_sided'
+                | 'blend'
+                | 'alpha_test'
+                | 'alpha_test_single_sided'
+                | 'blend_to_opaque'
+                | 'alpha_test_to_opaque'
+                | 'alpha_test_single_sided_to_opaque';
+              ambient_occlusion?: number;
+              face_dimming?: boolean | string;
+              isotropic?: boolean;
+              tint_method?: string | boolean;
+            }
+        >;
+      }
+    | undefined {
+    return this.#opt.components?.embedded_visual;
+  }
+  setEmbeddedVisual(value: {
+    geometry: string | { identifier: string };
+    material_instances: Record<
+      string,
+      | string
+      | {
+          texture: string;
+          render_method?:
+            | 'opaque'
+            | 'double_sided'
+            | 'blend'
+            | 'alpha_test'
+            | 'alpha_test_single_sided'
+            | 'blend_to_opaque'
+            | 'alpha_test_to_opaque'
+            | 'alpha_test_single_sided_to_opaque';
+          ambient_occlusion?: number;
+          face_dimming?: boolean | string;
+          isotropic?: boolean;
+          tint_method?: string | boolean;
+        }
+    >;
+  }) {
+    if (!this.#opt.components) this.#opt.components = {};
+    this.#opt.components.embedded_visual = value;
+  }
+  getTags(): string[] | undefined {
+    return this.#opt.components?.tags;
+  }
+  setTags(value: string[]) {
+    if (!this.#opt.components) this.#opt.components = {};
+    this.#opt.components.tags = value;
+  }
+  getCustomComponents(): string[] | undefined {
+    return this.#opt.components?.custom_components;
+  }
+  setCustomComponents(value: string[]) {
+    if (!this.#opt.components) this.#opt.components = {};
+    this.#opt.components.custom_components = value;
   }
 
   public toJSON() {
     if (!this.#opt) throw new Error('[mcx component]: cannot read component');
     const result: {
       format_version: string;
+      _meta: {
+        type: 'block';
+        file_edit?: Array<Record<string, unknown>>;
+      };
       'minecraft:block': {
-        description: { identifier: string };
+        description: {
+          identifier: string;
+          menu_category?: {
+            category?: string;
+            group?: string;
+            is_hidden_in_commands?: boolean;
+          };
+          traits?: Record<
+            string,
+            {
+              enabled_states?: string[];
+              [key: string]: unknown;
+            }
+          >;
+        };
         components: Partial<{
           'minecraft:display_name': string;
           'minecraft:light_emission': number;
@@ -641,10 +1003,75 @@ class BlockComponent {
           'minecraft:flower_pottable': Record<string, never>;
           'minecraft:chest_obstruction': Record<string, never>;
           'minecraft:icon': { textures: string };
+          'minecraft:breathability': 'solid' | 'air';
+          'minecraft:block_entity': { dynamic_properties?: boolean };
+          'minecraft:item_visual': {
+            geometry: string;
+            material_instances: Record<
+              string,
+              | string
+              | {
+                  texture: string;
+                  render_method?:
+                    | 'opaque'
+                    | 'double_sided'
+                    | 'blend'
+                    | 'alpha_test'
+                    | 'alpha_test_single_sided'
+                    | 'blend_to_opaque'
+                    | 'alpha_test_to_opaque'
+                    | 'alpha_test_single_sided_to_opaque';
+                  ambient_occlusion?: number;
+                  face_dimming?: boolean | string;
+                  isotropic?: boolean;
+                  tint_method?: string | boolean;
+                }
+            >;
+          };
+          'minecraft:destruction_particles': {
+            texture: string;
+            particle_count?: number;
+            tint_method?: string;
+          };
+          'minecraft:sound': string;
+          'minecraft:leashable': { offset?: [number, number, number] };
+          'minecraft:embedded_visual': {
+            geometry: string | { identifier: string };
+            material_instances: Record<
+              string,
+              | string
+              | {
+                  texture: string;
+                  render_method?:
+                    | 'opaque'
+                    | 'double_sided'
+                    | 'blend'
+                    | 'alpha_test'
+                    | 'alpha_test_single_sided'
+                    | 'blend_to_opaque'
+                    | 'alpha_test_to_opaque'
+                    | 'alpha_test_single_sided_to_opaque';
+                  ambient_occlusion?: number;
+                  face_dimming?: boolean | string;
+                  isotropic?: boolean;
+                  tint_method?: string | boolean;
+                }
+            >;
+          };
+          'minecraft:tags': string[];
+          'minecraft:custom_components': string[];
+        }>;
+        permutations?: Array<{
+          condition: string;
+          components?: Record<string, unknown>;
         }>;
       };
     } = {
       format_version: '',
+      _meta: {
+        type: 'block',
+        file_edit: this.#edit || [],
+      },
       'minecraft:block': {
         description: { identifier: '' },
         components: {},
@@ -665,6 +1092,32 @@ class BlockComponent {
       result['minecraft:block'].description.identifier = this.#opt.id;
     } else {
       throw new Error('[compile component]: no id');
+    }
+    if (this.#opt.menu_category) {
+      const mc = this.#opt.menu_category;
+      const menuCategory: Record<string, unknown> = {};
+      if (typeof mc.category === 'string' && mc.category.trim()) {
+        menuCategory.category = mc.category;
+      }
+      if (typeof mc.group === 'string' && mc.group.trim()) {
+        menuCategory.group = mc.group;
+      }
+      if (typeof mc.is_hidden_in_commands === 'boolean') {
+        menuCategory.is_hidden_in_commands = mc.is_hidden_in_commands;
+      }
+      if (Object.keys(menuCategory).length > 0) {
+        result['minecraft:block'].description.menu_category = menuCategory as {
+          category?: string;
+          group?: string;
+          is_hidden_in_commands?: boolean;
+        };
+      }
+    }
+    if (this.#opt.traits && Object.keys(this.#opt.traits).length > 0) {
+      result['minecraft:block'].description.traits = this.#opt.traits;
+    }
+    if (Array.isArray(this.#opt.permutations) && this.#opt.permutations.length > 0) {
+      result['minecraft:block'].permutations = this.#opt.permutations;
     }
     const ApplyComponents = result['minecraft:block'].components;
     if (this.#opt.components) {
@@ -731,16 +1184,28 @@ class BlockComponent {
         ApplyComponents['minecraft:flower_pottable'] = {};
       if (c.chest_obstruction !== undefined)
         ApplyComponents['minecraft:chest_obstruction'] = {};
-      if (typeof c.icon == 'string' && c.icon.trim()) {
+      if (typeof c.icon === 'string' && c.icon.trim()) {
         ApplyComponents['minecraft:icon'] = { textures: c.icon.trim() };
-      } else if (
-        typeof c.icon == 'object' &&
-        c.icon &&
-        'classId' in c.icon &&
-        c.icon.classId == 'mcx_png_2340192'
-      ) {
-        ApplyComponents['minecraft:icon'] = { textures: c.icon.filePath };
       }
+      if (c.breathability !== undefined)
+        ApplyComponents['minecraft:breathability'] = c.breathability;
+      if (c.block_entity !== undefined)
+        ApplyComponents['minecraft:block_entity'] = c.block_entity;
+      if (c.item_visual !== undefined)
+        ApplyComponents['minecraft:item_visual'] = c.item_visual;
+      if (c.destruction_particles !== undefined)
+        ApplyComponents['minecraft:destruction_particles'] =
+          c.destruction_particles;
+      if (typeof c.sound == 'string')
+        ApplyComponents['minecraft:sound'] = c.sound;
+      if (c.leashable !== undefined)
+        ApplyComponents['minecraft:leashable'] = c.leashable;
+      if (c.embedded_visual !== undefined)
+        ApplyComponents['minecraft:embedded_visual'] = c.embedded_visual;
+      if (Array.isArray(c.tags))
+        ApplyComponents['minecraft:tags'] = c.tags;
+      if (Array.isArray(c.custom_components))
+        ApplyComponents['minecraft:custom_components'] = c.custom_components;
     }
     return result;
   }

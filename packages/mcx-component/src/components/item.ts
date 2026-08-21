@@ -2566,6 +2566,31 @@ class ItemComponent {
         }
       }
 
+      // Handle minecraft:custom_components component
+      const customComponentsConfig =
+        (components as Record<string, unknown>)[
+          'minecraft:custom_components'
+        ] || (components as Record<string, unknown>).custom_components;
+      if (customComponentsConfig !== undefined) {
+        if (Array.isArray(customComponentsConfig)) {
+          const validComponents = customComponentsConfig.every(
+            (comp: unknown) => typeof comp === 'string',
+          );
+          if (validComponents) {
+            ApplyComponents['minecraft:custom_components'] =
+              customComponentsConfig;
+          } else {
+            throw new Error(
+              '[compile component]: custom_components: all components must be strings',
+            );
+          }
+        } else {
+          throw new Error(
+            '[compile component]: custom_components: must be an array',
+          );
+        }
+      }
+
       // Handle minecraft:swing_duration component
       const swingDurationConfig =
         components['minecraft:swing_duration'] || components.swing_duration;
@@ -5348,6 +5373,40 @@ class ItemComponent {
     }
 
     this.#opt.components['minecraft:tags'].tags = [...tags];
+  }
+
+  /**
+   * Set minecraft:custom_components component
+   * @param components {string[]} Array of custom component identifiers
+   */
+  public setCustomComponents(components: string[]) {
+    // Validate the components array
+    if (!Array.isArray(components)) {
+      throw new Error('[set error]: custom_components: must be an array');
+    }
+
+    // Validate each component
+    for (const comp of components) {
+      if (typeof comp !== 'string') {
+        throw new Error(
+          '[set error]: custom_components: all entries must be strings',
+        );
+      }
+    }
+
+    (this.#opt.components as Record<string, unknown>)[
+      'minecraft:custom_components'
+    ] = [...components];
+  }
+
+  /**
+   * Get minecraft:custom_components component
+   * @returns {string[] | undefined} Array of custom component identifiers
+   */
+  public getCustomComponents(): string[] | undefined {
+    return (this.#opt.components as Record<string, unknown>)[
+      'minecraft:custom_components'
+    ] as string[] | undefined;
   }
 
   /**

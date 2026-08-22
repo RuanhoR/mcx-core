@@ -120,7 +120,7 @@ export default class NodeUtils {
           return e.value;
         case 'NullLiteral':
           return null;
-        case 'MemberExpression':
+        case 'MemberExpression': {
           const objectValue = evaluate(e.object);
           const property = e.computed
             ? evaluate(e.property)
@@ -133,10 +133,11 @@ export default class NodeUtils {
             return (objectValue as Record<string, unknown>)[property as string];
           }
           throw new Error(
-            `Cannot access property '${property}' of ${objectValue}`,
+            `Cannot access property '${property}' of ${String(objectValue)}`,
           );
+        }
 
-        case 'ObjectExpression':
+        case 'ObjectExpression': {
           const obj: Record<string, unknown> = {};
           for (const prop of e.properties) {
             if (prop.type === 'ObjectProperty') {
@@ -147,6 +148,7 @@ export default class NodeUtils {
             }
           }
           return obj;
+        }
 
         case 'ArrayExpression':
           return e.elements.map((element: unknown) => {
@@ -154,7 +156,7 @@ export default class NodeUtils {
             return el && el.type !== 'SpreadElement' ? evaluate(el) : undefined;
           });
 
-        case 'UnaryExpression':
+        case 'UnaryExpression': {
           const argumentValue = evaluate(e.argument);
           switch (e.operator) {
             case '+':
@@ -172,9 +174,10 @@ export default class NodeUtils {
             default:
               throw new Error(`Unsupported unary operator: ${e.operator}`);
           }
+        }
         case 'PrivateName':
           return evaluate(context[e.id.name]);
-        case 'BinaryExpression':
+        case 'BinaryExpression': {
           const leftValue: unknown = evaluate(e.left);
           const rightValue: unknown = evaluate(e.right);
           const isNum =
@@ -235,7 +238,8 @@ export default class NodeUtils {
             default:
               throw new Error(`Unsupported binary operator: ${e.operator}`);
           }
-        case 'LogicalExpression':
+        }
+        case 'LogicalExpression': {
           const left = evaluate(e.left);
           switch (e.operator) {
             case '&&':
@@ -247,16 +251,17 @@ export default class NodeUtils {
             default:
               throw new Error('Unsupported logical operator');
           }
+        }
 
         case 'ConditionalExpression':
           return evaluate(e.test)
             ? evaluate(e.consequent)
             : evaluate(e.alternate);
 
-        case 'CallExpression':
+        case 'CallExpression': {
           const callee = evaluate(e.callee);
           if (typeof callee !== 'function') {
-            throw new Error(`Cannot call non-function: ${callee}`);
+            throw new Error(`Cannot call non-function: ${String(callee)}`);
           }
           const args = e.arguments.map(
             (arg: typeof callExpression.arguments) =>
@@ -265,6 +270,7 @@ export default class NodeUtils {
                 : evaluate(arg),
           );
           return callee.apply(null, args);
+        }
         default:
           throw new Error(`Unsupported expression type: ${e.type}`);
       }

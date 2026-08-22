@@ -107,7 +107,7 @@ class CompileMCX {
         const scriptNode =
           node.content.length == 0 ? '' : this.commonTagNodeContent(node);
         let code = scriptNode;
-        if (node.arr.lang == 'ts') {
+        if (node.arr.lang != 'js') {
           code = ts.transpileModule(scriptNode, {
             compilerOptions: {
               target: ts.ScriptTarget.ES2024,

@@ -271,7 +271,9 @@ class RecipeComponent {
         recipeData = this.makeBrewingMix();
         break;
       default:
-        throw new Error(`[mcx component]: unknown recipe type: ${type}`);
+        throw new Error(
+          `[mcx component]: unknown recipe type: ${String(type)}`,
+        );
     }
 
     let formatVersion = '1.12';

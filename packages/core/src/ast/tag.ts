@@ -326,6 +326,8 @@ class MCXUtils {
     return !!obj && typeof obj === 'object' && !Array.isArray(obj);
   }
   static isParseNode(node: unknown): node is ParsedTagNode[] {
-    return Array.isArray(node) && (node as unknown[]).every(MCXUtils.isTagNode);
+    return (
+      Array.isArray(node) && (node as unknown[]).every(n => MCXUtils.isTagNode(n))
+    );
   }
 }

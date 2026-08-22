@@ -45,12 +45,12 @@ export default class Utils {
     if (newList.imported.length !== ir.imported.length) return false;
     // in this for, newList.imported and ir.imported is same length
     for (let irIndex = 0; irIndex < newList.imported.length; irIndex++) {
-      const newItem = newList.imported[irIndex];
+      const newItem = newList.imported[irIndex]!;
       const oldItem = ir.imported[irIndex];
       if (
-        newItem?.import !== oldItem?.import ||
-        newItem?.as !== oldItem?.as ||
-        newItem?.isAll !== oldItem?.isAll
+        newItem.import !== oldItem?.import ||
+        newItem.as !== oldItem?.as ||
+        newItem.isAll !== oldItem?.isAll
       )
         return false;
     }
@@ -59,7 +59,7 @@ export default class Utils {
   public static CacheToImportNode(ir: ImportList): t.ImportDeclaration {
     if (!ir) throw new TypeError('plase call use right ImportList');
     // first verify ir.raw
-    if (ir.raw && Utils.CheckImportNode(ir?.raw, ir)) return ir.raw;
+    if (ir.raw && Utils.CheckImportNode(ir.raw, ir)) return ir.raw;
     const result: Array<
       t.ImportNamespaceSpecifier | t.ImportSpecifier | t.ImportDefaultSpecifier
     > = [];

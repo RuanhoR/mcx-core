@@ -733,7 +733,7 @@ describe('MCXCompileData - start data', () => {
 
   it('should preserve whitespace in script content', () => {
     const result = MCX.compiler.compileMCXFn(
-      "<script> console.log('test') </script>",
+      "<script lang=\"js\"> console.log('test') </script>",
     );
     expect(result.strLoc.script).toContain("console.log('test')");
     expect(result.strLoc.script).toBe(" console.log('test') ");

@@ -38,7 +38,11 @@ export class ImageComponent {
       const ext = extname(filePath);
       if (!imageType.includes(ext.slice(1)))
         throw new Error(
-          '[image type]: file extname: ' + ext + ' !includes ' + imageType,
+          '[image type]: file extname: ' +
+            ext +
+            ' !includes [' +
+            imageType.join(', ') +
+            ']',
         );
     } catch (err) {
       if (err instanceof Error && err.message.startsWith('[image type]')) throw err;

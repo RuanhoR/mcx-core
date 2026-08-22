@@ -120,8 +120,11 @@ describe('Component Transform - blocks and recipes', () => {
       json['minecraft:block'].components['minecraft:redstone_consumer'],
     ).toEqual({ min_power: 1 });
     expect(
+      json['minecraft:block'].components['test:controller'],
+    ).toEqual({});
+    expect(
       json['minecraft:block'].components['minecraft:custom_components'],
-    ).toEqual(['test:controller']);
+    ).toBeUndefined();
     expect(json['minecraft:block'].permutations).toHaveLength(1);
     expect(json['_meta']).toBeUndefined();
   });

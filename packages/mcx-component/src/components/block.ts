@@ -1204,8 +1204,19 @@ class BlockComponent {
         ApplyComponents['minecraft:embedded_visual'] = c.embedded_visual;
       if (Array.isArray(c.tags))
         ApplyComponents['minecraft:tags'] = c.tags;
-      if (Array.isArray(c.custom_components))
-        ApplyComponents['minecraft:custom_components'] = c.custom_components;
+      if (Array.isArray(c.custom_components)) {
+        // v2 custom components use a named component object per entry,
+        // e.g. "myplugin:controller": {} — registered via
+        // system.beforeEvents.startup blockComponentRegistry.
+        for (const name of c.custom_components) {
+          if (typeof name !== 'string' || !name.includes(':')) {
+            throw new Error(
+              `[mcx component]: invalid custom component id: ${String(name)}`,
+            );
+          }
+          ApplyComponents[name] = {};
+        }
+      }
     }
     return result;
   }

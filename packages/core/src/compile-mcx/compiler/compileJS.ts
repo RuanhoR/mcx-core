@@ -156,25 +156,26 @@ export class CompileJS {
             );
         }
       } else if (item.type == 'DoWhileStatement') {
-        this.traverse(t.blockStatement([item.body]));
+        this.traverse(t.blockStatement([item.body]), currentContext);
       } else if (item.type == 'VariableDeclaration') {
         const declaration = item.declarations;
         for (const varDef of declaration) {
           const init = varDef.init;
           const id = varDef.id;
           if (id.type == 'Identifier') {
-            if (!init && (item.kind == 'let' || item.kind == 'var'))
+            if (!init) {
+              if (item.kind == 'const')
+                throw makeError(
+                  "[compilr node]: 'const' must has a init",
+                  varDef,
+                );
               currentContext[id.name] = {
                 status: 'wait',
               };
-            if (!init)
-              throw makeError(
-                "[compilr node]: 'const' must has a init",
-                varDef,
-              );
+              continue;
+            }
             currentContext[id.name] = init;
             if (
-              init &&
               t.isCallExpression(init) &&
               t.isIdentifier(init.callee) &&
               init.callee.name === 'require' &&
@@ -187,7 +188,6 @@ export class CompileJS {
                 isAll: false,
               };
             } else if (
-              init &&
               t.isCallExpression(init) &&
               t.isImport(init.callee) &&
               init.arguments.length > 0 &&

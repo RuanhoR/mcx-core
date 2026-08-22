@@ -353,43 +353,6 @@ function simpleFn(expr: string): t.ArrowFunctionExpression {
   return t.arrowFunctionExpression([ctx], body);
 }
 
-/** Extract root identifiers from an expression for dependency tracking */
-function extractIdentifiers(expr: string): string[] {
-  const reserved = new Set([
-    'true',
-    'false',
-    'null',
-    'undefined',
-    'this',
-    'new',
-    'typeof',
-    'instanceof',
-  ]);
-  const ids = new Set<string>();
-  const regex = /\b([a-zA-Z_$][\w$]*)\b/g;
-  let m: RegExpExecArray | null;
-  while ((m = regex.exec(expr)) !== null) {
-    if (!reserved.has(m[1]!)) ids.add(m[1]!);
-  }
-  return [...ids];
-}
-
-/** Generate new Computation((ctx) => expr, [deps]) */
-function arrowFn(expr: string): t.NewExpression {
-  const ctx = t.identifier('ctx');
-  const body = dotAccess(expr, ctx);
-  const evalFn = t.arrowFunctionExpression([ctx], body);
-  const ids = extractIdentifiers(expr);
-  const deps = ids.map(id => {
-    const c = t.identifier('ctx');
-    return t.arrowFunctionExpression([c], dotAccess(id, c));
-  });
-  return t.newExpression(t.identifier('Computation'), [
-    evalFn,
-    t.arrayExpression(deps),
-  ]);
-}
-
 /** Parse content for form mode: never creates Computation, uses plain functions */
 function parseContentForm(raw: string): t.Expression {
   const ctx = t.identifier('ctx');

@@ -15,7 +15,7 @@ interface FeatureRuleConditions {
 }
 
 interface FeatureRuleDistributionAxis {
-  distribution?: 'uniform' | 'gaussian' | 'inverse_gaussian' | '➻uniform_distribution';
+  distribution?: 'uniform' | 'gaussian' | 'inverse_gaussian' | 'uniform_distribution';
   extent?: [number, number] | number;
   step?: number;
   grid?: {

@@ -229,13 +229,16 @@ class CompileMCX {
           subNode,
         );
       const useExport = content[0].data.trim();
-      if (subName == _MCXstructureLocComponentTypes[name]) {
-        this.tempLoc.Component[`${name}/${id}`] = {
-          type: subName,
-          useExport: useExport,
-          loc: extractLoc(subNode),
-        };
-      }
+      if (subName !== _MCXstructureLocComponentTypes[name])
+        throw makeError(
+          `[compile error]: component ${name} child must be <${_MCXstructureLocComponentTypes[name]}>, got <${subName}>`,
+          subNode,
+        );
+      this.tempLoc.Component[`${name}/${id}`] = {
+        type: subName,
+        useExport: useExport,
+        loc: extractLoc(subNode),
+      };
     }
   }
   private CompileData: CompileData.MCXCompileData;

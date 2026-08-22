@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { PNGImageComponent } from '../lib';
 import * as t from './../types';
 class ItemComponent {

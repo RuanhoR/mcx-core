@@ -38,7 +38,7 @@ class Event implements TypePkg.Event {
   private _execInExtends(method: keyof Event, ...args: unknown[]) {
     for (const i of this.status.extendList) {
       const fn = i[method];
-      if (typeof fn !== 'function') return;
+      if (typeof fn !== 'function') continue;
       (fn as Function).apply(i, args);
     }
   }

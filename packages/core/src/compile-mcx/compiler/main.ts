@@ -18,12 +18,12 @@ import {
 } from '../../mcx-component';
 import { resolveFileAsync } from './resolve';
 import { createImageTransformCode, IMAGE_EXTS } from './image';
+import { resetFileIdCounter } from '../../transforms/file_id';
 function createMcxPlugin(
   opt: CompileOpt,
   output: transformCtx['output'],
 ): Plugin {
   let cache: Map<string, MCXCompileData> = new Map();
-  let moduleTransformCache: Map<string, string>;
   let tsconfig: ts.ParsedCommandLine;
   try {
     const configResult = ts.readConfigFile(opt.tsconfigPath, path => {
@@ -234,7 +234,6 @@ function createMcxPlugin(
         }
       }
       if (compiledCode !== null) {
-        moduleTransformCache.set(id, compiledCode);
         return {
           code: compiledCode,
           ...(opt.sourcemap
@@ -251,8 +250,8 @@ function createMcxPlugin(
     },
     buildStart() {
       cache = new Map();
-      moduleTransformCache = new Map();
       clearCompileCaches();
+      resetFileIdCounter();
     },
   };
 }

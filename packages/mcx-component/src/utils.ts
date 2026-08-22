@@ -14,7 +14,7 @@ const compareVar = (a: string, b: string): number => {
   for (let i = 0; i < 3; i++) {
     const a = A[i];
     const b = B[i];
-    if (!a || !b) continue;
+    if (a === undefined || b === undefined) break;
     if (a !== b) return a > b ? 1 : -1;
   }
   return 0;

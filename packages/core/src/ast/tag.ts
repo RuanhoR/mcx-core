@@ -40,7 +40,6 @@ function absOffsetToMCXPos(
   lineIndex: number[],
   absOffset: number,
 ): { line: number; column: number } {
-  const len = Math.min(absOffset, lineIndex.length > 0 ? absOffset : 0);
   // Binary search for the line containing absOffset
   let lo = 0;
   let hi = lineIndex.length - 1;

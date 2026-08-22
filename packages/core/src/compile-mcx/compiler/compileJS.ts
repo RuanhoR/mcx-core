@@ -267,6 +267,7 @@ export const compileJSFn = ((code: string): CompileData.JsCompileData => {
   try {
     parsedCode = parse(code, {
       sourceType: 'module',
+      plugins: ['typescript', 'jsx'],
       allowImportExportEverywhere: true,
       errorRecovery: true,
       allowAwaitOutsideFunction: true,

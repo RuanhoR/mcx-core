@@ -6,13 +6,17 @@ import { MCXstructureLocComponentType } from '../compile-mcx/types';
 import { transformCtx } from '../types';
 import { existsSync } from 'node:fs';
 import type { BaseJson } from './types';
-import type { ItemComponent, BlockComponent, EntityComponent } from '@mbler/mcx-component';
+import type {
+  ItemComponent,
+  BlockComponent,
+  EntityComponent,
+} from '@mbler/mcx-component';
 import { execEdit } from './fileEdit';
 import { collectExportSources, checkComponentImports } from './importScan';
 export { clearCachedOptions } from './cache';
 export { resolveFilePoint, execEdit } from './fileEdit';
 export { collectExportSources, checkComponentImports } from './importScan';
-export { generateItemTextureJson } from './texture';
+export { generateItemTextureJson, generateTerrainTextureJson } from './texture';
 export * from './vm';
 export {
   MINECRAFT_MOCK,
@@ -40,7 +44,10 @@ export async function compileComponent(
     execESMMethod.transformCjs,
   )) as Record<
     string,
-    InstanceType<typeof ItemComponent | typeof BlockComponent | typeof EntityComponent> | undefined
+    | InstanceType<
+        typeof ItemComponent | typeof BlockComponent | typeof EntityComponent
+      >
+    | undefined
   >;
   if (!component)
     throw new Error(
@@ -74,14 +81,20 @@ export async function compileComponent(
     }
 
     const json = pointData.toJSON() as unknown as BaseJson;
-    if (
-      !json._meta ||
-      !json._meta.type ||
-      !['item', 'entity'].includes(json._meta.type)
-    )
-      throw new Error('[mcx component]: not mcx json component: unknown type');
+    if (entryData.type === 'recipe') {
+      // recipe JSON has no _meta wrapper
+      if ('_meta' in json) {
+        throw new Error(
+          '[mcx component]: recipe component must not contain _meta',
+        );
+      }
+    } else if (!json._meta || json._meta.type !== entryData.type) {
+      throw new Error(
+        `[mcx component]: not mcx json component: expected type "${entryData.type}"`,
+      );
+    }
 
-    if (json._meta.file_edit) {
+    if (json._meta?.file_edit) {
       const isMcxCoreSource = Object.values(exportSources).some(
         src => src && src.startsWith('@mbler/mcx-component'),
       );

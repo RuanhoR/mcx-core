@@ -11,7 +11,7 @@ export interface FilePoint {
 }
 
 export interface FileBindSource {
-  bind: 'item_texture';
+  bind: 'item_texture' | 'terrain_texture';
   type: 'append' | 'all_replace';
 }
 
@@ -63,7 +63,7 @@ export type FileEditOption =
 export interface BaseJson {
   format_version: string;
   _meta: {
-    type: 'item' | 'entity';
+    type: 'item' | 'entity' | 'block';
     file_edit?: (
       | FileEditOption
       | {

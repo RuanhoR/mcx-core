@@ -14,6 +14,7 @@ import ts from 'typescript';
 import { readFileSync } from 'node:fs';
 import {
   generateItemTextureJson,
+  generateTerrainTextureJson,
   clearCachedOptions,
 } from '../../mcx-component';
 import { resolveFileAsync } from './resolve';
@@ -217,7 +218,12 @@ function createMcxPlugin(
         return {
           code: compiledCode,
           ...(opt.sourcemap
-            ? { map: new MagicString(code).generateMap({ hires: true, source: id }) }
+            ? {
+                map: new MagicString(code).generateMap({
+                  hires: true,
+                  source: id,
+                }),
+              }
             : {}),
         };
       }
@@ -237,7 +243,12 @@ function createMcxPlugin(
         return {
           code: compiledCode,
           ...(opt.sourcemap
-            ? { map: new MagicString(code).generateMap({ hires: true, source: id }) }
+            ? {
+                map: new MagicString(code).generateMap({
+                  hires: true,
+                  source: id,
+                }),
+              }
             : {}),
         };
       }
@@ -246,6 +257,7 @@ function createMcxPlugin(
     async buildEnd() {
       cache.clear();
       await generateItemTextureJson(output);
+      await generateTerrainTextureJson(output);
       clearCachedOptions();
     },
     buildStart() {

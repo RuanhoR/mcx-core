@@ -112,20 +112,24 @@ async function execEditInternal(
             );
           }
         }
-        const filePath = resolveFilePoint(editOption.source, ctx, isMcxCoreSource);
+        const filePath = resolveFilePoint(
+          editOption.source,
+          ctx,
+          isMcxCoreSource,
+        );
         await writeFile(filePath, execResult.toString());
       } else if ('bind' in editOption.source) {
+        const bindKey = editOption.source.bind;
         if (
-          editOption.source.bind == 'item_texture' &&
+          (bindKey == 'item_texture' || bindKey == 'terrain_texture') &&
           editOption.source.type == 'append'
         ) {
           if (!Array.isArray(execResult))
             throw new Error(
               '[mcx component]: json._meta.file_edit: error exec result',
             );
-          if (!cachedOption['item_texture'])
-            cachedOption['item_texture'] = [];
-          (cachedOption['item_texture'] as [string, string][]).push(
+          if (!cachedOption[bindKey]) cachedOption[bindKey] = [];
+          (cachedOption[bindKey] as [string, string][]).push(
             ...(execResult as [string, string][]),
           );
         }

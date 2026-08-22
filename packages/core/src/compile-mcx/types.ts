@@ -37,6 +37,7 @@ export const _MCXstructureLocComponentTypes = {
   items: 'item',
   blocks: 'block',
   entities: 'entity',
+  recipes: 'recipe',
 } as const;
 type MCXstructureLocComponentType =
   (typeof _MCXstructureLocComponentTypes)[keyof typeof _MCXstructureLocComponentTypes];

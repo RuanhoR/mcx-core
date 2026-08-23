@@ -2,7 +2,10 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { MCXCompileData } from '../compile-mcx/compiler/compileData';
 import { execESMMethod, RunScript } from './vm';
 import * as path from 'node:path';
-import { MCXstructureLocComponentType } from '../compile-mcx/types';
+import {
+  MCXstructureLocComponentType,
+  _MCXComponentGroupOutputDir,
+} from '../compile-mcx/types';
 import { transformCtx } from '../types';
 import { existsSync } from 'node:fs';
 import type { BaseJson } from './types';
@@ -59,7 +62,18 @@ export async function compileComponent(
       '[component compile error]: exec code: mcx export type is not object',
     );
 
-  for (const [entryKey, entryData] of Object.entries(component)) {
+  for (const [componentKey, entryData] of Object.entries(component)) {
+    // component keys look like "<group>/<file>.json" (e.g. "blocks/x.json");
+    // some groups write to a different directory than their group name
+    // (trade tables live under "trading/").
+    const slash = componentKey.indexOf('/');
+    const groupKey = componentKey.slice(0, slash);
+    const fileName = componentKey.slice(slash + 1);
+    const dir =
+      _MCXComponentGroupOutputDir[
+        groupKey as keyof typeof _MCXComponentGroupOutputDir
+      ] ?? groupKey;
+    const entryKey = `${dir}/${fileName}`;
     const filePoint = path.join(ctx.output.behavior, entryKey);
 
     if (!path.relative(filePoint, ctx.output.behavior).startsWith('..'))
@@ -81,7 +95,11 @@ export async function compileComponent(
     }
 
     const json = pointData.toJSON() as unknown as BaseJson;
-    if (entryData.type === 'recipe') {
+    if (
+      entryData.type === 'recipe' ||
+      entryData.type === 'lootTable' ||
+      entryData.type === 'tradeTable'
+    ) {
       // recipe JSON has no _meta wrapper
       if ('_meta' in json) {
         throw new Error(

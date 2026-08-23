@@ -7,6 +7,8 @@ import type { ItemCatalogComponent as ItemCatalogComponentClass } from './compon
 import type { FeatureComponent as FeatureComponentClass } from './components/feature';
 import type { FeatureRuleComponent as FeatureRuleComponentClass } from './components/featureRule';
 import type { SpawnRuleComponent as SpawnRuleComponentClass } from './components/spawnRule';
+import type { LootTableComponent as LootTableComponentClass } from './components/lootTable';
+import type { TradeTableComponent as TradeTableComponentClass } from './components/tradeTable';
 import {
   ImageComponent,
   PNGImageComponent,
@@ -47,6 +49,12 @@ export const FeatureRuleComponent = createLazyClass<
 export const SpawnRuleComponent = createLazyClass<
   typeof SpawnRuleComponentClass
 >(() => require('./components/spawnRule').SpawnRuleComponent);
+export const LootTableComponent = createLazyClass<
+  typeof LootTableComponentClass
+>(() => require('./components/lootTable').LootTableComponent);
+export const TradeTableComponent = createLazyClass<
+  typeof TradeTableComponentClass
+>(() => require('./components/tradeTable').TradeTableComponent);
 
 export { createLazyClass } from './lazy';
 

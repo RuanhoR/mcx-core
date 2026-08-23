@@ -9,10 +9,13 @@ import type {
 } from 'rollup';
 import type { CompileOpt } from '@mbler/mcx-types';
 import type { transformCtx } from '../../src/types';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { mkdir, readFile, rm } from 'node:fs/promises';
+import path, { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
+const SPEC_DIR = path.dirname(fileURLToPath(import.meta.url));
+// packages/core/node_modules — upward resolution finds workspace deps here
+const TMP_ROOT = join(SPEC_DIR, '..', '..', 'node_modules', '.mcx-comp-tmp');
 const tempDirs: string[] = [];
 
 afterEach(async () => {
@@ -34,9 +37,15 @@ async function compileComponentMCX(
 ): Promise<{ code: string; behaviorDir: string }> {
   const compileData = compileMCXFn(mcxSource);
   const cache = new Map();
-  const behaviorDir = await mkdtemp(join(tmpdir(), 'mcx-comp-bp-'));
+  // keep temp dirs inside the package so upward module resolution finds
+  // @mbler/mcx-component in node_modules (mirrors a real project layout)
+  const tmpRoot = TMP_ROOT;
+  const rand = Math.random().toString(36).slice(2);
+  const behaviorDir = join(tmpRoot, rand);
+  await mkdir(behaviorDir, { recursive: true });
   tempDirs.push(behaviorDir);
-  const resourcesDir = await mkdtemp(join(tmpdir(), 'mcx-comp-rp-'));
+  const resourcesDir = join(tmpRoot, rand + '-rp');
+  await mkdir(resourcesDir, { recursive: true });
   tempDirs.push(resourcesDir);
   const output = createMockOutput(behaviorDir, resourcesDir);
   const mcxId = join(behaviorDir, 'test.component.mcx');
@@ -195,4 +204,106 @@ describe('Component Transform - blocks and recipes', () => {
     });
     expect(json['_meta']).toBeUndefined();
   });
+
+  it('should emit a loot table JSON under loot_tables/', async () => {
+    const { behaviorDir } = await compileComponentMCX(
+      `<Component>
+  <loot_tables>
+    <lootTable id="entities/test_loot.json">myLoot</lootTable>
+  </loot_tables>
+</Component>
+<script lang="ts">
+  import { LootTableComponent } from '@mbler/mcx-component';
+
+  export const myLoot = new LootTableComponent({ pools: [] });
+  myLoot.addPool({
+    rolls: { min: 1, max: 3 },
+    entries: [
+      {
+        type: 'item',
+        name: 'minecraft:diamond',
+        weight: 1,
+        functions: [{ function: 'set_count', count: { min: 1, max: 2 } }],
+        conditions: [
+          { condition: 'killed_by_player' },
+          { condition: 'random_chance', chance: 0.5 },
+        ],
+      },
+    ],
+  });
+</script>`,
+    );
+
+    const json = JSON.parse(
+      await readFile(
+        join(behaviorDir, 'loot_tables/entities/test_loot.json'),
+        'utf-8'
+      )
+    );
+    expect(json['pools']).toHaveLength(1);
+    const pool = json['pools'][0];
+    expect(pool.rolls).toEqual({ min: 1, max: 3 });
+    expect(pool.entries[0].name).toBe('minecraft:diamond');
+    expect(pool.entries[0].functions).toEqual([
+      { function: 'set_count', count: { min: 1, max: 2 } },
+    ]);
+    expect(pool.entries[0].conditions).toEqual([
+      { condition: 'killed_by_player' },
+      { condition: 'random_chance', chance: 0.5 },
+    ]);
+  });
+
+  it('should emit a trade table JSON under trading/', async () => {
+    const { behaviorDir } = await compileComponentMCX(
+      `<Component>
+  <trade_tables>
+    <tradeTable id="test_trades.json">myTrades</tradeTable>
+  </trade_tables>
+</Component>
+<script lang="ts">
+  import { TradeTableComponent } from '@mbler/mcx-component';
+
+  export const myTrades = new TradeTableComponent({ tiers: [] });
+  myTrades.addTier({
+    groups: [
+      {
+        trades: [
+          {
+            wants: [{ item: 'minecraft:emerald', quantity: 3 }],
+            gives: [{ item: 'test:gem', quantity: 1 }],
+            trader_exp: 5,
+            max_uses: 8,
+            reward_exp: true,
+          },
+        ],
+      },
+    ],
+  });
+</script>`,
+    );
+
+    const json = JSON.parse(
+      await readFile(join(behaviorDir, 'trading/test_trades.json'), 'utf-8')
+    );
+    expect(json['tiers']).toHaveLength(1);
+    const trade = json['tiers'][0].groups[0].trades[0];
+    expect(trade.wants[0].item).toBe('minecraft:emerald');
+    expect(trade.gives[0].item).toBe('test:gem');
+    expect(trade.max_uses).toBe(8);
+  });
+
+  it('should reject a loot table with no pools', async () => {
+    await expect(
+      compileComponentMCX(`<Component>
+  <loot_tables>
+    <lootTable id="empty.json">emptyLoot</lootTable>
+  </loot_tables>
+</Component>
+<script lang="ts">
+  import { LootTableComponent } from '@mbler/mcx-component';
+  export const emptyLoot = new LootTableComponent({ pools: [] });
+</script>`)
+    ).rejects.toThrow('needs at least one pool');
+  });
 });
+

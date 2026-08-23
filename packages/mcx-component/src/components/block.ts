@@ -1214,7 +1214,7 @@ class BlockComponent {
               `[mcx component]: invalid custom component id: ${String(name)}`,
             );
           }
-          ApplyComponents[name] = {};
+          ;(ApplyComponents as Record<string, unknown>)[name] = {};
         }
       }
     }

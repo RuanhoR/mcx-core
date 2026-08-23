@@ -4,6 +4,5 @@ packages:
   - packages/types
   - packages/client
   - packages/create-mbler
-  - packages/mcx-tsc
 allowBuilds:
   simple-git-hooks: true

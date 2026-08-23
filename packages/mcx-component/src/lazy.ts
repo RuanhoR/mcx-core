@@ -23,6 +23,13 @@ export function createLazyClass<T extends AbstractConstructor>(loader: () => T):
 
   // The proxy function that acts as a drop-in replacement for the real class
   function ProxyClass(this: unknown, ...args: unknown[]) {
+    if (!RealClass) {
+      // Retry synchronously: the eager init may have failed in environments
+      // where `require` was unavailable at import time (e.g. ESM test runners).
+      try {
+        RealClass = loader();
+      } catch {}
+    }
     if (RealClass) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return new (RealClass as any)(...args);

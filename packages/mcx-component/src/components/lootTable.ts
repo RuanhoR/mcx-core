@@ -261,7 +261,7 @@ class LootTableComponent {
 
   constructor(opt: LootTableComponentOptions) {
     this.#opt = opt;
-    if (!Array.isArray(this.#opt.pools)) this.#opt.pools = [];
+    this.#opt.pools = (this.#opt.pools ?? []).map(p => this.#toJSONPool(p));
   }
 
   #toJSONPool(pool: LootPool | LootPoolOptions): LootPoolOptions {

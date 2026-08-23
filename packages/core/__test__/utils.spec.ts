@@ -1,8 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import Utils from '../src/utils';
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+const tempDirs: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(
+    tempDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })),
+  );
+});
 
 describe('Utils.FileExist', () => {
   it('should return true for existing file', async () => {
@@ -58,6 +66,7 @@ describe('Utils.readFile', () => {
 
   it('should read file as object when want is object', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'utils-test-'));
+    tempDirs.push(dir);
     const jsonPath = join(dir, 'test.json');
     await writeFile(jsonPath, '{"key": "value"}');
     const content = await Utils.readFile(jsonPath, { want: 'object' });
@@ -67,6 +76,7 @@ describe('Utils.readFile', () => {
 
   it('should return empty object for invalid JSON with want object', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'utils-test-'));
+    tempDirs.push(dir);
     const jsonPath = join(dir, 'bad.json');
     await writeFile(jsonPath, 'not-json');
     const content = await Utils.readFile(jsonPath, { want: 'object' });

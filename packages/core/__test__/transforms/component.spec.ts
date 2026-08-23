@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { compileMCXFn } from '../../src/compile-mcx/compiler/index';
 import { transform } from '../../src/transforms/index';
 import type {
@@ -9,9 +9,17 @@ import type {
 } from 'rollup';
 import type { CompileOpt } from '@mbler/mcx-types';
 import type { transformCtx } from '../../src/types';
-import { mkdtemp, readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+const tempDirs: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(
+    tempDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })),
+  );
+});
 
 function createMockOutput(behavior: string, resources: string) {
   return {
@@ -27,7 +35,9 @@ async function compileComponentMCX(
   const compileData = compileMCXFn(mcxSource);
   const cache = new Map();
   const behaviorDir = await mkdtemp(join(tmpdir(), 'mcx-comp-bp-'));
+  tempDirs.push(behaviorDir);
   const resourcesDir = await mkdtemp(join(tmpdir(), 'mcx-comp-rp-'));
+  tempDirs.push(resourcesDir);
   const output = createMockOutput(behaviorDir, resourcesDir);
   const mcxId = join(behaviorDir, 'test.component.mcx');
   compileData.setFilePath(mcxId);

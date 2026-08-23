@@ -1,8 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { initProject, fileExists } from '../src/init';
-import { mkdtemp, readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+
+const tempDirs: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(
+    tempDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })),
+  );
+});
 
 describe('fileExists', () => {
   it('should return true for existing file', async () => {
@@ -19,6 +27,7 @@ describe('fileExists', () => {
 describe('initProject', () => {
   it('should create project with js template', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'mbler-test-js-'));
+    tempDirs.push(dir);
     await initProject({
       createAt: dir,
       Name: 'test-project',
@@ -40,6 +49,7 @@ describe('initProject', () => {
 
   it('should create project with mcx template', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'mbler-test-mcx-'));
+    tempDirs.push(dir);
     await initProject({
       createAt: dir,
       Name: 'mcx-project',
@@ -60,6 +70,7 @@ describe('initProject', () => {
 
   it('should create project with ts template and tsconfig', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'mbler-test-ts-'));
+    tempDirs.push(dir);
     await initProject({
       createAt: dir,
       Name: 'ts-project',
@@ -78,6 +89,7 @@ describe('initProject', () => {
 
   it('should map mc version to game test version', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'mbler-test-mc-'));
+    tempDirs.push(dir);
     await initProject({
       createAt: dir,
       Name: 'mc-test',

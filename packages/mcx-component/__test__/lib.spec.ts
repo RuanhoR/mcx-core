@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import {
   PNGImageComponent,
   JPGImageComponent,
@@ -7,11 +7,20 @@ import {
 } from '../src/lib';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+
+const tempDirs: string[] = [];
+
+afterEach(() => {
+  for (const dir of tempDirs.splice(0)) {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 describe('ImageComponent', () => {
   it('should create PNGImageComponent with valid file', () => {
     const dir = mkdtempSync(join(tmpdir(), 'img-test-'));
+    tempDirs.push(dir);
     const filePath = join(dir, 'test.png');
     writeFileSync(filePath, 'fake-png');
     const img = new PNGImageComponent(filePath);
@@ -21,6 +30,7 @@ describe('ImageComponent', () => {
 
   it('should create JPGImageComponent', () => {
     const dir = mkdtempSync(join(tmpdir(), 'img-test-'));
+    tempDirs.push(dir);
     const filePath = join(dir, 'test.jpg');
     writeFileSync(filePath, 'fake-jpg');
     const img = new JPGImageComponent(filePath);
@@ -29,6 +39,7 @@ describe('ImageComponent', () => {
 
   it('should create SVGImageComponent', () => {
     const dir = mkdtempSync(join(tmpdir(), 'img-test-'));
+    tempDirs.push(dir);
     const filePath = join(dir, 'test.svg');
     writeFileSync(filePath, 'fake-svg');
     const img = new SVGImageComponent(filePath);
@@ -37,6 +48,7 @@ describe('ImageComponent', () => {
 
   it('should create GIFImageComponent', () => {
     const dir = mkdtempSync(join(tmpdir(), 'img-test-'));
+    tempDirs.push(dir);
     const filePath = join(dir, 'test.gif');
     writeFileSync(filePath, 'fake-gif');
     const img = new GIFImageComponent(filePath);
@@ -49,6 +61,7 @@ describe('ImageComponent', () => {
 
   it('should throw for wrong file extension', () => {
     const dir = mkdtempSync(join(tmpdir(), 'img-test-'));
+    tempDirs.push(dir);
     const filePath = join(dir, 'test.txt');
     writeFileSync(filePath, 'fake');
     expect(() => new PNGImageComponent(filePath)).toThrow('file extname');

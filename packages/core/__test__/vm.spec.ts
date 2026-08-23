@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { describe, it, expect, afterEach } from 'vitest';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { RunScript, execESMMethod } from '../src/mcx-component/vm';
@@ -9,8 +9,18 @@ import {
   createMock,
 } from '../src/mcx-component/minecraftMock';
 
+const tempDirs: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(
+    tempDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })),
+  );
+});
+
 async function makeTempDir(): Promise<string> {
-  return mkdtemp(join(tmpdir(), 'mcx-vm-'));
+  const dir = await mkdtemp(join(tmpdir(), 'mcx-vm-'));
+  tempDirs.push(dir);
+  return dir;
 }
 
 async function writeModule(

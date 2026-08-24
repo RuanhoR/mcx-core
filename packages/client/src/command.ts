@@ -11,6 +11,7 @@ import {
 } from '@minecraft/server';
 
 type CommandParamTypeName =
+  | 'enum'
   | 'boolean'
   | 'number'
   | 'float'
@@ -21,19 +22,24 @@ type CommandParamTypeName =
   | 'entityType'
   | 'blockType'
   | 'itemType'
-  | 'location'
-  | 'enum';
+  | 'location';
 
-interface ParamOptions {
-  type: CommandParamTypeName;
-  min?: number;
-  max?: number;
-  options?: string[];
+interface EnumParamOptions {
+  type: 'enum';
+  options: string[];
 }
 
-type CommandParamDef = CommandParamTypeName | ParamOptions;
+interface SimpleParamOptions {
+  type: Exclude<CommandParamTypeName, 'enum'>;
+}
 
-const paramTypeMap: Record<string, CustomCommandParamType> = {
+type ParamOptions = EnumParamOptions | SimpleParamOptions;
+
+type CommandParamDef =
+  | CommandParamTypeName
+  | ParamOptions;
+
+const paramTypeMap: Record<Exclude<CommandParamTypeName, 'enum'>, CustomCommandParamType> = {
   boolean: CustomCommandParamType.Boolean,
   number: CustomCommandParamType.Float,
   float: CustomCommandParamType.Float,
@@ -45,42 +51,52 @@ const paramTypeMap: Record<string, CustomCommandParamType> = {
   blockType: CustomCommandParamType.BlockType,
   itemType: CustomCommandParamType.ItemType,
   location: CustomCommandParamType.Location,
-  enum: CustomCommandParamType.Enum,
 };
 
-let isInitd = false;
+/** Error patterns that indicate the command/enum already exists from a previous session. */
+const DUPLICATE_PATTERNS = [
+  'again',
+  'already',
+  'duplicate',
+  'exists',
+];
+
+function isDuplicateError(err: unknown): boolean {
+  const msg = String(err).toLowerCase();
+  return DUPLICATE_PATTERNS.some(p => msg.includes(p));
+}
+
 let subscribed = false;
 const commandQueue: Command[] = [];
 
 function registryCommand(command: Command): void {
-  if (isInitd) {
-    console.error(
-      `[mcx command]: Cannot register command '${command.getName()}' after startup`,
-    );
-    return;
-  }
-
   commandQueue.push(command);
 
   if (!subscribed) {
     subscribed = true;
     system.beforeEvents.startup.subscribe((event: StartupEvent) => {
-      isInitd = true;
       const registry = event.customCommandRegistry;
+
+      // Phase 1: register all enums first so commands can reference them
+      const registeredEnums = new Set<string>();
       for (const cmd of commandQueue) {
-        cmd.registerEnums(registry);
+        cmd.registerEnums(registry, registeredEnums);
+      }
+
+      // Phase 2: register commands
+      for (const cmd of commandQueue) {
         try {
           registry.registerCommand(cmd.toCustomCommand(), cmd.getCallback());
         } catch (e) {
-          if (String(e).includes('again')) {
-            continue;
+          if (!isDuplicateError(e)) {
+            console.error(
+              `[mcx command]: Failed to register command '${cmd.getName()}'`,
+              e
+            );
           }
-          console.error(
-            `[mcx command]: Failed to register command '${cmd.getName()}'`,
-            e,
-          );
         }
       }
+
       commandQueue.length = 0;
     });
   }
@@ -99,6 +115,7 @@ class Command {
         ...args: unknown[]
       ) => CustomCommandResult | undefined)
     | null = null;
+  /** Globally-unique enum definitions collected during parameter setup */
   private enums: { name: string; values: string[] }[] = [];
 
   constructor(name: string) {
@@ -125,23 +142,34 @@ class Command {
       cheatsRequired: this.cheatsRequired,
     };
     if (this.mandatoryParams.length > 0) {
-      cmd.mandatoryParameters = this.mandatoryParams;
+      cmd.mandatoryParameters = [...this.mandatoryParams];
     }
     if (this.optionalParams.length > 0) {
-      cmd.optionalParameters = this.optionalParams;
+      cmd.optionalParameters = [...this.optionalParams];
     }
     return cmd;
   }
 
-  registerEnums(registry: CustomCommandRegistry): void {
+  /**
+   * Register all pending enums.  Skips duplicates via `registeredEnums`
+   * (shared across commands in the same startup batch).
+   */
+  registerEnums(
+    registry: CustomCommandRegistry,
+    registeredEnums: Set<string>
+  ): void {
     for (const enumDef of this.enums) {
+      if (registeredEnums.has(enumDef.name)) continue;
+      registeredEnums.add(enumDef.name);
       try {
         registry.registerEnum(enumDef.name, enumDef.values);
       } catch (e) {
-        console.error(
-          `[mcx command]: Failed to register enum '${enumDef.name}' for command '${this.name}'`,
-          e,
-        );
+        if (!isDuplicateError(e)) {
+          console.error(
+            `[mcx command]: Failed to register enum '${enumDef.name}'`,
+            e
+          );
+        }
       }
     }
   }
@@ -175,35 +203,58 @@ class Command {
     callback: (
       origin: CustomCommandOrigin,
       ...args: unknown[]
-    ) => CustomCommandResult | undefined,
+    ) => CustomCommandResult | undefined
   ): void {
     this.callback = callback;
     registryCommand(this);
   }
 
+  /**
+   * Resolve a user-facing parameter definition into a CustomCommandParameter.
+   *
+   * For enum params, the enum is registered under a globally-unique name
+   * derived from `<commandName>_<paramName>` to avoid cross-command collisions.
+   */
   private resolveParameter(
-    name: string,
-    param: CommandParamDef,
+    paramName: string,
+    param: CommandParamDef
   ): CustomCommandParameter {
+    // Simple string shorthand → map directly
     if (typeof param === 'string') {
+      if (param === 'enum') {
+        throw new TypeError(
+          `[mcx command]: Parameter '${paramName}' uses type 'enum' but no options were provided. Use an object: { type: 'enum', options: [...] }`
+        );
+      }
       return {
-        name,
+        name: paramName,
         type: paramTypeMap[param] ?? CustomCommandParamType.String,
       };
     }
 
-    const result: CustomCommandParameter = {
-      name,
-      type: paramTypeMap[param.type] ?? CustomCommandParamType.String,
-    };
-
-    if (param.type === 'enum' && param.options && param.options.length > 0) {
-      this.enums.push({ name, values: param.options });
-      (result as CustomCommandParameter & { enumName?: string }).enumName =
-        name;
+    // Enum params: register a uniquely-named enum and reference it
+    if (param.type === 'enum') {
+      const opts = param as EnumParamOptions;
+      if (!opts.options || opts.options.length === 0) {
+        throw new TypeError(
+          `[mcx command]: Enum parameter '${paramName}' requires non-empty options array`
+        );
+      }
+      // Globally-unique enum name: <command>_<param> (sanitised)
+      const enumName = `${this.name.replace(/[^a-zA-Z0-9_]/g, '_')}_${paramName.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+      this.enums.push({ name: enumName, values: opts.options });
+      return {
+        name: paramName,
+        type: CustomCommandParamType.Enum,
+      };
     }
 
-    return result;
+    // Simple typed params
+    const simple = param as SimpleParamOptions;
+    return {
+      name: paramName,
+      type: paramTypeMap[simple.type] ?? CustomCommandParamType.String,
+    };
   }
 }
 

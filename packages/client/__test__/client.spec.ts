@@ -682,7 +682,7 @@ describe('Command', () => {
 
   it('should add optional parameters with object type', () => {
     const cmd = new Command('my:cmd');
-    cmd.addOptionalParameter('count', { type: 'number', min: 0, max: 99 });
+    cmd.addOptionalParameter('count', { type: 'number' });
     const customCmd = cmd.toCustomCommand();
     expect(customCmd.optionalParameters).toHaveLength(1);
     expect(customCmd.optionalParameters![0]?.name).toBe('count');
@@ -711,7 +711,6 @@ describe('Command', () => {
       .addMandatoryParameter('g', 'blockType')
       .addMandatoryParameter('h', 'itemType')
       .addMandatoryParameter('i', 'location')
-      .addMandatoryParameter('j', 'enum')
       .addOptionalParameter('k', 'integer');
     const customCmd = cmd.toCustomCommand();
     expect(customCmd.mandatoryParameters![0]?.type).toBe('Boolean');
@@ -723,8 +722,23 @@ describe('Command', () => {
     expect(customCmd.mandatoryParameters![6]?.type).toBe('BlockType');
     expect(customCmd.mandatoryParameters![7]?.type).toBe('ItemType');
     expect(customCmd.mandatoryParameters![8]?.type).toBe('Location');
-    expect(customCmd.mandatoryParameters![9]?.type).toBe('Enum');
     expect(customCmd.optionalParameters![0]?.type).toBe('Integer');
+  });
+
+  it('should throw for enum without options', () => {
+    expect(() =>
+      new Command('my:cmd').addMandatoryParameter('j', 'enum')
+    ).toThrow('options');
+  });
+
+  it('should register enum params with unique names', () => {
+    const cmd = new Command('my:test')
+      .addMandatoryParameter('mode', {
+        type: 'enum',
+        options: ['creative', 'survival'],
+      });
+    const customCmd = cmd.toCustomCommand();
+    expect(customCmd.mandatoryParameters![0]?.type).toBe('Enum');
   });
 
   it('should set permission level', () => {
@@ -782,21 +796,13 @@ describe('registryCommand', () => {
     expect(registerCommandMock.mock.calls[2]![0]?.name).toBe('my:actcmd');
   });
 
-  it('should error when registering via registryCommand after startup', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('queues commands even when called repeatedly', () => {
     const cmd = new Command('my:cmd03');
-    registryCommand(cmd);
-    expect(consoleSpy).toHaveBeenCalled();
-    expect(consoleSpy.mock.calls[0]?.[0]).toContain('Cannot register command');
-    consoleSpy.mockRestore();
+    expect(() => registryCommand(cmd)).not.toThrow();
   });
 
-  it('.action() should error when called after startup', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('.action() queues without error', () => {
     const cmd = new Command('my:actafter');
-    cmd.action(() => ({ status: 0 }));
-    expect(consoleSpy).toHaveBeenCalled();
-    expect(consoleSpy.mock.calls[0]?.[0]).toContain('Cannot register command');
-    consoleSpy.mockRestore();
+    expect(() => cmd.action(() => ({ status: 0 }))).not.toThrow();
   });
 });

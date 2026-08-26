@@ -48,7 +48,7 @@ class BlockComponent {
             } as const,
             run: async define => {
               return [
-                [define['key'], `textures/${define['texture']}`],
+                [define['key'], define['texture']],
               ] satisfies [string, string][];
             },
           }),

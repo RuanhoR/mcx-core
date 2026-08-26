@@ -30,6 +30,8 @@ interface RecipeComponentOptions {
   base?: string;
   addition?: string;
   reagent?: string;
+  /** Items that unlock this recipe, e.g. [{ item: "minecraft:iron_ingot" }] */
+  unlock?: RecipeItem[];
 }
 
 class RecipeComponent {
@@ -150,6 +152,16 @@ class RecipeComponent {
     this.#opt.reagent = value;
   }
 
+  getUnlock(): RecipeItem[] | undefined {
+    return this.#opt.unlock;
+  }
+  setUnlock(value: RecipeItem[]) {
+    if (!Array.isArray(value)) {
+      throw new Error('[mcx component]: unlock must be an array of { item: string } objects');
+    }
+    this.#opt.unlock = value;
+  }
+
   private makeShaped() {
     const data: Record<string, unknown> = {
       description: { identifier: this.#opt.id },
@@ -160,6 +172,7 @@ class RecipeComponent {
     if (this.#opt.key) data.key = this.#opt.key;
     if (this.#opt.priority !== undefined) data.priority = this.#opt.priority;
     if (this.#opt.result) data.result = this.#opt.result;
+    if (this.#opt.unlock) data.unlock = this.#opt.unlock;
     return {
       'minecraft:recipe_shaped': data,
     };
@@ -173,6 +186,7 @@ class RecipeComponent {
     if (this.#opt.ingredients) data.ingredients = this.#opt.ingredients;
     if (this.#opt.priority !== undefined) data.priority = this.#opt.priority;
     if (this.#opt.result) data.result = this.#opt.result;
+    if (this.#opt.unlock) data.unlock = this.#opt.unlock;
     return {
       'minecraft:recipe_shapeless': data,
     };

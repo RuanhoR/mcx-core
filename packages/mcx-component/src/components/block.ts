@@ -18,7 +18,8 @@ class BlockComponent {
       throw new Error("[mcx component]: can't handle non-PNG image component");
     }
     const filePath = value.filePath;
-    const textureKey = `${prefix}_${Date.now()}`;
+    const safePrefix = prefix.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const textureKey = `${safePrefix}_${Date.now()}`;
     if (!this.#edit) this.#edit = [];
     const idKey = `__tex_${textureKey}__`;
     this.#edit.push({

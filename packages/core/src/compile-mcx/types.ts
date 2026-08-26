@@ -40,6 +40,8 @@ export const _MCXstructureLocComponentTypes = {
   recipes: 'recipe',
   loot_tables: 'lootTable',
   trade_tables: 'tradeTable',
+  features: 'feature',
+  feature_rules: 'featureRule',
 } as const;
 
 /** Output directory (relative to the behavior pack) for each component group. */
@@ -49,7 +51,9 @@ export const _MCXComponentGroupOutputDir = {
   entities: 'entities',
   recipes: 'recipes',
   loot_tables: 'loot_tables',
-  trade_tables: 'trading'
+  trade_tables: 'trading',
+  features: 'features',
+  feature_rules: 'feature_rules'
 } as const;
 type MCXstructureLocComponentType =
   (typeof _MCXstructureLocComponentTypes)[keyof typeof _MCXstructureLocComponentTypes];

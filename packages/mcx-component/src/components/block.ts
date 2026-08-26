@@ -715,8 +715,9 @@ class BlockComponent {
     material_instances: Record<
       string,
       | string
+      | PNGImageComponent
       | {
-          texture: string;
+          texture: string | PNGImageComponent;
           render_method?:
             | 'opaque'
             | 'double_sided'
@@ -734,7 +735,25 @@ class BlockComponent {
     >;
   }) {
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.item_visual = value;
+    let counter = 0;
+    const resolved: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value.material_instances)) {
+      if (typeof val === 'string') {
+        resolved[key] = val;
+      } else if (val instanceof PNGImageComponent) {
+        resolved[key] = this.#resolveTexture(val, `iv_${key}_${counter++}`);
+      } else {
+        const tex =
+          typeof val.texture === 'string'
+            ? val.texture
+            : this.#resolveTexture(val.texture, `iv_${key}_${counter++}`);
+        resolved[key] = { ...val, texture: tex };
+      }
+    }
+    this.#opt.components.item_visual = {
+      geometry: value.geometry,
+      material_instances: resolved,
+    } as never;
   }
   getDestructionParticles():
     | {

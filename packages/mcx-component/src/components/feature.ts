@@ -1,6 +1,8 @@
 interface FeatureReplaceRule {
-  replace_block?: string | string[];
-  with_block?: string | string[];
+  /** The block to be replaced */
+  places_block?: string | string[];
+  /** Blocks that can be replaced by places_block */
+  may_replace?: (string | string[])[];
 }
 
 interface OreFeatureOptions {
@@ -18,8 +20,8 @@ interface FeatureJson {
     };
     count?: number;
     replace_rules?: Array<{
-      replace_block?: string | string[];
-      with_block?: string | string[];
+      places_block?: string | string[];
+      may_replace?: (string | string[])[];
     }>;
   };
 }
@@ -29,6 +31,9 @@ class FeatureComponent {
 
   constructor(opt: OreFeatureOptions) {
     this.#opt = opt;
+    if (!Array.isArray(this.#opt.replace_rules)) {
+      this.#opt.replace_rules = [];
+    }
   }
 
   getFormat(): string {
@@ -58,8 +63,8 @@ class FeatureComponent {
     this.#opt.count = value;
   }
 
-  getReplaceRules(): FeatureReplaceRule[] | undefined {
-    return this.#opt.replace_rules;
+  getReplaceRules(): FeatureReplaceRule[] {
+    return this.#opt.replace_rules!;
   }
 
   setReplaceRules(value: FeatureReplaceRule[]) {
@@ -70,10 +75,7 @@ class FeatureComponent {
   }
 
   addReplaceRule(rule: FeatureReplaceRule): this {
-    if (!this.#opt.replace_rules) {
-      this.#opt.replace_rules = [];
-    }
-    this.#opt.replace_rules.push(rule);
+    this.#opt.replace_rules!.push(rule);
     return this;
   }
 
@@ -98,10 +100,12 @@ class FeatureComponent {
     if (Array.isArray(this.#opt.replace_rules)) {
       result['minecraft:ore_feature'].replace_rules =
         this.#opt.replace_rules.map(rule => ({
-          ...(rule.replace_block !== undefined && {
-            replace_block: rule.replace_block,
+          ...(rule.places_block !== undefined && {
+            places_block: rule.places_block,
           }),
-          ...(rule.with_block !== undefined && { with_block: rule.with_block }),
+          ...(rule.may_replace !== undefined && {
+            may_replace: rule.may_replace,
+          }),
         }));
     }
 

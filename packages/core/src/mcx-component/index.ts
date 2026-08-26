@@ -98,9 +98,11 @@ export async function compileComponent(
     if (
       entryData.type === 'recipe' ||
       entryData.type === 'lootTable' ||
-      entryData.type === 'tradeTable'
+      entryData.type === 'tradeTable' ||
+      entryData.type === 'feature' ||
+      entryData.type === 'featureRule'
     ) {
-      // recipe JSON has no _meta wrapper
+      // these component types have no _meta wrapper
       if ('_meta' in json) {
         throw new Error(
           '[mcx component]: recipe component must not contain _meta',

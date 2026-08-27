@@ -26,7 +26,6 @@ export function init() {
   initd = true;
   const MockdWorld = World.prototype as MockdWorld;
   if (!MockdWorld._mcx_packcall) {
-    let currentMaxPackId = 0;
     MockdWorld._mcx_packcall = {
       eventMap: new Map(),
 

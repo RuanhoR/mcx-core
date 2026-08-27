@@ -100,7 +100,8 @@ export async function compileComponent(
       entryData.type === 'lootTable' ||
       entryData.type === 'tradeTable' ||
       entryData.type === 'feature' ||
-      entryData.type === 'featureRule'
+      entryData.type === 'featureRule' ||
+      entryData.type == 'itemCatalog'
     ) {
       // these component types have no _meta wrapper
       if ('_meta' in json) {

@@ -9,17 +9,14 @@ class BlockComponent {
     if (!this.#opt.components) this.#opt.components = {};
   }
 
-  #resolveTexture(
-    value: string | PNGImageComponent,
-    prefix: string,
-  ): string {
+  #resolveTexture(value: string | PNGImageComponent, prefix: string): string {
     if (typeof value === 'string') return value;
     if (value.classId !== 'mcx_png_2340192') {
       throw new Error("[mcx component]: can't handle non-PNG image component");
     }
     const filePath = value.filePath;
     const safePrefix = prefix.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const textureKey = `${safePrefix}_${Date.now()}`;
+    const textureKey = `${safePrefix}_${crypto.randomUUID()}`;
     if (!this.#edit) this.#edit = [];
     const idKey = `__tex_${textureKey}__`;
     this.#edit.push({
@@ -47,9 +44,10 @@ class BlockComponent {
               },
             } as const,
             run: async define => {
-              return [
-                [define['key'], define['texture']],
-              ] satisfies [string, string][];
+              return [[define['key'], define['texture']]] satisfies [
+                string,
+                string,
+              ][];
             },
           }),
         },
@@ -317,9 +315,15 @@ class BlockComponent {
         | string
         | {
             texture: string;
-            render_method?: 'opaque' | 'double_sided' | 'blend' | 'alpha_test'
-              | 'alpha_test_single_sided' | 'blend_to_opaque'
-              | 'alpha_test_to_opaque' | 'alpha_test_single_sided_to_opaque';
+            render_method?:
+              | 'opaque'
+              | 'double_sided'
+              | 'blend'
+              | 'alpha_test'
+              | 'alpha_test_single_sided'
+              | 'blend_to_opaque'
+              | 'alpha_test_to_opaque'
+              | 'alpha_test_single_sided_to_opaque';
             ambient_occlusion?: number;
             face_dimming?: boolean | string;
             isotropic?: boolean;
@@ -336,9 +340,15 @@ class BlockComponent {
       | PNGImageComponent
       | {
           texture: string | PNGImageComponent;
-          render_method?: 'opaque' | 'double_sided' | 'blend' | 'alpha_test'
-            | 'alpha_test_single_sided' | 'blend_to_opaque'
-            | 'alpha_test_to_opaque' | 'alpha_test_single_sided_to_opaque';
+          render_method?:
+            | 'opaque'
+            | 'double_sided'
+            | 'blend'
+            | 'alpha_test'
+            | 'alpha_test_single_sided'
+            | 'blend_to_opaque'
+            | 'alpha_test_to_opaque'
+            | 'alpha_test_single_sided_to_opaque';
           ambient_occlusion?: number;
           face_dimming?: boolean | string;
           isotropic?: boolean;
@@ -358,10 +368,7 @@ class BlockComponent {
         const tex =
           typeof val.texture === 'string'
             ? val.texture
-            : this.#resolveTexture(
-                val.texture,
-                `mat_${key}_${counter++}`,
-              );
+            : this.#resolveTexture(val.texture, `mat_${key}_${counter++}`);
         resolved[key] = { ...val, texture: tex };
       } else {
         resolved[key] = val;
@@ -780,9 +787,7 @@ class BlockComponent {
     if (!this.#opt.components) this.#opt.components = {};
     this.#opt.components.sound = value;
   }
-  getLeashable():
-    | { offset?: [number, number, number] }
-    | undefined {
+  getLeashable(): { offset?: [number, number, number] } | undefined {
     return this.#opt.components?.leashable;
   }
   setLeashable(value: { offset?: [number, number, number] }) {
@@ -908,10 +913,16 @@ class BlockComponent {
               };
           'minecraft:collision_box':
             | boolean
-            | { origin?: [number, number, number]; size?: [number, number, number] };
+            | {
+                origin?: [number, number, number];
+                size?: [number, number, number];
+              };
           'minecraft:selection_box':
             | boolean
-            | { origin?: [number, number, number]; size?: [number, number, number] };
+            | {
+                origin?: [number, number, number];
+                size?: [number, number, number];
+              };
           'minecraft:geometry':
             | string
             | {
@@ -928,17 +939,28 @@ class BlockComponent {
             | string
             | {
                 texture: string;
-                render_method?: 'opaque' | 'double_sided' | 'blend' | 'alpha_test'
-                  | 'alpha_test_single_sided' | 'blend_to_opaque'
-                  | 'alpha_test_to_opaque' | 'alpha_test_single_sided_to_opaque';
+                render_method?:
+                  | 'opaque'
+                  | 'double_sided'
+                  | 'blend'
+                  | 'alpha_test'
+                  | 'alpha_test_single_sided'
+                  | 'blend_to_opaque'
+                  | 'alpha_test_to_opaque'
+                  | 'alpha_test_single_sided_to_opaque';
                 ambient_occlusion?: number;
                 face_dimming?: boolean | string;
                 isotropic?: boolean;
                 tint_method?: string | boolean;
               }
           >;
-          'minecraft:map_color': string | { color: string; tint_method?: string };
-          'minecraft:crafting_table': { crafting_tags?: string[]; table_name?: string };
+          'minecraft:map_color':
+            | string
+            | { color: string; tint_method?: string };
+          'minecraft:crafting_table': {
+            crafting_tags?: string[];
+            table_name?: string;
+          };
           'minecraft:transformation': {
             rotation?:
               | [number, number, number]
@@ -952,7 +974,10 @@ class BlockComponent {
               | [number, number, number]
               | { x?: number; y?: number; z?: number };
           };
-          'minecraft:tick': { interval_range: [number, number]; looping?: boolean };
+          'minecraft:tick': {
+            interval_range: [number, number];
+            looping?: boolean;
+          };
           'minecraft:random_offset': {
             x?: { range?: { min?: number; max?: number }; steps?: number };
             y?: { range?: { min?: number; max?: number }; steps?: number };
@@ -997,13 +1022,21 @@ class BlockComponent {
           'minecraft:liquid_detection': {
             can_contain_liquid?: boolean;
             liquid_type?: string;
-            on_liquid_touches?: 'blocking' | 'broken' | 'popped' | 'no_reaction';
+            on_liquid_touches?:
+              | 'blocking'
+              | 'broken'
+              | 'popped'
+              | 'no_reaction';
             stops_liquid_flowing_from_direction?: string[];
             use_liquid_clipping?: boolean;
             detection_rules?: Array<{
               can_contain_liquid?: boolean;
               liquid_type?: string;
-              on_liquid_touches?: 'blocking' | 'broken' | 'popped' | 'no_reaction';
+              on_liquid_touches?:
+                | 'blocking'
+                | 'broken'
+                | 'popped'
+                | 'no_reaction';
               stops_liquid_flowing_from_direction?: string[];
               use_liquid_clipping?: boolean;
             }>;
@@ -1136,7 +1169,10 @@ class BlockComponent {
     if (this.#opt.traits && Object.keys(this.#opt.traits).length > 0) {
       result['minecraft:block'].description.traits = this.#opt.traits;
     }
-    if (Array.isArray(this.#opt.permutations) && this.#opt.permutations.length > 0) {
+    if (
+      Array.isArray(this.#opt.permutations) &&
+      this.#opt.permutations.length > 0
+    ) {
       result['minecraft:block'].permutations = this.#opt.permutations;
     }
     const ApplyComponents = result['minecraft:block'].components;
@@ -1222,8 +1258,7 @@ class BlockComponent {
         ApplyComponents['minecraft:leashable'] = c.leashable;
       if (c.embedded_visual !== undefined)
         ApplyComponents['minecraft:embedded_visual'] = c.embedded_visual;
-      if (Array.isArray(c.tags))
-        ApplyComponents['minecraft:tags'] = c.tags;
+      if (Array.isArray(c.tags)) ApplyComponents['minecraft:tags'] = c.tags;
       if (Array.isArray(c.custom_components)) {
         // v2 custom components use a named component object per entry,
         // e.g. "myplugin:controller": {} — registered via
@@ -1234,7 +1269,7 @@ class BlockComponent {
               `[mcx component]: invalid custom component id: ${String(name)}`,
             );
           }
-          ;(ApplyComponents as Record<string, unknown>)[name] = {};
+          (ApplyComponents as Record<string, unknown>)[name] = {};
         }
       }
     }

@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { getFs } from '../../state';
 import * as Parser from '@babel/parser';
 import { ImportList, ImportListImport } from '../types';
 import * as t from '@babel/types';
@@ -11,7 +11,7 @@ export default class Utils {
       throw new TypeError(
         '[read file]: compile utils was passed a non-string value',
       );
-    const file = await readFile(fileDir, 'utf-8');
+    const file = await getFs().promises.readFile(fileDir, 'utf-8');
     if (typeof file !== 'string')
       throw new Error('[read file]: not found file ' + fileDir);
     try {
@@ -24,7 +24,7 @@ export default class Utils {
     }
   }
   public static async FileContent(fileDir: string): Promise<string> {
-    const file = await readFile(fileDir, 'utf-8');
+    const file = await getFs().promises.readFile(fileDir, 'utf-8');
     return file;
   }
   private static nodeStringValue(node: t.Identifier | t.StringLiteral): string {

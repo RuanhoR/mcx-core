@@ -5,13 +5,12 @@ import { extname } from 'node:path';
 import { CompileError, compileMCXFn, clearCompileCaches } from '.';
 import { transform } from '../../transforms';
 import type { MCXCompileData } from './compileData';
-import { readFile } from 'node:fs/promises';
 import MagicString from 'magic-string';
 import * as path from 'node:path';
 import { createRequire } from 'node:module';
 import { transformCtx } from '../../types';
 import ts from 'typescript';
-import { readFileSync } from 'node:fs';
+import { getFs } from '../../state';
 import {
   generateItemTextureJson,
   generateTerrainTextureJson,
@@ -29,7 +28,7 @@ function createMcxPlugin(
   try {
     const configResult = ts.readConfigFile(opt.tsconfigPath, path => {
       try {
-        return readFileSync(path, 'utf-8');
+        return getFs().readFileSync(path, 'utf-8');
       } catch (error) {
         throw new Error(
           `Failed to read TypeScript config file at ${path}: ${error instanceof Error ? error.message : String(error)}`,
@@ -153,7 +152,7 @@ function createMcxPlugin(
         let pkgJson: Record<string, unknown>;
         try {
           pkgJson = JSON.parse(
-            await readFile(path.join(d, 'package.json'), 'utf-8'),
+            await getFs().promises.readFile(path.join(d, 'package.json'), 'utf-8'),
           );
         } catch (err: unknown) {
           const nodeErr = err as { code?: string; message?: string };

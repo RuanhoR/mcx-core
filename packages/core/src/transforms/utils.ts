@@ -3,7 +3,7 @@ import { JsCompileData } from '../compile-mcx/compiler/compileData';
 import Utils from '../compile-mcx/compiler/utils';
 import { ParsedTagNode, transformCtx } from '../types';
 import config from './config';
-import McxUtils from '../utils';
+import { fileExists } from '../utils';
 import * as path from 'node:path';
 import { generateFileId } from './file_id';
 import { extractIdList, toExpression } from './ast-utils';
@@ -123,7 +123,7 @@ export async function generateEventConfig(
       const extendsFile = handlerName.split(',');
       for (const extFile of extendsFile) {
         if (
-          !(await McxUtils.FileExist(
+          !(await fileExists(
             path.join(path.dirname(ctx.currentId), extFile),
           ))
         )

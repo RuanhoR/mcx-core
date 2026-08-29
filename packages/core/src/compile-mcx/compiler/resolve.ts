@@ -1,14 +1,14 @@
-import { accessSync, constants } from 'node:fs';
-import { access } from 'node:fs/promises';
+import { getFs } from '../../state';
 import { extname, resolve, dirname, sep } from 'node:path';
 
 export const RESOLVE_EXTS = ['.ts', '.mts', '.cts', '.js', '.mjs', '.cjs', ''];
 
 export function resolveFileSync(filePath: string): string | null {
+  const fs = getFs();
   for (const ext of RESOLVE_EXTS) {
     try {
       const fullPath = filePath + ext;
-      accessSync(fullPath, constants.F_OK);
+      fs.accessSync(fullPath);
       return fullPath;
     } catch {}
   }
@@ -16,7 +16,7 @@ export function resolveFileSync(filePath: string): string | null {
     for (const ext of RESOLVE_EXTS) {
       try {
         const fullPath = filePath + '/index' + ext;
-        accessSync(fullPath, constants.F_OK);
+        fs.accessSync(fullPath);
         return fullPath;
       } catch {}
     }
@@ -25,10 +25,11 @@ export function resolveFileSync(filePath: string): string | null {
 }
 
 export async function resolveFileAsync(filePath: string): Promise<string | null> {
+  const fs = getFs().promises;
   for (const ext of RESOLVE_EXTS) {
     try {
       const fullPath = filePath + ext;
-      await access(fullPath, constants.F_OK);
+      await fs.access(fullPath);
       return fullPath;
     } catch {}
   }
@@ -36,7 +37,7 @@ export async function resolveFileAsync(filePath: string): Promise<string | null>
     for (const ext of RESOLVE_EXTS) {
       try {
         const fullPath = filePath + '/index' + ext;
-        await access(fullPath, constants.F_OK);
+        await fs.access(fullPath);
         return fullPath;
       } catch {}
     }

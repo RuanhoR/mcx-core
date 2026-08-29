@@ -1,11 +1,10 @@
 import * as Module from 'node:module';
 import * as vm from 'node:vm';
-import { Buffer } from 'node:buffer';
 import * as t from '@babel/types';
 import { transformESMToCJS } from './cjsTransform';
+import { getFs } from '../state';
 import { resolveSync } from '../compile-mcx/compiler/resolve';
 import ts from 'typescript';
-import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 import {
   createImageTransformCode,
@@ -43,7 +42,7 @@ export class RunScript {
     if (this.module === 'esm') {
       if (esmExecMethod == execESMMethod.importESM) {
         const processedCode = code;
-        const dataUrl = `data:application/javascript;base64,${Buffer.from(processedCode).toString('base64')}`;
+        const dataUrl = `data:application/javascript;charset=utf-8,${encodeURIComponent(processedCode)}`;
         return await import(dataUrl);
       } else if (esmExecMethod == execESMMethod.transformCjs) {
         const compiledCode = transformESMToCJS(code, transformCjsHook);
@@ -94,7 +93,7 @@ export class RunScript {
           resolved.endsWith('.cts')
         ) {
           const transformed = ts.transpileModule(
-            readFileSync(resolved, 'utf-8'),
+            getFs().readFileSync(resolved, 'utf-8'),
             {
               compilerOptions: {
                 target: ts.ScriptTarget.ES2024,

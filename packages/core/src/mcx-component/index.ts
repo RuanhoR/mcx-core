@@ -1,4 +1,3 @@
-import { mkdir, writeFile } from 'node:fs/promises';
 import { MCXCompileData } from '../compile-mcx/compiler/compileData';
 import { execESMMethod, RunScript } from './vm';
 import * as path from 'node:path';
@@ -7,7 +6,7 @@ import {
   _MCXComponentGroupOutputDir,
 } from '../compile-mcx/types';
 import { transformCtx } from '../types';
-import { existsSync } from 'node:fs';
+import { getFs } from '../state';
 import type { BaseJson } from './types';
 import type {
   ItemComponent,
@@ -90,9 +89,7 @@ export async function compileComponent(
       );
     }
 
-    if (!existsSync(path.dirname(filePoint))) {
-      await mkdir(path.dirname(filePoint), { recursive: true });
-    }
+    await getFs().promises.mkdir(path.dirname(filePoint), { recursive: true });
 
     const json = pointData.toJSON() as unknown as BaseJson;
     if (
@@ -123,6 +120,6 @@ export async function compileComponent(
     }
 
     delete (json as unknown as Record<string, string>)['_meta'];
-    await writeFile(filePoint, JSON.stringify(json, null, 2));
+    await getFs().promises.writeFile(filePoint, JSON.stringify(json, null, 2));
   }
 }

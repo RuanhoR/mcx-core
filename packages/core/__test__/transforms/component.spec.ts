@@ -12,6 +12,10 @@ import type { transformCtx } from '../../src/types';
 import { mkdir, readFile, rm } from 'node:fs/promises';
 import path, { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { setGlobalFS } from '../../src/state';
+import * as nodeFs from 'node:fs';
+
+setGlobalFS(nodeFs);
 
 const SPEC_DIR = path.dirname(fileURLToPath(import.meta.url));
 // packages/core/node_modules — upward resolution finds workspace deps here

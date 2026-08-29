@@ -1,6 +1,6 @@
-import { cp, readFile, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import { transformCtx } from '../types';
+import { getFs } from '../state';
 import type { BaseJson, FilePoint } from './types';
 import { getCachedOption } from './cache';
 
@@ -72,7 +72,7 @@ async function execEditInternal(
     if (editOption.type == 'batch') {
       await execEditInternal(editOption.options, ctx, limits, isMcxCoreSource);
     } else if (editOption.type == 'copy_assets') {
-      await cp(
+      await getFs().promises.cp(
         resolveFilePoint(editOption.source, ctx, isMcxCoreSource),
         resolveFilePoint(editOption.output, ctx, isMcxCoreSource),
         { recursive: true, force: true },
@@ -94,7 +94,7 @@ async function execEditInternal(
               );
             }
           }
-          const fileContent = await readFile(
+          const fileContent = await getFs().promises.readFile(
             resolveFilePoint(value.data, ctx, isMcxCoreSource),
             'utf-8',
           );
@@ -117,7 +117,7 @@ async function execEditInternal(
           ctx,
           isMcxCoreSource,
         );
-        await writeFile(filePath, execResult.toString());
+        await getFs().promises.writeFile(filePath, execResult.toString());
       } else if ('bind' in editOption.source) {
         const bindKey = editOption.source.bind;
         if (

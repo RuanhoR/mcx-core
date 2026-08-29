@@ -1,8 +1,8 @@
 import * as path from 'node:path';
 import { transformParseCtx } from '../../types';
 import * as t from '@babel/types';
-import { readFile } from 'node:fs/promises';
 import { compileMCXFn } from '../../compile-mcx/compiler';
+import { getFs } from '../../state';
 import config from '../config';
 export async function Comp(ctx: transformParseCtx) {
   const eventImportIdList: {
@@ -19,7 +19,7 @@ export async function Comp(ctx: transformParseCtx) {
     const fPath = path.join(ctx.ctx.currentId, '../', source);
     try {
       // read file
-      const code = await readFile(fPath, 'utf-8');
+      const code = await getFs().promises.readFile(fPath, 'utf-8');
       const compiledCode = compileMCXFn(code);
       // write cache
       ctx.ctx.cache.set(fPath, compiledCode);

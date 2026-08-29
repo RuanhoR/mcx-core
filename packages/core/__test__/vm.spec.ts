@@ -3,6 +3,10 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { RunScript, execESMMethod } from '../src/mcx-component/vm';
+import { setGlobalFS } from '../src/state';
+import * as nodeFs from 'node:fs';
+
+setGlobalFS(nodeFs);
 import {
   MINECRAFT_MOCK,
   MINECRAFT_MOCK_SCOPE,

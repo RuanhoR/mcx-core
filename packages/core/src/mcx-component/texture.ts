@@ -1,7 +1,6 @@
-import { mkdir, writeFile } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { getCachedOption } from './cache';
+import { getFs } from '../state';
 
 /**
  * Generate the final textures/item_texture.json from accumulated bind data.
@@ -30,7 +29,7 @@ export async function generateItemTextureJson(output: {
   };
 
   try {
-    const existing = JSON.parse(readFileSync(filePath, 'utf-8'));
+    const existing = JSON.parse(await getFs().promises.readFile(filePath, 'utf-8'));
     if (existing.texture_data) {
       data.texture_data = existing.texture_data;
     }
@@ -42,8 +41,8 @@ export async function generateItemTextureJson(output: {
     data.texture_data[key] = { textures };
   }
 
-  await mkdir(dir, { recursive: true });
-  await writeFile(filePath, JSON.stringify(data, null, 2));
+  await getFs().promises.mkdir(dir, { recursive: true });
+  await getFs().promises.writeFile(filePath, JSON.stringify(data, null, 2));
 }
 
 /**
@@ -75,7 +74,7 @@ export async function generateTerrainTextureJson(output: {
   };
 
   try {
-    const existing = JSON.parse(readFileSync(filePath, 'utf-8'));
+    const existing = JSON.parse(await getFs().promises.readFile(filePath, 'utf-8'));
     if (existing.texture_data) {
       data.texture_data = existing.texture_data;
     }
@@ -87,6 +86,6 @@ export async function generateTerrainTextureJson(output: {
     data.texture_data[key] = { textures };
   }
 
-  await mkdir(dir, { recursive: true });
-  await writeFile(filePath, JSON.stringify(data, null, 2));
+  await getFs().promises.mkdir(dir, { recursive: true });
+  await getFs().promises.writeFile(filePath, JSON.stringify(data, null, 2));
 }

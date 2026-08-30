@@ -88,3 +88,28 @@ describe('EntityComponent identity', () => {
     expect(deep(make().toJSON() as unknown as Json, ['_meta', 'type'])).toBe('entity');
   });
 });
+
+describe('EntityComponent physics config (setPhysics regression)', () => {
+  it('setPhysics emits minecraft:physics config in toJSON', () => {
+    const entity = new EntityComponent({ format: '1.21.0', id: 'test:e' } as never);
+    entity.setPhysics({ has_gravity: false, has_collision: false });
+    const j = entity.toJSON() as unknown as Json;
+    expect(deep(j, [EE, EC, 'minecraft:physics', 'has_gravity'])).toBe(false);
+    expect(deep(j, [EE, EC, 'minecraft:physics', 'has_collision'])).toBe(false);
+  });
+  it('physics: boolean shorthand still emits empty physics component', () => {
+    const entity = new EntityComponent({
+      format: '1.21.0',
+      id: 'test:e',
+      components: { physics: true },
+    } as never);
+    const j = entity.toJSON() as unknown as Json;
+    expect(deep(j, [EE, EC, 'minecraft:physics'])).toEqual({});
+  });
+  it('physics config alone counts as a component (hasComponents chain)', () => {
+    const entity = new EntityComponent({ format: '1.21.0', id: 'test:e' } as never);
+    entity.setPhysics({ has_gravity: false });
+    const j = entity.toJSON() as unknown as Json;
+    expect(deep(j, [EE, EC, 'minecraft:physics'])).toBeDefined();
+  });
+});

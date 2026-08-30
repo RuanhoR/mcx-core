@@ -182,13 +182,22 @@ class EntityComponent {
         components['minecraft:navigation.swim'] !== void 0 ||
         components['minecraft:navigation.walk'] !== void 0 ||
         components['minecraft:offspring'] !== void 0 ||
-        components['minecraft:preferred_path'] !== void 0;
+        components['minecraft:preferred_path'] !== void 0 ||
+        components['minecraft:physics'] !== void 0;
 
       if (hasComponents) {
         result['minecraft:entity'].components = {};
         const ApplyComponents = result['minecraft:entity'].components;
         if (typeof components.physics === 'boolean') {
           ApplyComponents['minecraft:physics'] = {};
+        }
+        if (
+          components['minecraft:physics'] &&
+          typeof components['minecraft:physics'] === 'object'
+        ) {
+          ApplyComponents['minecraft:physics'] = {
+            ...components['minecraft:physics'],
+          };
         }
         if (components.addrider) {
           const addriderConfig: Record<string, unknown> = {};

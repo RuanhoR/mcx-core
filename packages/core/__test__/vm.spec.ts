@@ -101,6 +101,24 @@ describe('RunScript: nested relative module resolution', () => {
     )) as Record<string, unknown>;
     expect(exports.value).toBe('gongfa:util');
   });
+
+  it('should preserve named exports when mixed with export *', async () => {
+    const dir = await makeTempDir();
+    await writeModule(dir, 'lib/items.ts', `export const ITEM = 'item';`);
+    await writeModule(
+      dir,
+      'config.ts',
+      `export * from './lib/items'; export const MY_ENUM = "enum_value";`,
+    );
+
+    const run = new RunScript(join(dir, 'entry.ts'), 'esm');
+    const exports = (await run.run(
+      `import { ITEM, MY_ENUM } from './config'; exports.item = ITEM; exports.enum = MY_ENUM;`,
+      execESMMethod.transformCjs,
+    )) as Record<string, unknown>;
+    expect(exports.item).toBe('item');
+    expect(exports.enum).toBe('enum_value');
+  });
 });
 
 describe('minecraftMock', () => {

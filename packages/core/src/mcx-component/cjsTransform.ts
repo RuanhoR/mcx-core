@@ -64,18 +64,12 @@ function transformESMToCJS(
             t.callExpression(t.identifier('require'), [i.source]),
           ),
         );
-        return t.assignmentExpression(
-          '=',
-          t.memberExpression(t.identifier('module'), t.identifier('exports')),
-          t.objectExpression([
-            t.spreadElement(t.identifier(fileId)),
-            t.spreadElement(
-              t.memberExpression(
-                t.identifier('module'),
-                t.identifier('exports'),
-              ),
-            ),
-          ]),
+        return t.callExpression(
+          t.memberExpression(t.identifier('Object'), t.identifier('assign')),
+          [
+            t.memberExpression(t.identifier('module'), t.identifier('exports')),
+            t.identifier(fileId),
+          ],
         );
       } else if (t.isExportDefaultDeclaration(i)) {
         if (!i.declaration || t.isTSDeclareFunction(i.declaration))

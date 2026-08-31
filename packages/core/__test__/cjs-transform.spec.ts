@@ -45,3 +45,25 @@ describe('generateMain: should not mutate the shared cached body', () => {
     expect(out.match(/const YeShengGouNai =/g)?.length).toBe(1);
   });
 });
+
+describe('cjsTransform: export * should not shadow named exports', () => {
+  it('should use Object.assign for export * instead of module.exports reassignment', () => {
+    const code = `
+      export * from "./items";
+      export var MyConst = "hello";
+    `;
+    const out = transformESMToCJS(code);
+    expect(out).toContain('Object.assign');
+    expect(out).not.toMatch(/module\.exports\s*=\s*\{[\s\S]*\.\.\./);
+  });
+
+  it('should preserve both re-exported and local named exports', () => {
+    const code = `
+      export * from "./items";
+      export var AddonEnum;
+      (function(AddonEnum) { AddonEnum["A"] = "a"; })(AddonEnum || (AddonEnum = {}));
+    `;
+    const out = transformESMToCJS(code);
+    assertCompilable(out);
+  });
+});

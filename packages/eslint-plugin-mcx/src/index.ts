@@ -9,17 +9,14 @@ export interface McxPlugin {
   rules: Record<string, Rule.RuleModule>;
 }
 
-const plugin: McxPlugin = {
-  meta: { name: 'eslint-plugin-mcx', version: '0.0.1' },
-  rules,
-};
-
+// `configs` and the plugin object reference each other (the recommended
+// preset registers this plugin), so the circular link is filled in below
 export const configs = {
   recommended: {
     name: 'mcx/recommended',
     files: ['**/*.mcx'],
     languageOptions: { parser },
-    plugins: { mcx: plugin as never },
+    plugins: {} as { mcx: PluginWithConfigs },
     rules: {
       'mcx/valid-event-binding': 'error',
       'mcx/no-duplicate-root-tag': 'error',
@@ -28,6 +25,17 @@ export const configs = {
     },
   },
 };
+
+interface PluginWithConfigs extends McxPlugin {
+  configs: typeof configs;
+}
+
+const plugin: PluginWithConfigs = {
+  meta: { name: 'eslint-plugin-mcx', version: '0.0.1' },
+  rules,
+  configs,
+};
+configs.recommended.plugins.mcx = plugin;
 
 export type { McxTemplateNode };
 export default plugin;

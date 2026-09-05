@@ -1,5 +1,6 @@
 import type { Rule } from 'eslint';
-import { KNOWN_WORLD_EVENTS, isMcxDirectiveKey } from '../events';
+import { isMcxDirectiveKey } from '../events';
+import { loadEventLists } from '../event-source';
 import { exportedNames, parsePropLines, walkTags } from '../utils';
 import type { Tag } from '../utils';
 
@@ -16,7 +17,7 @@ export const validEventBinding: Rule.RuleModule = {
     type: 'problem',
     docs: {
       description:
-        'require Event bindings to use known world events and handlers exported from <script>',
+        'require Event bindings to use known world events (per @after/@before scope, from the project\'s @minecraft/server) and handlers exported from <script>',
       recommended: true,
     },
     schema: [
@@ -32,6 +33,8 @@ export const validEventBinding: Rule.RuleModule = {
     ],
     messages: {
       unknownEvent: "unknown world event '{{key}}' in <Event>",
+      unknownEventInScope:
+        "unknown world event '{{key}}' in <Event @{{scope}}> (not part of world.{{scope}}Events)",
       missingExport:
         "<Event> binds '{{value}}' but no exported function with that name exists in <script>",
     },
@@ -42,21 +45,48 @@ export const validEventBinding: Rule.RuleModule = {
     ).mcxTemplate;
     if (!tags) return {};
     const opts = (context.options[0] as Options | undefined) ?? defaultOptions;
-    const known = new Set([...KNOWN_WORLD_EVENTS, ...(opts.extraEvents ?? [])]);
+    const cwd = context.cwd ?? process.cwd();
+    const lists = loadEventLists(cwd);
+    const after = new Set([...lists.after, ...(opts.extraEvents ?? [])]);
+    const before = new Set([...lists.before, ...(opts.extraEvents ?? [])]);
     const exported = exportedNames(context.sourceCode.ast);
 
     walkTags(tags, tag => {
       if (tag.name !== 'Event') return;
+      const scope = tag.arr['@after'] !== undefined
+        ? 'after'
+        : tag.arr['@before'] !== undefined
+          ? 'before'
+          : undefined;
       for (const line of parsePropLines(tag.content)) {
         if (isMcxDirectiveKey(line.key) || opts.ignoreKeys?.includes(line.key)) {
           continue;
         }
-        if (!opts.allowUnknown && !known.has(line.key)) {
-          context.report({
-            loc: tag.loc,
-            messageId: 'unknownEvent',
-            data: { key: line.key },
-          });
+        if (!opts.allowUnknown) {
+          if (scope === 'after' && !after.has(line.key)) {
+            context.report({
+              loc: tag.loc,
+              messageId: 'unknownEventInScope',
+              data: { key: line.key, scope },
+            });
+            continue;
+          }
+          if (scope === 'before' && !before.has(line.key)) {
+            context.report({
+              loc: tag.loc,
+              messageId: 'unknownEventInScope',
+              data: { key: line.key, scope },
+            });
+            continue;
+          }
+          // no scope attribute: accept an event from either list
+          if (!scope && !after.has(line.key) && !before.has(line.key)) {
+            context.report({
+              loc: tag.loc,
+              messageId: 'unknownEvent',
+              data: { key: line.key },
+            });
+          }
         }
         const handler = line.value.replace(/\(\)$/, '');
         if (!exported.has(handler)) {

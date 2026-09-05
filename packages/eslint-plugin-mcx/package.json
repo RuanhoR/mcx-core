@@ -47,7 +47,8 @@
     "build": "rolldown -c",
     "lint": "eslint src --ext .js,.ts",
     "lint:fix": "eslint src --ext .js,.ts --fix",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "gen:events": "node scripts/generate-events.mjs"
   },
   "dependencies": {
     "@mbler/mcx-core": "workspace:*",

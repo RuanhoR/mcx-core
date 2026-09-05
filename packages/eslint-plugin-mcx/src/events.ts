@@ -1,61 +1,8 @@
-/**
- * World event names accepted inside `<Event>` blocks, from
- * `@minecraft/server` `world.afterEvents` / `world.beforeEvents` (2.x).
- */
-export const KNOWN_WORLD_EVENTS: readonly string[] = [
-  // afterEvents
-  'blockBreak',
-  'blockExplode',
-  'blockContainerClosed',
-  'blockContainerOpened',
-  'buttonPush',
-  'chatSend',
-  'effectAdd',
-  'entityDie',
-  'entityExplode',
-  'entityHealthChanged',
-  'entityHitBlock',
-  'entityHitEntity',
-  'entityHurt',
-  'entityLoad',
-  'entityRemove',
-  'entitySpawn',
-  'explosion',
-  'itemCompleteUse',
-  'itemDefinitionTrigger',
-  'itemReleaseUse',
-  'itemStartUse',
-  'itemStartUseOn',
-  'itemStopUse',
-  'itemStopUseOn',
-  'itemUse',
-  'itemUseOn',
-  'leverAction',
-  'pistonActivate',
-  'playerBreakBlock',
-  'playerButtonInput',
-  'playerDimensionChange',
-  'playerEmote',
-  'playerGameModeChange',
-  'playerInteractWithBlock',
-  'playerInteractWithEntity',
-  'playerJoin',
-  'playerLeave',
-  'playerPlaceBlock',
-  'playerSpawn',
-  'pressurePlatePop',
-  'pressurePlatePush',
-  'projectileHitBlock',
-  'projectileHitEntity',
-  'screenDisplay',
-  'scriptEventReceive',
-  'tripWireTrip',
-  'weatherChange',
-  'worldLoad',
-  'worldInitialize',
-  // beforeEvents (subset that also exists there)
-  'playerLeave',
-];
+// Generated from @minecraft/server typings; see scripts/generate-events.mjs.
+// This module re-exports the scoped lists plus helpers for mcx directives.
+import { WORLD_AFTER_EVENTS, WORLD_BEFORE_EVENTS } from './generated-events';
+
+export { WORLD_AFTER_EVENTS, WORLD_BEFORE_EVENTS };
 
 /** Prop keys with mcx-compiler meaning, not world events. */
 export const MCX_EVENT_DIRECTIVES: readonly string[] = ['McxExtendsBy'];

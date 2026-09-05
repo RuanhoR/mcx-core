@@ -42,6 +42,24 @@ export function onPlayerBreakBlock(): void {}
 export function onPlayerPlaceBlock(): void {}
 </script>`,
       },
+      // itemUse exists in both world.afterEvents and world.beforeEvents
+      {
+        code: `<Event @before>
+  itemUse = onUseItem
+</Event>
+<script lang="ts">
+export function onUseItem(): void {}
+</script>`,
+      },
+      // no scope attribute: an event from either list is accepted
+      {
+        code: `<Event>
+  projectileHitBlock = onHit
+</Event>
+<script lang="ts">
+export function onHit(): void {}
+</script>`,
+      },
       {
         code: `<Event @after>
   mysteryEvent = onMystery
@@ -58,9 +76,29 @@ export function hello(): string { return 'hi'; }
 </script>`,
     ],
     invalid: [
+      // entityDie is after-only: valid under @after but not @before
+      {
+        code: `<Event @before>
+  entityDie = onDeath
+</Event>
+<script lang="ts">
+export function onDeath(): void {}
+</script>`,
+        errors: [{ messageId: 'unknownEventInScope' }],
+      },
       {
         code: `<Event @after>
   itemUse = onUseItem
+  notAWorldEvent = onUseItem
+</Event>
+<script lang="ts">
+export function onUseItem(): void {}
+</script>`,
+        errors: [{ messageId: 'unknownEventInScope' }],
+      },
+      // no scope attribute: generic unknownEvent message
+      {
+        code: `<Event>
   notAWorldEvent = onUseItem
 </Event>
 <script lang="ts">

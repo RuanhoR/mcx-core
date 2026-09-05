@@ -26,10 +26,22 @@ export default [
 
 | Rule | Default | Description |
 | --- | --- | --- |
-| `mcx/valid-event-binding` | error | `<Event>` bindings must use known `@minecraft/server` world events and handlers exported from `<script>` |
+| `mcx/valid-event-binding` | error | `<Event>` bindings must use known `@minecraft/server` world events (validated per `@after`/`@before` scope) and handlers exported from `<script>` |
 | `mcx/no-duplicate-root-tag` | error | `App` / `Event` / `Ui` / `Form` / `script` may appear only once per file (configurable via `unique`) |
 | `mcx/valid-prop-value` | error | prop values that look like JSON objects/arrays must parse as JSON |
 | `mcx/require-script-lang` | warn | `<script>` must declare its language (`lang="ts"`) |
+
+### How event names are resolved
+
+`mcx/valid-event-binding` does not use a hardcoded list. At lint time the plugin
+reads the `WorldAfterEvents` / `WorldBeforeEvents` classes from the
+`@minecraft/server` typings installed **in your project**, so the known events
+always match the version you build against. The result is cached at
+`<project>/node_modules/.tmp/eslint-plugin-mcx/events-<version>.json` and
+regenerated automatically when the version changes. If `@minecraft/server`
+cannot be resolved, a bundled fallback list (generated from
+`@minecraft/server` via `pnpm --filter @mbler/eslint-plugin-mcx gen:events`)
+is used.
 
 Manual setup (pick rules yourself):
 
@@ -48,7 +60,7 @@ export default [
 
 ## Rule options
 
-- `valid-event-binding`: `{ allowUnknown?: boolean, extraEvents?: string[], ignoreKeys?: string[] }`. `McxExtendsBy` and other `Mcx*` compiler directives are always allowed.
+- `valid-event-binding`: `{ allowUnknown?: boolean, extraEvents?: string[], ignoreKeys?: string[] }`. `McxExtendsBy` and other `Mcx*` compiler directives are always allowed. Event names are validated against the list matching the tag's `@after`/`@before` scope; without a scope attribute an event from either list is accepted.
 - `no-duplicate-root-tag`: `{ unique?: string[] }` (default `['App', 'Event', 'Ui', 'Form', 'script']`).
 - `require-script-lang`: `{ allow?: string[] }` (default `['ts']`).
 

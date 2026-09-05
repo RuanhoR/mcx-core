@@ -41,7 +41,8 @@
   },
   "devDependencies": {
     "@mbler/mcx-component": "workspace:*",
-    "rollup": "^4.62.2"
+    "rollup": "^4.62.2",
+    "vite": "^7.1.0"
   },
   "files": [
     "dist",

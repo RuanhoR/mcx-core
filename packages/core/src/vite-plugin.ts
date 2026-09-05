@@ -3,17 +3,10 @@ import * as nodeFs from 'node:fs';
 import * as path from 'node:path';
 import type { Plugin } from 'vite';
 import type { Plugin as RollupPlugin } from 'rollup';
-import { rollupPlugin, setGlobalFS } from '@mbler/mcx-core';
-import type { CompileOpt } from '@mbler/mcx-types';
-
-export type { CompileOpt };
-
-/** Output directories consumed by @mbler/mcx-core (same shape mbler passes). */
-export interface McxOutputDirs {
-  dist: string;
-  behavior: string;
-  resources: string;
-}
+import { CompileOpt } from '@mbler/mcx-types';
+import { rollupPlugin } from './compile-mcx/index.js';
+import { setGlobalFS } from './state.js';
+import type { transformCtx } from './types';
 
 type LooseHook = (this: unknown, ...args: unknown[]) => unknown;
 
@@ -25,7 +18,7 @@ function unwrapHook(hook: unknown): LooseHook | undefined {
 }
 
 /**
- * Wrap `@mbler/mcx-core`'s rollup plugin for Vite/Vitest without changing core:
+ * Wrap `rollupPlugin` for Vite/Vitest without changing the compiler hooks:
  * - only `.mcx` modules enter the inner transform, so `.ts` files and images
  *   keep using Vite's own esbuild/asset pipeline;
  * - `resolveId` failures fall through to the host resolver instead of throwing;
@@ -33,11 +26,11 @@ function unwrapHook(hook: unknown): LooseHook | undefined {
  *   watch mode never serves stale results from the inner per-id cache;
  * - `buildEnd` side effects (texture JSON generation) are never forwarded.
  */
-export function mcxPlugin(
+export function vitePlugin(
   opt: CompileOpt,
-  output: McxOutputDirs,
+  output: transformCtx['output'],
 ): Plugin {
-  // core >= 1.1.5-dev.1 requires the host to inject its fs module
+  // >= 1.1.5-dev.1 requires the host to inject its fs module
   setGlobalFS(nodeFs);
   let inner: RollupPlugin = rollupPlugin(opt, output);
   let innerResolveId = unwrapHook(inner.resolveId);
@@ -76,7 +69,7 @@ export function mcxPlugin(
     },
   };
   // assigned separately: Vite's TransformPluginContext type is stricter than
-  // the rollup context core's hook expects, and `this` must pass through
+  // the rollup context the compiler hook expects, and `this` must pass through
   (plugin as { transform: unknown }).transform = {
     handler(this: unknown, code: string, id: string) {
       if (!isMcx(id)) return null;
@@ -91,5 +84,3 @@ export function mcxPlugin(
   };
   return plugin;
 }
-
-export default mcxPlugin;

@@ -61,7 +61,6 @@ This is a pnpm workspace monorepo containing the following packages:
 | [`@mbler/mcx-component`](./packages/mcx-component) | [![npm](https://img.shields.io/npm/v/@mbler/mcx-component.svg)](https://www.npmjs.com/package/@mbler/mcx-component) | Component runtime classes (Item, Block, Entity, Image) used at compile time     |
 | [`create-mbler`](./packages/create-mbler)          | [![npm](https://img.shields.io/npm/v/create-mbler.svg)](https://www.npmjs.com/package/create-mbler)                 | CLI scaffolding tool for new mbler projects                                     |
 | [`@mbler/eslint-plugin-mcx`](./packages/eslint-plugin-mcx) | [![npm](https://img.shields.io/npm/v/@mbler/eslint-plugin-mcx.svg)](https://www.npmjs.com/package/@mbler/eslint-plugin-mcx) | ESLint parser and rules for `.mcx` files                                     |
-| [`@mbler/vite-plugin-mcx`](./packages/vite-plugin-mcx)     | [![npm](https://img.shields.io/npm/v/@mbler/vite-plugin-mcx.svg)](https://www.npmjs.com/package/@mbler/vite-plugin-mcx)     | Vite/Vitest plugin — import compiled `.mcx` modules in tests                  |
 
 ### Monorepo Structure
 
@@ -73,8 +72,7 @@ mcx-core/
 │   ├── types/             # @mbler/mcx-types — shared TypeScript type declarations
 │   ├── mcx-component/     # @mbler/mcx-component — component runtime classes (Item, Block, Entity, Image)
 │   ├── create-mbler/      # create-mbler — CLI scaffolding tool for new mbler projects
-│   ├── eslint-plugin-mcx/ # @mbler/eslint-plugin-mcx — ESLint parser + rules for .mcx
-│   └── vite-plugin-mcx/   # @mbler/vite-plugin-mcx — Vite/Vitest plugin for .mcx imports
+│   └── eslint-plugin-mcx/ # @mbler/eslint-plugin-mcx — ESLint parser + rules for .mcx
 ├── docs/                  # README translations (zh, ja, ko) + TODO.md
 ├── scripts/               # verify-commit.js (commit-msg hook)
 └── .github/workflows/     # CI (pnpm install → lint:packages → test)

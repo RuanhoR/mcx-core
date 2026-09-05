@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
-import { mcxPlugin } from '../src/index.js';
+import { vitePlugin as mcxPlugin } from '../src/index.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const fixtureDir = path.join(here, 'fixture');
+const fixtureDir = path.join(here, 'vite-plugin-fixture');
 
 function makePlugin() {
   return mcxPlugin(

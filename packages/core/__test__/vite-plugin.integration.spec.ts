@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import plain from './fixture/plain.mcx';
-import event from './fixture/event.mcx';
+import plain from './vite-plugin-fixture/plain.mcx';
+import event from './vite-plugin-fixture/event.mcx';
 
 // Runs in the `mcx-integration` project of the root vitest config, which is
 // the only project with the mcx Vite plugin applied.

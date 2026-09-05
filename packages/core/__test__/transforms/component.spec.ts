@@ -59,6 +59,7 @@ async function compileComponentMCX(
     cache,
     mcxId,
     {
+      environment: {} as never,
       error: err => {
         const msg =
           typeof err === 'string' ? err : (err?.message ?? String(err));
@@ -78,6 +79,7 @@ async function compileComponentMCX(
       load: _opt => null as unknown as Promise<ModuleInfo>,
       meta: {
         rollupVersion: '',
+        viteVersion: '',
         watchMode: false,
       },
       getWatchFiles: () => [],

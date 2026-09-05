@@ -19,6 +19,7 @@ function compileMCX(mcxSource: string): Promise<string> {
     cache,
     'test.ui.mcx',
     {
+      environment: {} as never,
       error: err => {
         const msg =
           typeof err === 'string' ? err : (err?.message ?? String(err));
@@ -38,6 +39,7 @@ function compileMCX(mcxSource: string): Promise<string> {
       load: _opt => null as unknown as Promise<ModuleInfo>,
       meta: {
         rollupVersion: '',
+        viteVersion: '',
         watchMode: false,
       },
       getWatchFiles: () => [],

@@ -12,6 +12,7 @@ const external = [
   'magic-string',
   'rollup',
   'rolldown',
+  'vite',
   'typescript',
   /@vue\/*/
 ];

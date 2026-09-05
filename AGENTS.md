@@ -2,14 +2,13 @@
 
 Monorepo for **MCX**, a DSL that compiles `.mcx` files into Minecraft Bedrock Edition addon JSON/JS (components, UI, events). pnpm workspace, ESM everywhere, Node >=22.
 
-## Workspace packages (8, all in `packages/`)
+## Workspace packages (7, all in `packages/`)
 
-- `core/` — `@mbler/mcx-core` — the DSL compiler (parser → AST → Babel transform → codegen). Entry `src/index.ts`.
+- `core/` — `@mbler/mcx-core` — the DSL compiler (parser → AST → Babel transform → codegen). Entry `src/index.ts`. Also exports `vitePlugin` (Vite/Vitest wrapper around `rollupPlugin`), so consumers only need this one package.
 - `client/` — `@mbler/mcx` — runtime framework (`createApp`, `Event`, `ui`).
 - `mcx-component/` — `@mbler/mcx-component` — component runtime classes (Item/Block/Entity + image components) instantiated at compile time. Often overlooked because it has no dedicated section in older docs.
 - `types/` — `@mbler/mcx-types` — pure `.d.ts` declarations. **Has no build, no tests, excluded from lint and `check`.** Do not add runtime code here.
 - `create-mbler/` — CLI scaffolding tool (`cac` + `inquirer`). Entry `bin/create-mbler.js`. Generates projects with `type-check: mcx-tsc` (adds `mcx-tsc` to the generated project's devDependencies).
-- `vite-plugin-mcx/` — `@mbler/vite-plugin-mcx` — thin Vite/Vitest wrapper around core's `rollupPlugin` (scopes transform to `.mcx`, swallows `resolveId` throws, invalidates the inner cache on content change, drops `buildEnd` side effects). Must NOT contain compiler logic; core stays the single source of truth.
 - `eslint-plugin-mcx/` — `@mbler/eslint-plugin-mcx` — ESLint parser + rules for `.mcx` files (template via core's `AST.tag`, `<script>` via `@typescript-eslint/parser` with offset-corrected locs).
 
 ## Commands

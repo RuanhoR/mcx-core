@@ -2,10 +2,10 @@ import { defineConfig } from 'vitest/config'
 import ts from 'typescript'
 import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
-import { mcxPlugin } from './packages/vite-plugin-mcx/src/index.js'
+import { vitePlugin as mcxPlugin } from './packages/core/src/index.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const fixtureDir = `${__dirname}/packages/vite-plugin-mcx/__test__/fixture`
+const fixtureDir = `${__dirname}/packages/core/__test__/vite-plugin-fixture`
 const tmpOut = `${fixtureDir}/.out`
 
 export default defineConfig({
@@ -19,7 +19,7 @@ export default defineConfig({
           include: ['packages/*/__test__/**/*.spec.ts'],
           exclude: [
             '**/node_modules/**',
-            'packages/vite-plugin-mcx/__test__/**/*.integration.spec.ts',
+            'packages/core/__test__/vite-plugin.integration.spec.ts',
           ],
           // ESLint's RuleTester registers its cases through the global
           // describe/it, which several ecosystem tools expect
@@ -41,7 +41,7 @@ export default defineConfig({
         test: {
           name: 'mcx-integration',
           include: [
-            'packages/vite-plugin-mcx/__test__/**/*.integration.spec.ts',
+            'packages/core/__test__/vite-plugin.integration.spec.ts',
           ],
         },
       },

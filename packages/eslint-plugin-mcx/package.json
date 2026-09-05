@@ -1,6 +1,6 @@
 {
   "name": "@mbler/eslint-plugin-mcx",
-  "version": "0.0.1",
+  "version": "0.0.1-rc.1",
   "description": "ESLint parser and rules for .mcx files (Minecraft Bedrock DSL by mbler)",
   "keywords": [
     "eslint",

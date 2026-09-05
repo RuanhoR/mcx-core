@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx",
-  "version": "0.0.6-rc.1",
+  "version": "0.0.6-rc.2",
   "description": "MCX Runtime Framework",
   "main": "dist/index.js",
   "scripts": {

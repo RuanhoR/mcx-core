@@ -1,0 +1,49 @@
+<Component>
+  <items>
+    <item id="lucklyapple.json">LuckApple</item>
+    <item id="lucklysword.json">LuckSword</item>
+  </items>
+</Component>
+
+<script lang="ts">
+import { EnchantableSlotEnum } from "@mbler/mcx-component"
+import { ItemComponent } from "@mbler/mcx-component"
+import LuckAppleIcon from "./assets/LuckApple.png";
+import LucklySwordIcon from "./assets/LucklySword.png"
+const LuckApple = new ItemComponent({
+  id: "rluckblock:luckly_apple",
+  components: {},
+  format: "1.21.0",
+});
+const LuckSword = new ItemComponent({
+  id: "rluckblock:luckly_sword",
+  components: {},
+  format: "1.21.0"
+});
+LuckSword.setDamage(8);
+LuckSword.setIcon(LucklySwordIcon);
+LuckSword.setGlint(true);
+LuckSword.setThrowable({
+  do_swing_animation: true
+})
+LuckSword.setMaxStackSize(1);
+LuckSword.setEnchantable({
+  slot: EnchantableSlotEnum[7],
+  value: 1
+});
+LuckApple.setFood({
+  nutrition: 4,
+  saturation_modifier: 1.0,
+  can_always_eat: true,
+});
+LuckApple.setMaxStackSize(64);
+LuckApple.setUseAnimation("eat");
+LuckApple.setUseModifiers({
+  use_duration: 1.6,
+});
+LuckApple.setIcon(LuckAppleIcon);
+export {
+  LuckApple,
+  LuckSword
+}
+</script>

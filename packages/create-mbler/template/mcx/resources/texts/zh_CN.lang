@@ -1,2 +1,12 @@
-pack.name=MCX模板包
-pack.description=§l模板包
+tile.rluckblock:block.name=幸运方块
+item.rluckblock:luckly_apple.name=幸运苹果
+item.rluckblock:luckly_sword.name=幸运剑
+item.rluckblock:luckly_apple=幸运苹果
+item.rluckblock:luckly_sword=幸运剑
+sapi.form.lucknum.slot=槽位：%s
+sapi.form.lucknum.select_luckblock=选择一个幸运方块（幸运值修改表单）
+sapi.form.lucknum.no_luckblock=§c你的背包里没有幸运方块
+sapi.form.lucknum.select_material=选择一种材料（腐肉/蜘蛛眼/金锭/钻石/绿宝石）
+sapi.form.lucknum.no_material=§c你的背包里没有合适的材料
+sapi.form.lucknum.title=幸运值转换
+sapi.form.lucknum.quantity=数量

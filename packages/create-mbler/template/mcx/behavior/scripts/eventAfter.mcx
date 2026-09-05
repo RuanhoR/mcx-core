@@ -1,0 +1,27 @@
+<Event @after>
+  itemCompleteUse = onItemUse
+  playerSpawn = onPlayerSpawn
+  entityHitEntity = onEntityHitEntity
+</Event>
+<script lang="ts">
+import { EntityHitEntityAfterEvent, Player, PlayerSpawnAfterEvent, system, world, type ItemUseAfterEvent } from "@minecraft/server";
+import { luckAppleTypeId } from "./config";
+import { LuckBlockCore } from "./core/luckBlock";
+import { mainhand } from "./core/utils";
+
+export async function onItemUse(event: ItemUseAfterEvent) {
+  if (event.itemStack.typeId !== luckAppleTypeId) return;
+  system.run(() => LuckBlockCore.onHit(event.source, event.source as Player));
+};
+export async function onPlayerSpawn(event: PlayerSpawnAfterEvent) {
+  if (!event.initialSpawn) return;
+  const player = event.player;
+  if (!player.getDynamicProperty("_gb")) {
+    world.structureManager.place("zuozhehua_biji_block_init", player.dimension, player.location);
+    player.setDynamicProperty("_gb")
+  }
+}
+export async function onEntityHitEntity(event: EntityHitEntityAfterEvent) {
+  if (event.damagingEntity.typeId == "minecraft:player" && mainhand(event.damagingEntity as Player) && mainhand(event.damagingEntity as Player)?.typeId == "rluckblock:luckly_sword") { LuckBlockCore.onHit(event.hitEntity, event.damagingEntity as Player) }
+}
+</script>

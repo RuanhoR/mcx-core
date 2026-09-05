@@ -1,0 +1,26 @@
+<Component>
+  <blocks>
+    <block id="luckblock-normal.json">luckBlock</block>
+  </blocks>
+</Component>
+<script lang="ts">
+import { BlockComponent } from "@mbler/mcx-component";
+import LucklyBlock from "./../assets/lucklyblock.png"
+export const luckBlock = new BlockComponent({
+  format: "1.21.80",
+  id: "rluckblock:block",
+  menu_category: { category: "construction" }
+});
+
+luckBlock.setGeometry("minecraft:geometry.full_block");
+luckBlock.setLoot("loot_tables/empty.json");
+luckBlock.setMaterialInstances(Object.fromEntries(
+  (["down", "up", "west", "east", "south", "north"] as const).map(v => [v, { texture: "luckblock" }])
+));
+luckBlock.setItemVisual({
+  geometry: "minecraft:geometry.full_block",
+  material_instances: {
+    "*": { texture: LucklyBlock, render_method: "opaque" }
+  }
+});
+</script>

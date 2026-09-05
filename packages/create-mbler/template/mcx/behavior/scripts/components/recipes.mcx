@@ -1,0 +1,56 @@
+<Component>
+  <recipes>
+    <recipe id="lucklyblock.json">lucklyBlockRecipe</recipe>
+    <recipe id="lucklyapple.json">lucklyAppleRecipe</recipe>
+    <recipe id="lucklysword.json">lucklySwordRecipe</recipe>
+  </recipes>
+</Component>
+<script lang="ts">
+import { RecipeComponent } from "@mbler/mcx-component";
+
+const lucklyBlockRecipe = new RecipeComponent({
+  format: "1.12.0",
+  id: "rluckblock:block-recipe",
+  type: "shaped",
+  tags: ["crafting_table"],
+  pattern: ["III", "IiI", "III"],
+  key: {
+    I: { item: "minecraft:gold_ingot" },
+    i: { item: "minecraft:dropper" }
+  },
+  result: { item: "rluckblock:block" }
+});
+
+const lucklyAppleRecipe = new RecipeComponent({
+  format: "1.12.0",
+  id: "rluckblock:apple-recipe",
+  type: "shaped",
+  tags: ["crafting_table"],
+  pattern: ["GGG", "GAG", " D "],
+  key: {
+    G: { item: "minecraft:gold_ingot" },
+    A: { item: "minecraft:apple" },
+    D: { item: "minecraft:dropper" }
+  },
+  result: { item: "rluckblock:luckly_apple", count: 2 }
+});
+
+const lucklySwordRecipe = new RecipeComponent({
+  format: "1.12.0",
+  id: "rluckblock:sword-recipe",
+  type: "shaped",
+  tags: ["crafting_table"],
+  pattern: [" I ", " I ", " i "],
+  key: {
+    I: { item: "rluckblock:block" },
+    i: { item: "minecraft:stick" }
+  },
+  result: { item: "rluckblock:luckly_sword" }
+});
+
+export {
+  lucklyBlockRecipe,
+  lucklyAppleRecipe,
+  lucklySwordRecipe
+};
+</script>

@@ -1,0 +1,25 @@
+<Event @before>
+  playerBreakBlock = onPlayerBreakBlock
+  playerPlaceBlock = onPlayerPlaceBlock
+  McxExtendsBy = ./eventAfter.mcx
+</Event>
+<script lang="ts">
+import { PlayerBreakBlockAfterEvent, PlayerPlaceBlockAfterEvent, system } from "@minecraft/server";
+import { LuckBlockCore } from "./core/luckBlock";
+import { luckBlockTypeId, luckAppleTypeId } from "./config";
+import { mainhand } from "./core/utils";
+export async function onPlayerBreakBlock(event: PlayerBreakBlockAfterEvent) {
+  if (event.block.typeId == luckBlockTypeId) system.run(() => LuckBlockCore.onBreak(event.block, event.player));
+}
+export async function onPlayerPlaceBlock(event: PlayerPlaceBlockAfterEvent) {
+  const useBlock = mainhand(event.player);
+  if (!useBlock) return;
+  if (useBlock.typeId !== luckBlockTypeId) return;
+  let luckNum = 0;
+  if (useBlock.getLore().length !== 0) {
+    const parsed = LuckBlockCore.LoreParser.parseLuckBlockLore(useBlock.getLore()[0]);
+    luckNum = parsed.num;
+  }
+  LuckBlockCore.addBlockLuckNumData(event.block.location, event.dimension, luckNum);
+};
+</script>

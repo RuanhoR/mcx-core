@@ -120,6 +120,8 @@ export async function initProject(inputOpt: InputResult) {
   if (isMcx) {
     packageJson.dependencies['@mbler/mcx'] =
       await getLatestPackageVersion('@mbler/mcx');
+    packageJson.dependencies['@ojaang/be-vanilla-iddata'] =
+      await getLatestPackageVersion('@ojaang/be-vanilla-iddata');
     packageJson.devDependencies['@mbler/mcx-component'] =
       await getLatestPackageVersion('@mbler/mcx-component');
     packageJson.devDependencies['@mbler/mcx-core'] =

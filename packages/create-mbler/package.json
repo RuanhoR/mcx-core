@@ -21,7 +21,7 @@
   "engines": {
     "node": ">= 20"
   },
-  "version": "0.0.5-rc.1",
+  "version": "0.0.6-rc.1",
   "dependencies": {
     "cac": "7.0.0",
     "cross-spawn": "7.0.6",

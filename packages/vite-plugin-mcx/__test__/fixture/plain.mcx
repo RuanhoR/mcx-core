@@ -1,0 +1,6 @@
+<script lang="ts">
+const hiddenValue = 41;
+export function hello(): string {
+  return `hello ${hiddenValue}`;
+}
+</script>

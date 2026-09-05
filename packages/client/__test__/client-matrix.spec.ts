@@ -233,7 +233,7 @@ describe('ref matrix', () => {
     expect(unwrapValue(ref(3))).toBe(3);
   });
   it('watch returns unsubscribe and stops notifications', () => {
-    const r = ref('x');
+    const r = ref<string>('x');
     const cb = vi.fn();
     const stop = watch(r, cb);
     expect(typeof stop).toBe('function');

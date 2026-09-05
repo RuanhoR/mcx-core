@@ -1,0 +1,67 @@
+{
+  "name": "@mbler/vite-plugin-mcx",
+  "version": "0.0.1",
+  "description": "Vite/Vitest plugin for compiling .mcx files via @mbler/mcx-core",
+  "keywords": [
+    "minecraft",
+    "mcx",
+    "vite",
+    "vitest",
+    "dsl"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "ruanhor",
+    "email": "zcvb182a@163.com",
+    "url": "https://github.com/RuanhoR/"
+  },
+  "repository": {
+    "directory": "/packages/vite-plugin-mcx",
+    "type": "git",
+    "url": "https://github.com/RuanhoR/mcx-core"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./package.json": {
+      "require": "./package.json"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rolldown -c",
+    "lint": "eslint src --ext .js,.ts",
+    "lint:fix": "eslint src --ext .js,.ts --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mbler/mcx-core": "workspace:*",
+    "@mbler/mcx-types": "workspace:*"
+  },
+  "peerDependencies": {
+    "vite": ">=5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "rolldown": "^1.2.0",
+    "rolldown-plugin-dts": "^0.25.2",
+    "rollup": "^4.62.2",
+    "typescript": "5.9.3",
+    "vite": "^7.1.0",
+    "vitest": "^4.1.8"
+  }
+}

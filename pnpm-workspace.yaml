@@ -4,5 +4,8 @@ packages:
   - packages/types
   - packages/client
   - packages/create-mbler
+  - packages/vite-plugin-mcx
+  - packages/eslint-plugin-mcx
 allowBuilds:
+  esbuild: true
   simple-git-hooks: true

@@ -1,0 +1,6 @@
+<Event @after>
+  playerSpawn = onPlayerSpawn
+</Event>
+<script lang="ts">
+export function onPlayerSpawn(): void {}
+</script>

@@ -2,13 +2,15 @@
 
 Monorepo for **MCX**, a DSL that compiles `.mcx` files into Minecraft Bedrock Edition addon JSON/JS (components, UI, events). pnpm workspace, ESM everywhere, Node >=22.
 
-## Workspace packages (6, all in `packages/`)
+## Workspace packages (8, all in `packages/`)
 
 - `core/` — `@mbler/mcx-core` — the DSL compiler (parser → AST → Babel transform → codegen). Entry `src/index.ts`.
 - `client/` — `@mbler/mcx` — runtime framework (`createApp`, `Event`, `ui`).
 - `mcx-component/` — `@mbler/mcx-component` — component runtime classes (Item/Block/Entity + image components) instantiated at compile time. Often overlooked because it has no dedicated section in older docs.
 - `types/` — `@mbler/mcx-types` — pure `.d.ts` declarations. **Has no build, no tests, excluded from lint and `check`.** Do not add runtime code here.
 - `create-mbler/` — CLI scaffolding tool (`cac` + `inquirer`). Entry `bin/create-mbler.js`. Generates projects with `type-check: mcx-tsc` (adds `mcx-tsc` to the generated project's devDependencies).
+- `vite-plugin-mcx/` — `@mbler/vite-plugin-mcx` — thin Vite/Vitest wrapper around core's `rollupPlugin` (scopes transform to `.mcx`, swallows `resolveId` throws, invalidates the inner cache on content change, drops `buildEnd` side effects). Must NOT contain compiler logic; core stays the single source of truth.
+- `eslint-plugin-mcx/` — `@mbler/eslint-plugin-mcx` — ESLint parser + rules for `.mcx` files (template via core's `AST.tag`, `<script>` via `@typescript-eslint/parser` with offset-corrected locs).
 
 ## Commands
 
@@ -19,7 +21,7 @@ pnpm test               # root `vitest run` — runs ALL package tests once
 pnpm lint:packages      # pnpm -r lint   (eslint per package)
 pnpm lint:packages:fix  # pnpm -r lint:fix
 pnpm format             # prettier --write on core/client/types/create-mbler src only (NOT mcx-component)
-pnpm check              # test + lint:packages + tsc --noEmit on core/client/create-mbler ONLY (excludes types & mcx-component)
+pnpm check              # test + lint:packages + tsc --noEmit on core/client/create-mbler/vite-plugin-mcx/eslint-plugin-mcx (excludes types & mcx-component)
 ```
 
 Single-package / focused runs:
@@ -33,6 +35,7 @@ pnpm --filter=@mbler/mcx-core build
 
 - **Test directory is `__test__/`, not `tests/`.** This is what ESLint's config globs for (`packages/**/__test__/**`). Don't create `tests/`.
 - **`pnpm test` is root `vitest run`, not `pnpm -r`.** It uses the root vitest config to run every package's `__test__`.
+- **No package-local vitest configs.** Every package's tests are discovered by the root `vitest.config.ts` (`pnpm test`). If a spec needs special Vite plugins (e.g. the mcx plugin to import `.mcx`), add a `projects` entry in the root vitest config and name the spec `*.integration.spec.ts` — the `mcx-integration` project is the one with the plugin applied. Never add a `vitest.config.ts` inside a package.
 - **`check` does not typecheck `types` or `mcx-component`** and **`format` skips `mcx-component`**. If you touch those, typecheck/build them explicitly.
 - **`types/` package is declarations-only** and is ignored by ESLint (config ignores `packages/types/**`). Adding `.ts` source there will break expectations.
 - **Commit messages are enforced** by `scripts/verify-commit.js` (commit-msg hook): must match `^(feat|fix|docs|...)(\(.+\))?: .{1,50}`. Wrong format aborts the commit.

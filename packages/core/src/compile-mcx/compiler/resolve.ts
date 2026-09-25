@@ -3,21 +3,21 @@ import { extname, resolve, dirname, sep } from 'node:path';
 
 export const RESOLVE_EXTS = ['.ts', '.mts', '.cts', '.js', '.mjs', '.cjs', ''];
 
+// candidates must be real files: on Windows a directory passes access()
+// and would shadow the index fallback below
 export function resolveFileSync(filePath: string): string | null {
   const fs = getFs();
   for (const ext of RESOLVE_EXTS) {
     try {
       const fullPath = filePath + ext;
-      fs.accessSync(fullPath);
-      return fullPath;
+      if (fs.statSync(fullPath).isFile()) return fullPath;
     } catch {}
   }
   if (filePath.endsWith(sep) || !extname(filePath)) {
     for (const ext of RESOLVE_EXTS) {
       try {
-        const fullPath = filePath + '/index' + ext;
-        fs.accessSync(fullPath);
-        return fullPath;
+        const fullPath = filePath + sep + 'index' + ext;
+        if (fs.statSync(fullPath).isFile()) return fullPath;
       } catch {}
     }
   }
@@ -29,16 +29,14 @@ export async function resolveFileAsync(filePath: string): Promise<string | null>
   for (const ext of RESOLVE_EXTS) {
     try {
       const fullPath = filePath + ext;
-      await fs.access(fullPath);
-      return fullPath;
+      if ((await fs.stat(fullPath)).isFile()) return fullPath;
     } catch {}
   }
   if (filePath.endsWith(sep) || !extname(filePath)) {
     for (const ext of RESOLVE_EXTS) {
       try {
-        const fullPath = filePath + '/index' + ext;
-        await fs.access(fullPath);
-        return fullPath;
+        const fullPath = filePath + sep + 'index' + ext;
+        if ((await fs.stat(fullPath)).isFile()) return fullPath;
       } catch {}
     }
   }

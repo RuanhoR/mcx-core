@@ -77,7 +77,7 @@ describe('BlockComponent setter matrix (valid args do not throw and keep JSON va
   it.each(validCases)('$name %j', ({ name, args }) => {
     const block = make();
     expect(() =>
-      (block as never as Record<string, (...a: unknown[]) => void>)[name](...args),
+      (block as never as Record<string, (...a: unknown[]) => void>)[name]!(...args),
     ).not.toThrow();
     expect(() => block.toJSON()).not.toThrow();
   });
@@ -100,7 +100,7 @@ describe('BlockComponent setter matrix (values are stored)', () => {
     { name: 'setFormat', args: ['1.21.0'], path: ['format_version'], value: '1.21.0' },
   ])('$name stores $path', ({ name, args, path, value }) => {
     const block = make();
-    (block as never as Record<string, (...a: unknown[]) => void>)[name](...args);
+    (block as never as Record<string, (...a: unknown[]) => void>)[name]!(...args);
     expect(deep(block.toJSON() as unknown as Json, path)).toBe(value);
   });
   it.each([
@@ -109,7 +109,7 @@ describe('BlockComponent setter matrix (values are stored)', () => {
     { name: 'setSupport', args: [{ shape: 'wall' }], path: [BC, COMP, 'minecraft:support', 'shape'], value: 'wall' },
   ])('$name stores raw values without extra validation', ({ name, args, path, value }) => {
     const block = make();
-    (block as never as Record<string, (...a: unknown[]) => void>)[name](...args);
+    (block as never as Record<string, (...a: unknown[]) => void>)[name]!(...args);
     expect(deep(block.toJSON() as unknown as Json, path)).toBe(value);
   });
 });

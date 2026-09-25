@@ -85,8 +85,8 @@ describe('ItemComponent setter matrix (valid args do not throw and keep JSON val
   it.each(validCases)('$name %j', ({ name, args, fmt, pre }) => {
     const item = make(fmt);
     const setters = item as never as Record<string, (...a: unknown[]) => void>;
-    for (const [preName, preArgs] of pre ?? []) setters[preName](...preArgs);
-    expect(() => setters[name](...args)).not.toThrow();
+    for (const [preName, preArgs] of pre ?? []) setters[preName]!(...preArgs);
+    expect(() => setters[name]!(...args)).not.toThrow();
     expect(() => item.toJSON()).not.toThrow();
   });
 });
@@ -109,7 +109,7 @@ describe('ItemComponent setter matrix (values are stored)', () => {
     { name: 'setRarity', args: [{ value: 'rare' }], path: [COMP, 'components', 'minecraft:rarity', 'value'], value: 'rare' },
   ])('$name stores $path', ({ name, args, path, value }) => {
     const item = make();
-    (item as never as Record<string, (...a: unknown[]) => void>)[name](...args);
+    (item as never as Record<string, (...a: unknown[]) => void>)[name]!(...args);
     expect(deep(item.toJSON() as unknown as Json, path)).toBe(value);
   });
 });
@@ -132,7 +132,7 @@ describe('ItemComponent setter validation errors', () => {
   ])('$name %j throws', ({ name, args, match }) => {
     const item = make(NEW);
     const fn = () =>
-      (item as never as Record<string, (...a: unknown[]) => void>)[name](...args);
+      (item as never as Record<string, (...a: unknown[]) => void>)[name]!(...args);
     if (match) expect(fn).toThrow(match);
     else expect(fn).toThrow();
   });

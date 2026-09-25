@@ -183,7 +183,8 @@ class EntityComponent {
         components['minecraft:navigation.walk'] !== void 0 ||
         components['minecraft:offspring'] !== void 0 ||
         components['minecraft:preferred_path'] !== void 0 ||
-        components['minecraft:physics'] !== void 0;
+        components['minecraft:physics'] !== void 0 ||
+        Object.keys(components).some(key => key.startsWith('minecraft:'));
 
       if (hasComponents) {
         result['minecraft:entity'].components = {};
@@ -1553,6 +1554,15 @@ class EntityComponent {
             offspringConfigObj.variants = { ...offspringConfig.variants };
           }
           ApplyComponents['minecraft:offspring'] = offspringConfigObj;
+        }
+        for (const [key, value] of Object.entries(
+          components as Record<string, unknown>,
+        )) {
+          if (!key.startsWith('minecraft:')) continue;
+          if (key in ApplyComponents) continue;
+          if (typeof value !== 'object' || value === null) continue;
+          if (Array.isArray(value)) continue;
+          ApplyComponents[key] = { ...(value as Record<string, unknown>) };
         }
       }
     }
@@ -8116,6 +8126,121 @@ class EntityComponent {
       this.#opt.components = {};
     }
     this.#opt.components['minecraft:offspring'] = config;
+  }
+  /**
+   * Sets the type family tags used to filter targets and spawn rules
+   */
+  public setTypeFamily(config: { family?: string[] }): void {
+    if (typeof config !== 'object' || config === null) {
+      throw new TypeError(
+        '[set error]: type_family: must be an object configuration',
+      );
+    }
+    if (
+      config.family !== void 0 &&
+      (!Array.isArray(config.family) ||
+        !config.family.every(item => typeof item === 'string'))
+    ) {
+      throw new TypeError(
+        '[set error]: type_family: family must be an array of strings',
+      );
+    }
+    if (!this.#opt.components) {
+      this.#opt.components = {};
+    }
+    this.#opt.components['minecraft:type_family'] = config;
+  }
+
+  /**
+   * Sets whether the entity can be pushed by players and pistons
+   */
+  public setPushable(config: {
+    is_pushable?: boolean;
+    is_pushable_by_piston?: boolean;
+  }): void {
+    if (typeof config !== 'object' || config === null) {
+      throw new TypeError(
+        '[set error]: pushable: must be an object configuration',
+      );
+    }
+    if (
+      config.is_pushable !== void 0 &&
+      typeof config.is_pushable !== 'boolean'
+    ) {
+      throw new TypeError('[set error]: pushable: is_pushable must be boolean');
+    }
+    if (
+      config.is_pushable_by_piston !== void 0 &&
+      typeof config.is_pushable_by_piston !== 'boolean'
+    ) {
+      throw new TypeError(
+        '[set error]: pushable: is_pushable_by_piston must be boolean',
+      );
+    }
+    if (!this.#opt.components) {
+      this.#opt.components = {};
+    }
+    this.#opt.components['minecraft:pushable'] = config;
+  }
+
+  /**
+   * Sets minecraft:jump.strength
+   */
+  public setJumpStrength(config: { value?: number }): void {
+    if (typeof config !== 'object' || config === null) {
+      throw new TypeError(
+        '[set error]: jump.strength: must be an object configuration',
+      );
+    }
+    if (config.value !== void 0 && typeof config.value !== 'number') {
+      throw new TypeError('[set error]: jump.strength: value must be a number');
+    }
+    if (!this.#opt.components) {
+      this.#opt.components = {};
+    }
+    this.#opt.components['minecraft:jump.strength'] = config;
+  }
+
+  /**
+   * Sets minecraft:knockback_resistance
+   */
+  public setKnockbackResistance(config: { value?: number }): void {
+    if (typeof config !== 'object' || config === null) {
+      throw new TypeError(
+        '[set error]: knockback_resistance: must be an object configuration',
+      );
+    }
+    if (config.value !== void 0 && typeof config.value !== 'number') {
+      throw new TypeError(
+        '[set error]: knockback_resistance: value must be a number',
+      );
+    }
+    if (!this.#opt.components) {
+      this.#opt.components = {};
+    }
+    this.#opt.components['minecraft:knockback_resistance'] = config;
+  }
+
+  /**
+   * Sets a minecraft:behavior.* AI goal component by name
+   */
+  public setBehavior(name: string, config: Record<string, unknown>): void {
+    if (typeof name !== 'string' || !name.startsWith('minecraft:behavior.')) {
+      throw new TypeError(
+        '[set error]: behavior: name must start with "minecraft:behavior."',
+      );
+    }
+    if (
+      typeof config !== 'object' ||
+      config === null ||
+      Array.isArray(config)
+    ) {
+      throw new TypeError('[set error]: behavior: config must be an object');
+    }
+    if (!this.#opt.components) {
+      this.#opt.components = {};
+    }
+    (this.#opt.components as Record<string, unknown>)[name] = { ...config };
   }
 }
 export { EntityComponent };

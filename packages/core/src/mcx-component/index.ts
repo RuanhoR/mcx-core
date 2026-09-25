@@ -95,6 +95,7 @@ export async function compileComponent(
     if (
       entryData.type === 'recipe' ||
       entryData.type === 'lootTable' ||
+      entryData.type === 'spawnRule' ||
       entryData.type === 'tradeTable' ||
       entryData.type === 'feature' ||
       entryData.type === 'featureRule' ||

@@ -259,6 +259,52 @@ describe('Component Transform - blocks and recipes', () => {
     ]);
   });
 
+  it('should emit a spawn rule JSON under spawn_rules/', async () => {
+    const { behaviorDir } = await compileComponentMCX(
+      `<Component>
+  <spawn_rules>
+    <spawnRule id="test_mob.json">mySpawn</spawnRule>
+  </spawn_rules>
+</Component>
+<script lang="ts">
+  import { SpawnRuleComponent } from '@mbler/mcx-component';
+
+  export const mySpawn = new SpawnRuleComponent({
+    identifier: 'test:test_mob',
+    population_control: 'monster',
+    conditions: [
+      {
+        'minecraft:biome_filter': [
+          { test: 'has_biome_tag', operator: '==', value: 'forest' },
+        ],
+        'minecraft:brightness_filter': { min: 7, max: 15 },
+        'minecraft:weight': { default: 10 },
+      },
+    ],
+  });
+</script>`,
+    );
+
+    const json = JSON.parse(
+      await readFile(
+        join(behaviorDir, 'spawn_rules/test_mob.json'),
+        'utf-8'
+      )
+    );
+    expect(json['format_version']).toBe('1.21.0');
+    expect(json['minecraft:spawn_rules'].description.identifier).toBe(
+      'test:test_mob',
+    );
+    expect(json['minecraft:spawn_rules'].description.population_control).toBe(
+      'monster',
+    );
+    expect(json['minecraft:spawn_rules'].conditions).toHaveLength(1);
+    expect(
+      json['minecraft:spawn_rules'].conditions[0]['minecraft:weight'],
+    ).toEqual({ default: 10 });
+    expect(json['_meta']).toBeUndefined();
+  });
+
   it('should emit a trade table JSON under trading/', async () => {
     const { behaviorDir } = await compileComponentMCX(
       `<Component>

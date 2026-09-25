@@ -2,6 +2,11 @@
 
 This changelog tracks changes committed after the v0.0.2 release tag.
 
+### 2026-09-25
+- **feat(mcx-component)**: fill entity components and behaviors (`2ac89f6`)
+- **feat(core)**: add spawn_rules component group (`0bbbf8a`)
+- **chore(release)**: bump mcx-component 0.0.4-rc.4, mcx-core 1.1.5-rc.2
+
 ### 2026-09-06
 - **chore(release)**: bump all packages to rc (`e960c34`)
 - **refactor**: merge vite plugin into mcx-core (`b7c99d6`)

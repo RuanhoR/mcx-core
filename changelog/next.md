@@ -5,7 +5,9 @@ This changelog tracks changes committed after the v0.0.2 release tag.
 ### 2026-09-25
 - **feat(mcx-component)**: fill entity components and behaviors (`2ac89f6`)
 - **feat(core)**: add spawn_rules component group (`0bbbf8a`)
+- **fix(core)**: resolve directory imports to index file (`f687fe2`)
 - **chore(release)**: bump mcx-component 0.0.4-rc.4, mcx-core 1.1.5-rc.2
+- **chore(release)**: bump mcx-core 1.1.5-rc.3
 
 ### 2026-09-06
 - **chore(release)**: bump all packages to rc (`e960c34`)

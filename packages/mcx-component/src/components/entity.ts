@@ -8184,21 +8184,26 @@ class EntityComponent {
   }
 
   /**
-   * Sets minecraft:jump.strength
+   * Sets minecraft:jump.static (gives the entity the ability to jump)
    */
-  public setJumpStrength(config: { value?: number }): void {
+  public setJumpStatic(config: { jump_power?: number } = {}): void {
     if (typeof config !== 'object' || config === null) {
       throw new TypeError(
-        '[set error]: jump.strength: must be an object configuration',
+        '[set error]: jump.static: must be an object configuration',
       );
     }
-    if (config.value !== void 0 && typeof config.value !== 'number') {
-      throw new TypeError('[set error]: jump.strength: value must be a number');
+    if (
+      config.jump_power !== void 0 &&
+      typeof config.jump_power !== 'number'
+    ) {
+      throw new TypeError(
+        '[set error]: jump.static: jump_power must be a number',
+      );
     }
     if (!this.#opt.components) {
       this.#opt.components = {};
     }
-    this.#opt.components['minecraft:jump.strength'] = config;
+    this.#opt.components['minecraft:jump.static'] = config;
   }
 
   /**

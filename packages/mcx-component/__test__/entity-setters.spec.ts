@@ -123,7 +123,7 @@ describe('EntityComponent docs gap-fill', () => {
         'minecraft:type_family': { family: ['mushroom_man', 'mob'] },
         'minecraft:pushable': { is_pushable: true, is_pushable_by_piston: true },
         'minecraft:knockback_resistance': { value: 0.1 },
-        'minecraft:jump.strength': { value: 0.42 },
+        'minecraft:jump.static': { jump_power: 0.42 },
         'minecraft:scale': { value: 1.5 },
       },
     } as never);
@@ -131,7 +131,7 @@ describe('EntityComponent docs gap-fill', () => {
     expect(deep(j, [EE, EC, 'minecraft:type_family', 'family'])).toEqual(['mushroom_man', 'mob']);
     expect(deep(j, [EE, EC, 'minecraft:pushable', 'is_pushable'])).toBe(true);
     expect(deep(j, [EE, EC, 'minecraft:knockback_resistance', 'value'])).toBe(0.1);
-    expect(deep(j, [EE, EC, 'minecraft:jump.strength', 'value'])).toBe(0.42);
+    expect(deep(j, [EE, EC, 'minecraft:jump.static', 'jump_power'])).toBe(0.42);
     expect(deep(j, [EE, EC, 'minecraft:scale', 'value'])).toBe(1.5);
   });
 
@@ -192,11 +192,13 @@ describe('EntityComponent docs gap-fill', () => {
     expect(() => entity.setPushable({ is_pushable: 'yes' as never })).toThrow();
   });
 
-  it('setJumpStrength stores minecraft:jump.strength', () => {
+  it('setJumpStatic stores minecraft:jump.static', () => {
     const entity = make();
-    entity.setJumpStrength({ value: 0.42 });
-    expect(deep(entity.toJSON() as unknown as Json, [EE, EC, 'minecraft:jump.strength', 'value'])).toBe(0.42);
-    expect(() => entity.setJumpStrength({ value: 'x' as never })).toThrow();
+    entity.setJumpStatic({ jump_power: 0.42 });
+    expect(deep(entity.toJSON() as unknown as Json, [EE, EC, 'minecraft:jump.static', 'jump_power'])).toBe(0.42);
+    entity.setJumpStatic();
+    expect(deep(entity.toJSON() as unknown as Json, [EE, EC, 'minecraft:jump.static'])).toEqual({});
+    expect(() => entity.setJumpStatic({ jump_power: 'x' as never })).toThrow();
   });
 
   it('setKnockbackResistance stores minecraft:knockback_resistance', () => {

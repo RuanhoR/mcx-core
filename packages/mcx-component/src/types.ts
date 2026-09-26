@@ -83,7 +83,6 @@ export type EntityComponentOptions = Omit<
     'minecraft:is_tamed'?: Record<string, unknown>;
     'minecraft:jump.dynamic'?: Record<string, unknown>;
     'minecraft:jump.static'?: Record<string, unknown>;
-    'minecraft:jump.strength'?: { value?: number };
     'minecraft:knockback_resistance'?: { value?: number };
     'minecraft:lava_movement'?: Record<string, unknown>;
     'minecraft:movement_sound_distance_offset'?: Record<string, unknown>;

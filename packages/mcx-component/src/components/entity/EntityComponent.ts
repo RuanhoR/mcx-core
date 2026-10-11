@@ -1,4 +1,16 @@
-import * as t from './../types';
+import { requireIdentifier, resolveFormatVersion } from '../../shared';
+import * as t from '../../types';
+import { SPAWN_CATEGORIES, type EntityInteractionData } from './constants';
+import {
+  assertAttack,
+  assertBreedable,
+  assertInteractionEntry,
+  assertKnockbackResistance,
+  assertLeashable,
+  assertLeashableTo,
+  assertOffspring,
+  normalizeOffspring,
+} from './validators';
 
 class EntityComponent {
   #opt: t.EntityComponentOptions;
@@ -22,22 +34,16 @@ class EntityComponent {
         },
       },
     };
-    if (
-      typeof this.#opt.format == 'string' &&
-      /^\d+\.\d+\.\d+$/.test(this.#opt.format)
-    ) {
-      result['format_version'] = this.#opt.format;
-    } else {
-      throw new Error('[compile component]: no format');
-    }
-    if (
-      typeof this.#opt.id == 'string' &&
-      /^[a-zA-Z0-9_\/\.-]+:[a-zA-Z0-9_\/\.-]+$/.test(this.#opt.id)
-    ) {
-      result['minecraft:entity'].description.identifier = this.#opt.id;
-    } else {
-      throw new Error('[compile component]: no id');
-    }
+    result['format_version'] = resolveFormatVersion({
+      component: 'entity',
+      format: this.#opt.format,
+      required: true,
+      parts: 3,
+    })!;
+    result['minecraft:entity'].description.identifier = requireIdentifier(
+      this.#opt.id,
+      'entity',
+    );
     if (typeof this.#opt.is_spawnable === 'boolean') {
       result['minecraft:entity'].description.is_spawnable =
         this.#opt.is_spawnable;
@@ -52,6 +58,53 @@ class EntityComponent {
       result['minecraft:entity'].description.is_experimental =
         this.#opt.is_experimental;
     }
+    if (typeof this.#opt.runtime_identifier === 'string') {
+      result['minecraft:entity'].description.runtime_identifier =
+        this.#opt.runtime_identifier;
+    }
+    if (this.#opt.animations && typeof this.#opt.animations === 'object') {
+      result['minecraft:entity'].description.animations = {
+        ...this.#opt.animations,
+      };
+    }
+    if (this.#opt.scripts && typeof this.#opt.scripts === 'object') {
+      result['minecraft:entity'].description.scripts = {
+        ...this.#opt.scripts,
+      };
+    }
+    if (typeof this.#opt.spawn_category === 'string') {
+      if (!SPAWN_CATEGORIES.includes(this.#opt.spawn_category as never)) {
+        throw new Error(
+          `[compile component]: entity: unknown spawn_category "${this.#opt.spawn_category}", valid: ${SPAWN_CATEGORIES.join(', ')}`,
+        );
+      }
+      result['minecraft:entity'].description.spawn_category =
+        this.#opt.spawn_category;
+    }
+    if (this.#opt.component_groups && typeof this.#opt.component_groups === 'object') {
+      const groups: Record<string, Record<string, unknown>> = {};
+      for (const [name, group] of Object.entries(this.#opt.component_groups)) {
+        if (typeof group !== 'object' || group === null || Array.isArray(group)) {
+          throw new Error(
+            `[compile component]: entity: component_groups["${name}"] must be an object`,
+          );
+        }
+        groups[name] = { ...(group as Record<string, unknown>) };
+      }
+      result['minecraft:entity'].component_groups = groups;
+    }
+    if (this.#opt.events && typeof this.#opt.events === 'object') {
+      const events: Record<string, Record<string, unknown>> = {};
+      for (const [name, event] of Object.entries(this.#opt.events)) {
+        if (typeof event !== 'object' || event === null || Array.isArray(event)) {
+          throw new Error(
+            `[compile component]: entity: events["${name}"] must be an object`,
+          );
+        }
+        events[name] = { ...(event as Record<string, unknown>) };
+      }
+      result['minecraft:entity'].events = events;
+    }
 
     // 处理组件
     if (this.#opt.components) {
@@ -60,7 +113,7 @@ class EntityComponent {
       // 检查是否需要components字段
       const hasComponents =
         typeof components.physics === 'boolean' ||
-        components.addrider !== void 0 ||
+        components['minecraft:addrider'] !== void 0 ||
         components['minecraft:admire_item'] !== void 0 ||
         components['minecraft:ageable'] !== void 0 ||
         components['minecraft:anger_level'] !== void 0 ||
@@ -171,7 +224,7 @@ class EntityComponent {
         components['minecraft:movement.hover'] !== void 0 ||
         components['minecraft:movement.jump'] !== void 0 ||
         components['minecraft:movement.skip'] !== void 0 ||
-        components['minecraft:movement.sound_distance_offset'] !== void 0 ||
+        components['minecraft:movement_sound_distance_offset'] !== void 0 ||
         components['minecraft:movement.sway'] !== void 0 ||
         components['minecraft:nameable'] !== void 0 ||
         components['minecraft:navigation.climb'] !== void 0 ||
@@ -200,22 +253,33 @@ class EntityComponent {
             ...components['minecraft:physics'],
           };
         }
-        if (components.addrider) {
+        const addriderSource =
+          components['minecraft:addrider'];
+        if (addriderSource) {
+          if (
+            typeof addriderSource !== 'object' ||
+            addriderSource === null ||
+            Array.isArray(addriderSource)
+          ) {
+            throw new Error(
+              '[compile component]: addrider: must be an object configuration',
+            );
+          }
           const addriderConfig: Record<string, unknown> = {};
 
-          if (components.addrider.entity_type) {
-            addriderConfig.entity_type = components.addrider.entity_type;
+          if (addriderSource.entity_type) {
+            addriderConfig.entity_type = addriderSource.entity_type;
           }
 
           if (
-            Array.isArray(components.addrider.riders) &&
-            components.addrider.riders.length > 0
+            Array.isArray(addriderSource.riders) &&
+            addriderSource.riders.length > 0
           ) {
-            addriderConfig.riders = [...components.addrider.riders];
+            addriderConfig.riders = [...addriderSource.riders];
           }
 
-          if (components.addrider.spawn_event) {
-            addriderConfig.spawn_event = components.addrider.spawn_event;
+          if (addriderSource.spawn_event) {
+            addriderConfig.spawn_event = addriderSource.spawn_event;
           }
 
           ApplyComponents['minecraft:addrider'] = addriderConfig;
@@ -810,13 +874,14 @@ class EntityComponent {
           ApplyComponents['minecraft:movement.skip'] = skipMovementConfig;
         }
         const soundDistanceOffsetConfig =
-          components['minecraft:movement.sound_distance_offset'];
+          components['minecraft:movement_sound_distance_offset'];
         if (soundDistanceOffsetConfig !== void 0) {
           const soundDistanceOffsetMovementConfig: Record<string, unknown> = {};
-          if (soundDistanceOffsetConfig.value !== void 0)
+          if (typeof soundDistanceOffsetConfig.value === 'number') {
             soundDistanceOffsetMovementConfig.value =
               soundDistanceOffsetConfig.value;
-          ApplyComponents['minecraft:movement.sound_distance_offset'] =
+          }
+          ApplyComponents['minecraft:movement_sound_distance_offset'] =
             soundDistanceOffsetMovementConfig;
         }
         const swayConfig = components['minecraft:movement.sway'];
@@ -1447,113 +1512,16 @@ class EntityComponent {
         }
         const offspringConfig = components['minecraft:offspring'];
         if (offspringConfig !== void 0) {
-          const offspringConfigObj: Record<string, unknown> = {};
-          if (offspringConfig.born_event !== void 0) {
-            offspringConfigObj.born_event = offspringConfig.born_event;
+          if (
+            typeof offspringConfig !== 'object' ||
+            offspringConfig === null ||
+            Array.isArray(offspringConfig)
+          ) {
+            throw new Error('[compile component]: offspring: must be an object');
           }
-          if (offspringConfig.cooldown !== void 0) {
-            offspringConfigObj.cooldown = offspringConfig.cooldown;
-          }
-          if (offspringConfig.mutation_factor !== void 0) {
-            const mutationFactorObj: Record<string, unknown> = {};
-            if (offspringConfig.mutation_factor.color !== void 0) {
-              mutationFactorObj.color = offspringConfig.mutation_factor.color;
-            }
-            if (offspringConfig.mutation_factor.gene !== void 0) {
-              mutationFactorObj.gene = offspringConfig.mutation_factor.gene;
-            }
-            if (offspringConfig.mutation_factor.extra !== void 0) {
-              mutationFactorObj.extra = offspringConfig.mutation_factor.extra;
-            }
-            if (offspringConfig.mutation_factor.health !== void 0) {
-              mutationFactorObj.health = offspringConfig.mutation_factor.health;
-            }
-            if (offspringConfig.mutation_factor.speed !== void 0) {
-              mutationFactorObj.speed = offspringConfig.mutation_factor.speed;
-            }
-            if (Object.keys(mutationFactorObj).length > 0) {
-              offspringConfigObj.mutation_factor = mutationFactorObj;
-            }
-          }
-          if (offspringConfig.breed_event !== void 0) {
-            offspringConfigObj.breed_event = offspringConfig.breed_event;
-          }
-          if (offspringConfig.breed_items !== void 0) {
-            offspringConfigObj.breed_items = [...offspringConfig.breed_items];
-          }
-          if (offspringConfig.delayed_growth !== void 0) {
-            offspringConfigObj.delayed_growth = offspringConfig.delayed_growth;
-          }
-          if (offspringConfig.deny_parents_baby_variant !== void 0) {
-            offspringConfigObj.deny_parents_baby_variant =
-              offspringConfig.deny_parents_baby_variant;
-          }
-          if (offspringConfig.grow_up_duration !== void 0) {
-            offspringConfigObj.grow_up_duration =
-              offspringConfig.grow_up_duration;
-          }
-          if (offspringConfig.initial_variant !== void 0) {
-            offspringConfigObj.initial_variant =
-              offspringConfig.initial_variant;
-          }
-          if (offspringConfig.inheritance_chance !== void 0) {
-            const inheritanceChanceObj: Record<string, unknown> = {};
-            if (offspringConfig.inheritance_chance.angry !== void 0) {
-              inheritanceChanceObj.angry =
-                offspringConfig.inheritance_chance.angry;
-            }
-            if (offspringConfig.inheritance_chance.attacker !== void 0) {
-              inheritanceChanceObj.attacker =
-                offspringConfig.inheritance_chance.attacker;
-            }
-            if (offspringConfig.inheritance_chance.color !== void 0) {
-              inheritanceChanceObj.color =
-                offspringConfig.inheritance_chance.color;
-            }
-            if (offspringConfig.inheritance_chance.gene !== void 0) {
-              inheritanceChanceObj.gene =
-                offspringConfig.inheritance_chance.gene;
-            }
-            if (offspringConfig.inheritance_chance.variant !== void 0) {
-              inheritanceChanceObj.variant =
-                offspringConfig.inheritance_chance.variant;
-            }
-            if (Object.keys(inheritanceChanceObj).length > 0) {
-              offspringConfigObj.inheritance_chance = inheritanceChanceObj;
-            }
-          }
-          if (offspringConfig.num_variants !== void 0) {
-            offspringConfigObj.num_variants = offspringConfig.num_variants;
-          }
-          if (offspringConfig.parent_centric_attribute_blending !== void 0) {
-            const attributeBlendingObj: Record<string, unknown> = {};
-            if (
-              offspringConfig.parent_centric_attribute_blending.attribute !==
-              void 0
-            ) {
-              attributeBlendingObj.attribute =
-                offspringConfig.parent_centric_attribute_blending.attribute;
-            }
-            if (
-              offspringConfig.parent_centric_attribute_blending.dampening !==
-              void 0
-            ) {
-              attributeBlendingObj.dampening =
-                offspringConfig.parent_centric_attribute_blending.dampening;
-            }
-            if (Object.keys(attributeBlendingObj).length > 0) {
-              offspringConfigObj.parent_centric_attribute_blending =
-                attributeBlendingObj;
-            }
-          }
-          if (offspringConfig.should_baby_face_parent !== void 0) {
-            offspringConfigObj.should_baby_face_parent =
-              offspringConfig.should_baby_face_parent;
-          }
-          if (offspringConfig.variants !== void 0) {
-            offspringConfigObj.variants = { ...offspringConfig.variants };
-          }
-          ApplyComponents['minecraft:offspring'] = offspringConfigObj;
+          ApplyComponents['minecraft:offspring'] = normalizeOffspring(
+            offspringConfig as t.OffspringConfig,
+          );
         }
         for (const [key, value] of Object.entries(
           components as Record<string, unknown>,
@@ -1629,7 +1597,7 @@ class EntityComponent {
       this.#opt.components = {};
     }
 
-    this.#opt.components.addrider = config;
+    this.#opt.components['minecraft:addrider'] = config;
   }
 
   public setAdmireItem(config: {
@@ -1888,12 +1856,14 @@ class EntityComponent {
       | number
       | [number, number]
       | { range_min: number; range_max: number };
+    effect_amplifier?: number;
     effect_duration?: number;
     effect_name?: string;
   }): void {
-    if (typeof config !== 'object' || config === null) {
+    if (typeof config !== 'object' || config === null || Array.isArray(config)) {
       throw new Error('[set error]: attack: must be an object configuration');
     }
+    assertAttack(config);
     if (!this.#opt.components) {
       this.#opt.components = {};
     }
@@ -2445,10 +2415,11 @@ class EntityComponent {
           mate_type?: string;
         };
     causes_pregnancy?: boolean;
+    combine_parent_colors?: boolean;
     deny_parents_variant?: {
       chance?: number;
-      max_variant?: string;
-      min_variant?: string;
+      max_variant?: number;
+      min_variant?: number;
     };
     environment_requirements?: Array<{
       block_types?: string[];
@@ -2474,25 +2445,7 @@ class EntityComponent {
     if (!this.#opt.components) {
       this.#opt.components = {};
     }
-    const booleanProperties = [
-      'allow_sitting',
-      'blend_attributes',
-      'causes_pregnancy',
-      'inherit_tamed',
-      'require_full_health',
-      'require_tame',
-    ];
-
-    for (const prop of booleanProperties) {
-      if (
-        config[prop as keyof typeof config] !== void 0 &&
-        typeof config[prop as keyof typeof config] !== 'boolean'
-      ) {
-        throw new TypeError(
-          `[set error]: breedable: ${prop} must be a boolean`,
-        );
-      }
-    }
+    assertBreedable(config as never);
     if (
       config.breed_cooldown !== void 0 &&
       (typeof config.breed_cooldown !== 'number' || config.breed_cooldown < 0)
@@ -5582,47 +5535,7 @@ class EntityComponent {
       health_amount?: number;
       hurt_item?: number;
       interact_text?: string;
-      interactions?: Array<{
-        give_item?: boolean;
-        hurt_item?: number;
-        interact_text?: string;
-        on_interact?:
-          | string
-          | {
-              filters?: {
-                subject?: string;
-                test?: string;
-                value: unknown;
-                operator?: string;
-                [key: string]: unknown;
-              };
-            };
-        particle_on_start?: Array<{
-          particle_offset_towards_interactor?: boolean;
-          particle_type?: string;
-          particle_y_offset?: number;
-        }>;
-        play_sounds?: string;
-        repair_entity_item?: Array<{
-          amount?: number;
-          slot?: string | number;
-        }>;
-        spawn_entities?: string;
-        spawn_items?: Array<{
-          table?: string;
-          y_offset?: number;
-        }>;
-        swing?: boolean;
-        take_item?: boolean;
-        transform_to_item?: string;
-        use_item?: boolean;
-        vibration?:
-          | 'none'
-          | 'shear'
-          | 'entity_die'
-          | 'entity_act'
-          | 'entity_interact';
-      }>;
+      interactions?: EntityInteractionData[];
     } = {},
   ): void {
     if (typeof config !== 'object' || config === null) {
@@ -5704,225 +5617,8 @@ class EntityComponent {
 
       for (let i = 0; i < config.interactions.length; i++) {
         const interaction = config.interactions[i];
-        if (!interaction) continue; // Skip void 0 entries
-
-        // Validate give_item (must be boolean if provided)
-        if (
-          interaction.give_item !== void 0 &&
-          typeof interaction.give_item !== 'boolean'
-        ) {
-          throw new TypeError(
-            `[set error]: interact: interactions[${i}].give_item must be a boolean`,
-          );
-        }
-
-        // Validate hurt_item (must be number if provided)
-        if (
-          interaction.hurt_item !== void 0 &&
-          typeof interaction.hurt_item !== 'number'
-        ) {
-          throw new TypeError(
-            `[set error]: interact: interactions[${i}].hurt_item must be a number`,
-          );
-        }
-
-        // Validate interact_text (must be string if provided)
-        if (
-          interaction.interact_text !== void 0 &&
-          typeof interaction.interact_text !== 'string'
-        ) {
-          throw new TypeError(
-            `[set error]: interact: interactions[${i}].interact_text must be a string`,
-          );
-        }
-
-        // Validate on_interact (must be string or object if provided)
-        if (
-          interaction.on_interact !== void 0 &&
-          typeof interaction.on_interact !== 'string' &&
-          (typeof interaction.on_interact !== 'object' ||
-            interaction.on_interact === null)
-        ) {
-          throw new TypeError(
-            `[set error]: interact: interactions[${i}].on_interact must be a string or object`,
-          );
-        }
-
-        // Validate particle_on_start array
-        if (interaction.particle_on_start !== void 0) {
-          if (!Array.isArray(interaction.particle_on_start)) {
-            throw new TypeError(
-              `[set error]: interact: interactions[${i}].particle_on_start must be an array`,
-            );
-          }
-
-          for (let j = 0; j < interaction.particle_on_start.length; j++) {
-            const particle = interaction.particle_on_start[j];
-            if (!particle) continue;
-
-            // Validate particle_offset_towards_interactor (boolean if provided)
-            if (
-              particle.particle_offset_towards_interactor !== void 0 &&
-              typeof particle.particle_offset_towards_interactor !== 'boolean'
-            ) {
-              throw new TypeError(
-                `[set error]: interact: interactions[${i}].particle_on_start[${j}].particle_offset_towards_interactor must be a boolean`,
-              );
-            }
-
-            // Validate particle_type (string if provided)
-            if (
-              particle.particle_type !== void 0 &&
-              typeof particle.particle_type !== 'string'
-            ) {
-              throw new TypeError(
-                `[set error]: interact: interactions[${i}].particle_on_start[${j}].particle_type must be a string`,
-              );
-            }
-
-            // Validate particle_y_offset (number if provided)
-            if (
-              particle.particle_y_offset !== void 0 &&
-              typeof particle.particle_y_offset !== 'number'
-            ) {
-              throw new TypeError(
-                `[set error]: interact: interactions[${i}].particle_on_start[${j}].particle_y_offset must be a number`,
-              );
-            }
-          }
-        }
-
-        // Validate play_sounds (string if provided)
-        if (
-          interaction.play_sounds !== void 0 &&
-          typeof interaction.play_sounds !== 'string'
-        ) {
-          throw new TypeError(
-            `[set error]: interact: interactions[${i}].play_sounds must be a string`,
-          );
-        }
-
-        // Validate repair_entity_item array
-        if (interaction.repair_entity_item !== void 0) {
-          if (!Array.isArray(interaction.repair_entity_item)) {
-            throw new TypeError(
-              `[set error]: interact: interactions[${i}].repair_entity_item must be an array`,
-            );
-          }
-
-          for (let j = 0; j < interaction.repair_entity_item.length; j++) {
-            const repair = interaction.repair_entity_item[j];
-            if (!repair) continue;
-
-            // Validate amount (integer if provided)
-            if (
-              repair.amount !== void 0 &&
-              (typeof repair.amount !== 'number' ||
-                !Number.isInteger(repair.amount))
-            ) {
-              throw new TypeError(
-                `[set error]: interact: interactions[${i}].repair_entity_item[${j}].amount must be an integer`,
-              );
-            }
-          }
-        }
-
-        // Validate spawn_entities (string if provided)
-        if (
-          interaction.spawn_entities !== void 0 &&
-          typeof interaction.spawn_entities !== 'string'
-        ) {
-          throw new TypeError(
-            `[set error]: interact: interactions[${i}].spawn_entities must be a string`,
-          );
-        }
-
-        // Validate spawn_items array
-        if (interaction.spawn_items !== void 0) {
-          if (!Array.isArray(interaction.spawn_items)) {
-            throw new TypeError(
-              `[set error]: interact: interactions[${i}].spawn_items must be an array`,
-            );
-          }
-
-          for (let j = 0; j < interaction.spawn_items.length; j++) {
-            const spawn = interaction.spawn_items[j];
-            if (!spawn) continue;
-
-            // Validate table (string if provided)
-            if (spawn.table !== void 0 && typeof spawn.table !== 'string') {
-              throw new TypeError(
-                `[set error]: interact: interactions[${i}].spawn_items[${j}].table must be a string`,
-              );
-            }
-
-            // Validate y_offset (number if provided)
-            if (
-              spawn.y_offset !== void 0 &&
-              typeof spawn.y_offset !== 'number'
-            ) {
-              throw new TypeError(
-                `[set error]: interact: interactions[${i}].spawn_items[${j}].y_offset must be a number`,
-              );
-            }
-          }
-        }
-
-        // Validate swing (boolean if provided)
-        if (
-          interaction.swing !== void 0 &&
-          typeof interaction.swing !== 'boolean'
-        ) {
-          throw new TypeError(
-            `[set error]: interact: interactions[${i}].swing must be a boolean`,
-          );
-        }
-
-        // Validate take_item (boolean if provided)
-        if (
-          interaction.take_item !== void 0 &&
-          typeof interaction.take_item !== 'boolean'
-        ) {
-          throw new TypeError(
-            `[set error]: interact: interactions[${i}].take_item must be a boolean`,
-          );
-        }
-
-        // Validate transform_to_item (string if provided)
-        if (
-          interaction.transform_to_item !== void 0 &&
-          typeof interaction.transform_to_item !== 'string'
-        ) {
-          throw new TypeError(
-            `[set error]: interact: interactions[${i}].transform_to_item must be a string`,
-          );
-        }
-
-        // Validate use_item (boolean if provided)
-        if (
-          interaction.use_item !== void 0 &&
-          typeof interaction.use_item !== 'boolean'
-        ) {
-          throw new TypeError(
-            `[set error]: interact: interactions[${i}].use_item must be a boolean`,
-          );
-        }
-
-        // Validate vibration (must be valid value if provided)
-        if (
-          interaction.vibration !== void 0 &&
-          ![
-            'none',
-            'shear',
-            'entity_die',
-            'entity_act',
-            'entity_interact',
-          ].includes(interaction.vibration)
-        ) {
-          throw new TypeError(
-            `[set error]: interact: interactions[${i}].vibration must be one of: 'none', 'shear', 'entity_die', 'entity_act', 'entity_interact'`,
-          );
-        }
+        if (!interaction) continue;
+        assertInteractionEntry(interaction, i);
       }
     }
 
@@ -6112,7 +5808,9 @@ class EntityComponent {
       max_distance?: number;
       on_leash?: string | { event: string; target?: string };
       on_unleash?: string | { event: string; target?: string };
+      on_unleash_interact_only?: boolean;
       soft_distance?: number;
+      unleash_on_removal?: boolean;
       presets?: Array<{
         filter?: {
           subject?: string;
@@ -6121,6 +5819,10 @@ class EntityComponent {
           operator?: string;
           [key: string]: unknown;
         };
+        hard_distance?: number;
+        max_distance?: number;
+        rotation_adjustment?: number;
+        soft_distance?: number;
         spring_type?: 'bouncy' | 'dampened' | 'quad_dampened';
       }>;
     } = {},
@@ -6132,96 +5834,48 @@ class EntityComponent {
     }
 
     // Validate boolean values
-    if (
-      config.can_be_cut !== void 0 &&
-      typeof config.can_be_cut !== 'boolean'
-    ) {
-      throw new TypeError('[set error]: leashable: can_be_cut must be boolean');
-    }
-    if (
-      config.can_be_stolen !== void 0 &&
-      typeof config.can_be_stolen !== 'boolean'
-    ) {
-      throw new TypeError(
-        '[set error]: leashable: can_be_stolen must be boolean',
-      );
+    for (const key of [
+      'can_be_cut',
+      'can_be_stolen',
+      'on_unleash_interact_only',
+      'unleash_on_removal',
+    ] as const) {
+      const value = config[key];
+      if (value !== void 0 && typeof value !== 'boolean') {
+        throw new TypeError(`[set error]: leashable: ${key} must be boolean`);
+      }
     }
 
     // Validate number values
-    if (
-      config.hard_distance !== void 0 &&
-      typeof config.hard_distance !== 'number'
-    ) {
-      throw new TypeError(
-        '[set error]: leashable: hard_distance must be a number',
-      );
-    }
-    if (
-      config.max_distance !== void 0 &&
-      typeof config.max_distance !== 'number'
-    ) {
-      throw new TypeError(
-        '[set error]: leashable: max_distance must be a number',
-      );
-    }
-    if (
-      config.soft_distance !== void 0 &&
-      typeof config.soft_distance !== 'number'
-    ) {
-      throw new TypeError(
-        '[set error]: leashable: soft_distance must be a number',
-      );
+    for (const key of [
+      'hard_distance',
+      'max_distance',
+      'soft_distance',
+    ] as const) {
+      const value = config[key];
+      if (value !== void 0 && typeof value !== 'number') {
+        throw new TypeError(`[set error]: leashable: ${key} must be a number`);
+      }
     }
 
     // Validate event handlers
-    if (config.on_leash !== void 0) {
+    for (const key of ['on_leash', 'on_unleash'] as const) {
+      const value = config[key];
+      if (value === void 0) continue;
       if (
-        typeof config.on_leash !== 'string' &&
-        (typeof config.on_leash !== 'object' ||
-          config.on_leash === null ||
-          !('event' in config.on_leash))
+        typeof value !== 'string' &&
+        (typeof value !== 'object' || value === null || !('event' in value))
       ) {
         throw new TypeError(
-          '[set error]: leashable: on_leash must be string or object with event property',
-        );
-      }
-    }
-    if (config.on_unleash !== void 0) {
-      if (
-        typeof config.on_unleash !== 'string' &&
-        (typeof config.on_unleash !== 'object' ||
-          config.on_unleash === null ||
-          !('event' in config.on_unleash))
-      ) {
-        throw new TypeError(
-          '[set error]: leashable: on_unleash must be string or object with event property',
+          `[set error]: leashable: ${key} must be string or object with event property`,
         );
       }
     }
 
-    // Validate presets array
-    if (config.presets !== void 0) {
-      if (!Array.isArray(config.presets)) {
-        throw new TypeError('[set error]: leashable: presets must be an array');
-      }
-
-      for (const preset of config.presets) {
-        if (typeof preset !== 'object' || preset === null) {
-          throw new TypeError(
-            '[set error]: leashable: presets must contain objects',
-          );
-        }
-
-        if (
-          preset.spring_type !== void 0 &&
-          !['bouncy', 'dampened', 'quad_dampened'].includes(preset.spring_type)
-        ) {
-          throw new TypeError(
-            "[set error]: leashable: spring_type must be one of 'bouncy', 'dampened', or 'quad_dampened'",
-          );
-        }
-      }
+    if (config.presets !== void 0 && !Array.isArray(config.presets)) {
+      throw new TypeError('[set error]: leashable: presets must be an array');
     }
+    assertLeashable(config as never);
 
     if (!this.#opt.components) {
       this.#opt.components = {};
@@ -6235,24 +5889,10 @@ class EntityComponent {
   public setLeashableTo(
     config: {
       can_retrieve_from?: boolean;
+      unleash_on_removal?: boolean;
     } = {},
   ): void {
-    if (typeof config !== 'object' || config === null) {
-      throw new TypeError(
-        '[set error]: leashable_to: must be an object configuration',
-      );
-    }
-
-    // Validate can_retrieve_from
-    if (
-      config.can_retrieve_from !== void 0 &&
-      typeof config.can_retrieve_from !== 'boolean'
-    ) {
-      throw new TypeError(
-        '[set error]: leashable_to: can_retrieve_from must be boolean',
-      );
-    }
-
+    assertLeashableTo(config);
     if (!this.#opt.components) {
       this.#opt.components = {};
     }
@@ -7003,7 +6643,7 @@ class EntityComponent {
     if (!this.#opt.components) {
       this.#opt.components = {};
     }
-    this.#opt.components['minecraft:movement.sound_distance_offset'] = config;
+    this.#opt.components['minecraft:movement_sound_distance_offset'] = config;
   }
 
   /**
@@ -7933,199 +7573,15 @@ class EntityComponent {
   /**
    * Sets offspring configuration for the entity
    */
-  public setOffspring(config: {
-    blend_attributes?: boolean;
-    deny_parents_variant?: Array<{
-      chance?: number;
-      max_variant?: number;
-      min_variant?: number;
-    }>;
-    inherit_tamed?: boolean;
-    mutation_factor?: {
-      color?: number;
-      extra_variant?: number;
-      variant?: number;
-    };
-    offspring_pairs?: Record<string, string>;
-    parent_centric_attribute_blending?: {
-      attribute?: string;
-      dampening?: number;
-    };
-    property_inheritance?: Record<string, unknown>;
-    random_extra_variant_mutation_interval?: {
-      range_max?: number;
-      range_min?: number;
-    };
-    random_variant_mutation_interval?: {
-      range_max?: number;
-      range_min?: number;
-    };
-  }) {
-    if (typeof config !== 'object' || config === null) {
-      throw new TypeError(
-        '[set error]: offspring: must be an object configuration',
-      );
+  public setOffspring(config: t.OffspringConfig) {
+    if (typeof config !== 'object' || config === null || Array.isArray(config)) {
+      throw new TypeError('[set error]: offspring: must be an object configuration');
     }
-
-    // Validate boolean properties
-    if (
-      config.blend_attributes !== void 0 &&
-      typeof config.blend_attributes !== 'boolean'
-    ) {
-      throw new TypeError(
-        '[set error]: offspring: blend_attributes must be boolean',
-      );
-    }
-    if (
-      config.inherit_tamed !== void 0 &&
-      typeof config.inherit_tamed !== 'boolean'
-    ) {
-      throw new TypeError(
-        '[set error]: offspring: inherit_tamed must be boolean',
-      );
-    }
-
-    // Validate deny_parents_variant array
-    if (config.deny_parents_variant !== void 0) {
-      if (!Array.isArray(config.deny_parents_variant)) {
-        throw new TypeError(
-          '[set error]: offspring: deny_parents_variant must be an array',
-        );
-      }
-      for (const item of config.deny_parents_variant) {
-        if (
-          item.chance !== void 0 &&
-          (typeof item.chance !== 'number' || item.chance < 0)
-        ) {
-          throw new TypeError(
-            '[set error]: offspring: deny_parents_variant.chance must be a non-negative number',
-          );
-        }
-        if (
-          item.max_variant !== void 0 &&
-          (typeof item.max_variant !== 'number' || item.max_variant < 0)
-        ) {
-          throw new TypeError(
-            '[set error]: offspring: deny_parents_variant.max_variant must be a non-negative integer',
-          );
-        }
-        if (
-          item.min_variant !== void 0 &&
-          (typeof item.min_variant !== 'number' || item.min_variant < 0)
-        ) {
-          throw new TypeError(
-            '[set error]: offspring: deny_parents_variant.min_variant must be a non-negative integer',
-          );
-        }
-      }
-    }
-
-    // Validate mutation_factor
-    if (config.mutation_factor !== void 0) {
-      if (
-        config.mutation_factor.color !== void 0 &&
-        (typeof config.mutation_factor.color !== 'number' ||
-          config.mutation_factor.color < 0 ||
-          config.mutation_factor.color > 1)
-      ) {
-        throw new TypeError(
-          '[set error]: offspring: mutation_factor.color must be a number between 0.0 and 1.0',
-        );
-      }
-      if (
-        config.mutation_factor.extra_variant !== void 0 &&
-        (typeof config.mutation_factor.extra_variant !== 'number' ||
-          config.mutation_factor.extra_variant < 0 ||
-          config.mutation_factor.extra_variant > 1)
-      ) {
-        throw new TypeError(
-          '[set error]: offspring: mutation_factor.extra_variant must be a number between 0.0 and 1.0',
-        );
-      }
-      if (
-        config.mutation_factor.variant !== void 0 &&
-        (typeof config.mutation_factor.variant !== 'number' ||
-          config.mutation_factor.variant < 0 ||
-          config.mutation_factor.variant > 1)
-      ) {
-        throw new TypeError(
-          '[set error]: offspring: mutation_factor.variant must be a number between 0.0 and 1.0',
-        );
-      }
-    }
-
-    // Validate parent_centric_attribute_blending
-    if (config.parent_centric_attribute_blending !== void 0) {
-      if (
-        typeof config.parent_centric_attribute_blending !== 'object' ||
-        config.parent_centric_attribute_blending === null
-      ) {
-        throw new TypeError(
-          '[set error]: offspring: parent_centric_attribute_blending must be an object',
-        );
-      }
-      const item = config.parent_centric_attribute_blending;
-      if (item.attribute !== void 0 && typeof item.attribute !== 'string') {
-        throw new TypeError(
-          '[set error]: offspring: parent_centric_attribute_blending attribute must be string',
-        );
-      }
-      if (item.dampening !== void 0 && typeof item.dampening !== 'number') {
-        throw new TypeError(
-          '[set error]: offspring: parent_centric_attribute_blending dampening must be number',
-        );
-      }
-    }
-
-    // Validate random intervals
-    if (config.random_extra_variant_mutation_interval !== void 0) {
-      if (
-        config.random_extra_variant_mutation_interval.range_max !== void 0 &&
-        (typeof config.random_extra_variant_mutation_interval.range_max !==
-          'number' ||
-          config.random_extra_variant_mutation_interval.range_max < 0)
-      ) {
-        throw new TypeError(
-          '[set error]: offspring: random_extra_variant_mutation_interval.range_max must be a non-negative number',
-        );
-      }
-      if (
-        config.random_extra_variant_mutation_interval.range_min !== void 0 &&
-        (typeof config.random_extra_variant_mutation_interval.range_min !==
-          'number' ||
-          config.random_extra_variant_mutation_interval.range_min < 0)
-      ) {
-        throw new TypeError(
-          '[set error]: offspring: random_extra_variant_mutation_interval.range_min must be a non-negative number',
-        );
-      }
-    }
-    if (config.random_variant_mutation_interval !== void 0) {
-      if (
-        config.random_variant_mutation_interval.range_max !== void 0 &&
-        (typeof config.random_variant_mutation_interval.range_max !==
-          'number' ||
-          config.random_variant_mutation_interval.range_max < 0)
-      ) {
-        throw new TypeError(
-          '[set error]: offspring: random_variant_mutation_interval.range_max must be a non-negative number',
-        );
-      }
-      if (
-        config.random_variant_mutation_interval.range_min !== void 0 &&
-        (typeof config.random_variant_mutation_interval.range_min !==
-          'number' ||
-          config.random_variant_mutation_interval.range_min < 0)
-      ) {
-        throw new TypeError(
-          '[set error]: offspring: random_variant_mutation_interval.range_min must be a non-negative number',
-        );
-      }
-    }
+    assertOffspring(config);
     if (!this.#opt.components) {
       this.#opt.components = {};
     }
-    this.#opt.components['minecraft:offspring'] = config;
+    this.#opt.components['minecraft:offspring'] = normalizeOffspring(config);
   }
   /**
    * Sets the type family tags used to filter targets and spawn rules
@@ -8209,17 +7665,11 @@ class EntityComponent {
   /**
    * Sets minecraft:knockback_resistance
    */
-  public setKnockbackResistance(config: { value?: number }): void {
-    if (typeof config !== 'object' || config === null) {
-      throw new TypeError(
-        '[set error]: knockback_resistance: must be an object configuration',
-      );
-    }
-    if (config.value !== void 0 && typeof config.value !== 'number') {
-      throw new TypeError(
-        '[set error]: knockback_resistance: value must be a number',
-      );
-    }
+  public setKnockbackResistance(config: {
+    value?: number;
+    max?: number;
+  }): void {
+    assertKnockbackResistance(config);
     if (!this.#opt.components) {
       this.#opt.components = {};
     }

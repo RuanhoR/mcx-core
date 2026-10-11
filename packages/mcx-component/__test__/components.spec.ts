@@ -81,7 +81,7 @@ describe('BlockComponent', () => {
     ['light_emission', b => b.setLightEmission(7), undefined as never, 7],
     ['friction', b => b.setFriction(0.4), undefined as never, 0.4],
     ['map_color', b => b.setMapColor('#ff0000'), undefined as never, '#ff0000'],
-    ['sound', b => b.setSound('stone'), undefined as never, 'stone'],
+    ['sound', b => b.setSound('stone'), 'sound', 'stone'],
   ];
 
   for (const [name, apply, subKey, want] of blockFields) {
@@ -137,11 +137,12 @@ describe('BlockComponent', () => {
     ).toBe('t');
   });
 
-  it('emits direct-key custom components', () => {
+  it('emits custom components as named v2 components', () => {
     const b = block();
     b.setCustomComponents(['test:ctrl']);
     const json = b.toJSON() as Json;
     const comps = deep(json, 'minecraft:block.components') as Json;
+    expect(comps['minecraft:custom_components']).toBeUndefined();
     expect(comps['test:ctrl']).toEqual({});
   });
 

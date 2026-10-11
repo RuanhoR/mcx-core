@@ -1,3 +1,5 @@
+import { applyFormatVersion, resolveFormatVersion } from '../shared';
+
 type ItemCatalogCategory = 'construction' | 'equipment' | 'items' | 'nature';
 
 interface ItemCatalogGroupOptions {
@@ -27,7 +29,11 @@ class ItemCatalogComponent {
   }
 
   getFormat(): string {
-    return this.#opt.format || '1.26.30';
+    return resolveFormatVersion({
+      component: 'item catalog',
+      format: this.#opt.format,
+      fallback: '1.26.30',
+    })!;
   }
 
   setFormat(value: string) {
@@ -85,7 +91,6 @@ class ItemCatalogComponent {
   }
 
   public toJSON(): Record<string, unknown> {
-    const formatVersion = this.#opt.format || '1.26.30';
     const categories = Object.entries(this.#categories).map(
       ([category_name, groups]) => ({
         category_name,
@@ -93,12 +98,17 @@ class ItemCatalogComponent {
       }),
     );
 
-    return {
-      format_version: formatVersion,
+    const result: Record<string, unknown> = {
       'minecraft:crafting_items_catalog': {
         categories,
       },
     };
+    applyFormatVersion(result, {
+      component: 'item catalog',
+      format: this.#opt.format,
+      fallback: '1.26.30',
+    });
+    return result;
   }
 }
 

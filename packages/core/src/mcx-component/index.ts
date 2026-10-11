@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import {
   MCXstructureLocComponentType,
   _MCXComponentGroupOutputDir,
+  resolveComponentPack,
 } from '../compile-mcx/types';
 import { transformCtx } from '../types';
 import { getFs } from '../state';
@@ -64,7 +65,8 @@ export async function compileComponent(
   for (const [componentKey, entryData] of Object.entries(component)) {
     // component keys look like "<group>/<file>.json" (e.g. "blocks/x.json");
     // some groups write to a different directory than their group name
-    // (trade tables live under "trading/").
+    // (trade tables live under "trading/"), and resource-pack groups go to the
+    // resource pack instead of the behavior pack.
     const slash = componentKey.indexOf('/');
     const groupKey = componentKey.slice(0, slash);
     const fileName = componentKey.slice(slash + 1);
@@ -72,10 +74,18 @@ export async function compileComponent(
       _MCXComponentGroupOutputDir[
         groupKey as keyof typeof _MCXComponentGroupOutputDir
       ] ?? groupKey;
+    const pack =
+      resolveComponentPack(groupKey) === 'resources'
+        ? ctx.output.resources
+        : ctx.output.behavior;
     const entryKey = `${dir}/${fileName}`;
-    const filePoint = path.join(ctx.output.behavior, entryKey);
+    const filePoint = path.join(pack, entryKey);
 
-    if (!path.relative(filePoint, ctx.output.behavior).startsWith('..'))
+    // Resolve first, then confirm the result is still inside the pack root.
+    // Comparing the two paths directly is not enough: a sibling directory that
+    // shares a name prefix would pass.
+    const resolved = path.resolve(filePoint);
+    if (!resolved.startsWith(path.resolve(pack) + path.sep))
       throw new Error('[component]: Path Traversal: path: ' + filePoint);
 
     const pointExport = entryData.useExport;
@@ -99,12 +109,13 @@ export async function compileComponent(
       entryData.type === 'tradeTable' ||
       entryData.type === 'feature' ||
       entryData.type === 'featureRule' ||
-      entryData.type == 'itemCatalog'
+      entryData.type == 'itemCatalog' ||
+      entryData.type == 'ui'
     ) {
       // these component types have no _meta wrapper
       if ('_meta' in json) {
         throw new Error(
-          '[mcx component]: recipe component must not contain _meta',
+          `[mcx component]: ${entryData.type} component must not contain _meta`,
         );
       }
     } else if (!json._meta || json._meta.type !== entryData.type) {

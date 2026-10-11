@@ -44,9 +44,12 @@ export const _MCXstructureLocComponentTypes = {
   features: 'feature',
   feature_rules: 'featureRule',
   itemCatalog: 'itemCatalog',
+  ui: 'ui',
+  client_entities: 'clientEntity',
+  attachables: 'attachable',
 } as const;
 
-/** Output directory (relative to the behavior pack) for each component group. */
+/** Output directory (relative to the pack) for each component group. */
 export const _MCXComponentGroupOutputDir = {
   items: 'items',
   blocks: 'blocks',
@@ -58,7 +61,35 @@ export const _MCXComponentGroupOutputDir = {
   trade_tables: 'trading',
   features: 'features',
   feature_rules: 'feature_rules',
+  ui: 'ui',
+  client_entities: 'entities',
+  attachables: 'attachables',
 } as const;
+
+/**
+ * Which pack each group is written into. Groups absent from this map go to the
+ * behavior pack.
+ */
+export const _MCXComponentGroupOutputPack = {
+  ui: 'resources',
+  client_entities: 'resources',
+  attachables: 'resources',
+} as const;
+
+type MCXComponentGroup = keyof typeof _MCXstructureLocComponentTypes;
+type MCXComponentGroupPack = MCXComponentGroup extends infer G
+  ? G extends keyof typeof _MCXComponentGroupOutputPack
+    ? (typeof _MCXComponentGroupOutputPack)[G]
+    : 'behavior'
+  : never;
+
+/** Pack lookup that is safe for group names outside the map. */
+export const resolveComponentPack = (
+  group: string,
+): 'behavior' | 'resources' =>
+  ((
+    _MCXComponentGroupOutputPack as Record<string, 'resources'>
+  )[group] ?? 'behavior') as 'behavior' | 'resources';
 type MCXstructureLocComponentType =
   (typeof _MCXstructureLocComponentTypes)[keyof typeof _MCXstructureLocComponentTypes];
 interface MCXstructureLoc {

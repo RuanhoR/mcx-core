@@ -103,6 +103,18 @@ interface EntityJson extends BaseJson {
       is_spawnable?: boolean;
       is_summonable?: boolean;
       is_experimental?: boolean;
+      runtime_identifier?: string;
+      animations?: Record<string, unknown>;
+      scripts?: Record<string, unknown>;
+      spawn_category?:
+        | 'monster'
+        | 'creature'
+        | 'ambient'
+        | 'axolotls'
+        | 'underground_water_creature'
+        | 'water_creature'
+        | 'water_ambient'
+        | 'misc';
     };
     component_groups?: Record<string, unknown>;
     components?: Record<string, unknown>;
@@ -119,12 +131,18 @@ interface ItemJson extends BaseJson {
     description: {
       identifier: string;
       menu_category?: MenuCategory;
-      group?: string;
-      is_hidden_in_commands?: boolean;
     };
     components: Record<string, unknown>;
   };
 }
+
+/** The creative tabs an item or block can be placed in. */
+type MenuCategoryName =
+  | 'construction'
+  | 'nature'
+  | 'equipment'
+  | 'items'
+  | 'none';
 
 /**
  * Creative inventory placement of an item definition.
@@ -133,7 +151,7 @@ interface ItemJson extends BaseJson {
  * - is_hidden_in_commands: Whether this item can be used with commands.
  */
 interface MenuCategory {
-  category?: string;
+  category?: MenuCategoryName;
   group?: string;
   is_hidden_in_commands?: boolean;
 }
@@ -837,8 +855,6 @@ interface ItemComponentOptions {
   name?: string;
   format: string;
   menu_category?: MenuCategory;
-  group?: string;
-  is_hidden_in_commands?: boolean;
   components: Partial<{
     offHand: boolean;
     damage: number;
@@ -915,6 +931,7 @@ interface ItemComponentOptions {
       movement_modifier?: number;
       emit_vibrations?: boolean;
       start_sound?: string;
+      start_using?: 'always' | 'on_attack';
     };
     'minecraft:swing_sounds'?: {
       attack_critical_hit?: string;
@@ -940,6 +957,7 @@ interface ItemComponentOptions {
       movement_modifier?: number;
       emit_vibrations?: boolean;
       start_sound?: string;
+      start_using?: 'always' | 'on_attack';
     };
     swing_sounds?: {
       attack_critical_hit?: string;
@@ -1418,6 +1436,26 @@ interface EntityComponentOptions {
   is_spawnable?: boolean;
   is_summonable?: boolean;
   is_experimental?: boolean;
+  /** inherit mechanics from a vanilla entity that has no component yet */
+  runtime_identifier?: string;
+  /** behaviour animations / animation controllers */
+  animations?: Record<string, unknown>;
+  /** behaviour scripts, mirroring the client entity `scripts` block */
+  scripts?: Record<string, unknown>;
+  /** not fully implemented upstream; `misc` is the recommended value */
+  spawn_category?:
+    | 'monster'
+    | 'creature'
+    | 'ambient'
+    | 'axolotls'
+    | 'underground_water_creature'
+    | 'water_creature'
+    | 'water_ambient'
+    | 'misc';
+  /** named component groups, referenced from events */
+  component_groups?: Record<string, Record<string, unknown>>;
+  /** named events, referenced from components and groups */
+  events?: Record<string, Record<string, unknown>>;
   components?: Partial<{
     physics?: boolean;
     addrider?: AddRiderConfig;
@@ -1568,36 +1606,25 @@ interface EntityComponentOptions {
   }>;
 }
 
+/** `minecraft:offspring`, as documented in minecraftComponent_offspring.md */
 interface OffspringConfig {
-  born_event?: string;
-  cooldown?: number;
-  mutation_factor?: {
+  blend_attributes?: boolean;
+  deny_parents_variant?: Array<{
+    chance?: number;
+    max_variant?: number;
+    min_variant?: number;
+  }>;
+  inherit_tamed?: boolean;
+  mutation_factor?: Array<{
     color?: number;
-    gene?: number;
-    extra?: number;
-    health?: number;
-    speed?: number;
-  };
-  breed_event?: string;
-  breed_items?: Array<{ item?: string; entity_type?: string }>;
-  delayed_growth?: boolean;
-  deny_parents_baby_variant?: boolean;
-  grow_up_duration?: number;
-  initial_variant?: number;
-  inheritance_chance?: {
-    angry?: number;
-    attacker?: number;
-    color?: number;
-    gene?: number;
+    extra_variant?: number;
     variant?: number;
-  };
-  num_variants?: number;
-  parent_centric_attribute_blending?: {
-    attribute?: string;
-    dampening?: number;
-  };
-  should_baby_face_parent?: boolean;
-  variants?: Record<string, unknown>;
+  }>;
+  offspring_pairs?: Record<string, string>;
+  parent_centric_attribute_blending?: string[];
+  property_inheritance?: Record<string, unknown>;
+  random_extra_variant_mutation_interval?: { min: number; max: number };
+  random_variant_mutation_interval?: { min: number; max: number };
 }
 
 interface PreferredPathConfig {
@@ -1625,6 +1652,7 @@ export type {
   FoodEffect,
   ItemComponentOptions,
   MenuCategory,
+  MenuCategoryName,
   BlockComponentOptions,
   AddRiderConfig,
   MobEffectConfig,

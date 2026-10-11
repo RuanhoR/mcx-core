@@ -63,7 +63,7 @@ const validCases: Case[] = [
   { name: 'setMaxStackSize', args: [16] },
   { name: 'setMaxStackSize', args: [{ value: 1 }] },
   { name: 'setMaxStackSize', args: [64] },
-  { name: 'setRarity', args: [{ value: 'epic' }] },
+  { name: 'setRarity', args: [{ value: 'epic' }], fmt: NEW },
   { name: 'setStackedByData', args: [{ value: true }] },
   { name: 'setShouldDespawn', args: [{ value: false }] },
   { name: 'setTags', args: [['minecraft:is_food']] },
@@ -74,10 +74,9 @@ const validCases: Case[] = [
   { name: 'setUseAnimation', args: ['bow'] },
   { name: 'setDamage', args: [7] },
   { name: 'setCanDestroyInCreative', args: [false] },
-  { name: 'setSwingSounds', args: [{ sound: 'item.sword.hit' }] },
+  { name: 'setSwingSounds', args: [{ attack_hit: 'attack.strong' }], fmt: '1.21.130' },
   { name: 'setWeapon', args: [{ on_hit_block: 'minecraft:stone' }] },
-  { name: 'setKnockbackResistance', args: [{ value: 0.5 }] },
-  { name: 'setKnockbackResistance', args: [{ value: 1, protection: 0.2 }] },
+  { name: 'setRenderOffsets', args: [{ main_hand: { x: 0.1 } }] },
   { name: 'setDurability', args: [{ max_durability: 1 }] },
 ];
 
@@ -99,16 +98,16 @@ describe('ItemComponent setter matrix (values are stored)', () => {
     { name: 'setHandEquipped', args: [true], path: [COMP, 'components', 'minecraft:hand_equipped', 'value'], value: true },
     { name: 'setDamage', args: [9], path: [COMP, 'components', 'minecraft:damage', 'value'], value: 9 },
     { name: 'setCanDestroyInCreative', args: [false], path: [COMP, 'components', 'minecraft:can_destroy_in_creative', 'value'], value: false },
-    { name: 'setIsHiddenInCommands', args: [true], path: [COMP, DESC, 'is_hidden_in_commands'], value: true },
+    { name: 'setIsHiddenInCommands', args: [true], path: [COMP, DESC, 'menu_category', 'is_hidden_in_commands'], value: true },
     { name: 'setFuel', args: [{ duration: 80 }], path: [COMP, 'components', 'minecraft:fuel', 'duration'], value: 80 },
     { name: 'setFood', args: [{ nutrition: 6 }], path: [COMP, 'components', 'minecraft:food', 'nutrition'], value: 6 },
     { name: 'setCooldown', args: [{ category: 'ender_pearl', duration: 12 }], path: [COMP, 'components', 'minecraft:cooldown', 'duration'], value: 12 },
     { name: 'setSwingDuration', args: [3], path: [COMP, 'components', 'minecraft:swing_duration', 'value'], value: 3 },
     { name: 'setMaxStackSize', args: [32], path: [COMP, 'components', 'minecraft:max_stack_size'], value: 32 },
     { name: 'setInteractButton', args: ['Push'], path: [COMP, 'components', 'minecraft:interact_button'], value: 'Push' },
-    { name: 'setRarity', args: [{ value: 'rare' }], path: [COMP, 'components', 'minecraft:rarity', 'value'], value: 'rare' },
-  ])('$name stores $path', ({ name, args, path, value }) => {
-    const item = make();
+    { name: 'setRarity', args: [{ value: 'rare' }], fmt: NEW, path: [COMP, 'components', 'minecraft:rarity', 'value'], value: 'rare' },
+  ])('$name stores $path', ({ name, args, path, value, fmt }) => {
+    const item = make(fmt);
     (item as never as Record<string, (...a: unknown[]) => void>)[name]!(...args);
     expect(deep(item.toJSON() as unknown as Json, path)).toBe(value);
   });

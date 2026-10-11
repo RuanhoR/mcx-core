@@ -44,7 +44,7 @@ const validCases: Case[] = [
   { name: 'setGeometry', args: ['minecraft:geometry.full_block'] },
   { name: 'setGeometry', args: [{ identifier: 'minecraft:geometry.full_block' }] },
   { name: 'setMapColor', args: ['#7bb659'] },
-  { name: 'setMapColor', args: [{ color: '#7bb659', tint_method: 'multiply' }] },
+  { name: 'setMapColor', args: [{ color: '#7bb659', tint_method: 'grass' }] },
   { name: 'setCraftingTable', args: [{ crafting_tags: ['crafting_table'], table_name: 'Demo' }] },
   { name: 'setTransformation', args: [{ rotation: [0, 90, 0] }] },
   { name: 'setTransformation', args: [{ rotation: { x: 0, y: 90, z: 0 }, rotation_pivot: [0, 0, 0] }] },
@@ -61,7 +61,7 @@ const validCases: Case[] = [
   { name: 'setReplaceable', args: [] },
   { name: 'setFlowerPottable', args: [] },
   { name: 'setChestObstruction', args: [] },
-  { name: 'setIcon', args: ['test_icon'] },
+  { name: 'setInstrumentSound', args: [{ up: 'note.bassattack' }] },
   { name: 'setBreathability', args: ['solid'] },
   { name: 'setDestructionParticles', args: ['particles'] },
   { name: 'setSound', args: ['stone'] },
@@ -91,7 +91,7 @@ describe('BlockComponent setter matrix (values are stored)', () => {
     { name: 'setFriction', args: [0.4], path: [BC, COMP, 'minecraft:friction'], value: 0.4 },
     { name: 'setLoot', args: ['loot_tables/blocks/demo.json'], path: [BC, COMP, 'minecraft:loot'], value: 'loot_tables/blocks/demo.json' },
     { name: 'setMapColor', args: ['#7bb659'], path: [BC, COMP, 'minecraft:map_color'], value: '#7bb659' },
-    { name: 'setSound', args: ['stone'], path: [BC, COMP, 'minecraft:sound'], value: 'stone' },
+    { name: 'setSound', args: ['stone'], path: [BC, COMP, 'minecraft:sound', 'sound'], value: 'stone' },
     { name: 'setDestructibleByExplosion', args: [false], path: [BC, COMP, 'minecraft:destructible_by_explosion'], value: false },
     { name: 'setFlammable', args: [false], path: [BC, COMP, 'minecraft:flammable'], value: false },
     { name: 'setCollisionBox', args: [false], path: [BC, COMP, 'minecraft:collision_box'], value: false },
@@ -104,13 +104,35 @@ describe('BlockComponent setter matrix (values are stored)', () => {
     expect(deep(block.toJSON() as unknown as Json, path)).toBe(value);
   });
   it.each([
-    { name: 'setLightEmission', args: [-1], path: [BC, COMP, 'minecraft:light_emission'], value: -1 },
-    { name: 'setFriction', args: [2], path: [BC, COMP, 'minecraft:friction'], value: 2 },
     { name: 'setSupport', args: [{ shape: 'wall' }], path: [BC, COMP, 'minecraft:support', 'shape'], value: 'wall' },
   ])('$name stores raw values without extra validation', ({ name, args, path, value }) => {
     const block = make();
     (block as never as Record<string, (...a: unknown[]) => void>)[name]!(...args);
     expect(deep(block.toJSON() as unknown as Json, path)).toBe(value);
+  });
+  it.each([
+    { name: 'setLightEmission', args: [-1] },
+    { name: 'setLightEmission', args: [16] },
+    { name: 'setFriction', args: [2] },
+    { name: 'setMapColor', args: [{ color: '#fff', tint_method: 'multiply' }] },
+    { name: 'setRedstoneProducer', args: [{ power: 99 }] },
+    { name: 'setRedstoneConsumer', args: [{ min_power: 99 }] },
+    { name: 'setConnectionRule', args: [{ enabled_directions: ['sideways'] }] },
+    {
+      name: 'setPrecipitationInteractions',
+      args: [{ precipitation_behavior: 'drizzle' }],
+    },
+    { name: 'setLiquidDetection', args: [{ liquid_type: 'lava' }] },
+    { name: 'setBlockEntity', args: [{ container: { slot_count: 99 } }] },
+    { name: 'setInstrumentSound', args: [{ up: 'note.kazoo' }] },
+    { name: 'setInstrumentSound', args: [{}] },
+    { name: 'setDestructionParticles', args: [{ particle_count: 999 }] },
+  ])('$name rejects out-of-range or unknown values', ({ name, args }) => {
+    const block = make();
+    expect(() => {
+      (block as never as Record<string, (...a: unknown[]) => void>)[name]!(...args);
+      block.toJSON();
+    }).toThrow();
   });
 });
 

@@ -5,6 +5,8 @@
  * https://learn.microsoft.com/en-us/minecraft/creator/reference/content/loottablereference/examples/loottabledefinitionlist
  */
 
+import { applyFormatVersion } from '../shared';
+
 export type LootEntryType = 'item' | 'loot_table' | 'empty';
 
 export interface LootRange {
@@ -20,7 +22,7 @@ export type LootNumber = number | LootRange;
 // ---------------------------------------------------------------------------
 
 export interface KilledByPlayerCondition {
-  condition: 'killed_by_player';
+  condition: 'killed_by_player' | 'killed_by_player_or_pets';
 }
 
 export interface RandomChanceCondition {
@@ -35,6 +37,21 @@ export interface RandomChanceWithLootingCondition {
   looting_multiplier: number;
 }
 
+export interface RandomDifficultyChanceCondition {
+  condition: 'random_difficulty_chance';
+  default_chance?: number;
+  peaceful?: number;
+  easy?: number;
+  normal?: number;
+  hard?: number;
+}
+
+/** `has_variant` / `has_mark_variant` — match a specific variant index. */
+export interface HasVariantCondition {
+  condition: 'has_variant' | 'has_mark_variant';
+  value: number;
+}
+
 export interface EntityPropertiesCondition {
   condition: 'entity_properties';
   /** subject of the check: this / other / killer / damager … */
@@ -42,9 +59,18 @@ export interface EntityPropertiesCondition {
   properties: Record<string, unknown>;
 }
 
+export interface ToolEnchantment {
+  enchantment: string;
+  levels?: { min: number; max?: number };
+}
+
+/** `match_tool` is a nested object, not a flat `item` key. */
 export interface MatchToolCondition {
   condition: 'match_tool';
-  item?: string;
+  match_tool?: {
+    item?: string;
+    enchantments?: ToolEnchantment[];
+  };
 }
 
 export interface SurvivesExplosionCondition {
@@ -71,6 +97,8 @@ export type LootCondition =
   | KilledByPlayerCondition
   | RandomChanceCondition
   | RandomChanceWithLootingCondition
+  | RandomDifficultyChanceCondition
+  | HasVariantCondition
   | EntityPropertiesCondition
   | MatchToolCondition
   | SurvivesExplosionCondition
@@ -107,8 +135,21 @@ export interface SetLoreFunction {
   lore: string[];
 }
 
+export interface SetPotionFunction {
+  function: 'set_potion';
+  id: string;
+}
+
+/** Only valid on spawn eggs. */
+export interface SetActorIdFunction {
+  function: 'set_actor_id';
+  id: string;
+}
+
 export interface EnchantRandomlyFunction {
   function: 'enchant_randomly';
+  /** whether treasure enchantments are included */
+  treasure?: boolean;
 }
 
 export interface EnchantWithLevelsFunction {
@@ -116,9 +157,10 @@ export interface EnchantWithLevelsFunction {
   levels?: LootNumber;
 }
 
-export interface SetPotionFunction {
-  function: 'set_potion';
-  id: string;
+/** Scales the count with the killing blow's looting level. */
+export interface LootingEnchantFunction {
+  function: 'looting_enchant';
+  count?: LootNumber;
 }
 
 export type ExplorationMapDestination =
@@ -153,6 +195,63 @@ export interface TraderMaterialTypeFunction {
   function: 'trader_material_type';
 }
 
+/** Enchant functions shared by the enchanting-table docs. */
+export interface EnchantBookForTradingFunction {
+  function: 'enchant_book_for_trading';
+  base_cost?: number;
+  base_random_cost?: number;
+  per_level_random_cost?: number;
+  per_level_cost?: number;
+}
+
+export interface EnchantRandomGearFunction {
+  function: 'enchant_random_gear';
+  chance?: number;
+}
+
+export interface SpecificEnchantsFunction {
+  function: 'specific_enchants';
+  enchants: Array<{ enchantment: string; level?: number }>;
+}
+
+/** Item-modification functions from the itemmodtables reference. */
+export interface RandomAuxValueFunction {
+  function: 'random_aux_value';
+  values?: LootNumber;
+}
+
+export interface RandomBlockStateFunction {
+  function: 'random_block_state';
+  states: Array<{ state: string; values?: LootNumber }>;
+}
+
+export interface RandomDyeFunction {
+  function: 'random_dye';
+  color?: string;
+  value?: LootNumber;
+}
+
+export interface SetBannerDetailsFunction {
+  function: 'set_banner_details';
+  type?: number;
+  color?: string;
+  pattern?: string;
+}
+
+export interface SetBookContentsFunction {
+  function: 'set_book_contents';
+  type?: 'written_book';
+  title?: string;
+  author?: string;
+  generation?: number;
+  pages?: string[];
+  texts?: Array<{ rawtext?: string[]; text?: string }>;
+}
+
+export interface SetDataFromColorIndexFunction {
+  function: 'set_data_from_color_index';
+}
+
 /** Escape hatch for functions not covered above. */
 export interface CustomLootFunction {
   function: string & {};
@@ -167,7 +266,18 @@ export type LootTableFunction =
   | SetLoreFunction
   | EnchantRandomlyFunction
   | EnchantWithLevelsFunction
+  | EnchantBookForTradingFunction
+  | EnchantRandomGearFunction
+  | SpecificEnchantsFunction
+  | LootingEnchantFunction
   | SetPotionFunction
+  | SetActorIdFunction
+  | RandomAuxValueFunction
+  | RandomBlockStateFunction
+  | RandomDyeFunction
+  | SetBannerDetailsFunction
+  | SetBookContentsFunction
+  | SetDataFromColorIndexFunction
   | ExplorationMapFunction
   | FillContainerFunction
   | FurnaceSmeltFunction
@@ -187,11 +297,17 @@ export interface LootPoolEntry {
   quality?: number;
   functions?: (LootTableFunction & { conditions?: LootCondition[] })[];
   conditions?: LootCondition[];
+  /** inline pools, used when `type` is "loot_table" */
+  pools?: LootPoolOptions[];
 }
 
 export interface LootPoolOptions {
   /** fixed roll count or a min/max range */
   rolls?: LootNumber;
+  /** extra rolls granted by the luck attribute */
+  bonus_rolls?: LootNumber;
+  /** tiered entry selection, restricts the entries that can roll */
+  tiers?: unknown;
   entries: LootPoolEntry[];
   conditions?: LootCondition[];
 }
@@ -204,6 +320,8 @@ export class LootPool {
     this.#opt = {
       entries: opt.entries ?? [],
       ...(opt.rolls !== undefined ? { rolls: opt.rolls } : {}),
+      ...(opt.bonus_rolls !== undefined ? { bonus_rolls: opt.bonus_rolls } : {}),
+      ...(opt.tiers !== undefined ? { tiers: opt.tiers } : {}),
       ...(opt.conditions !== undefined ? { conditions: opt.conditions } : {})
     };
   }
@@ -213,6 +331,22 @@ export class LootPool {
   }
   setRolls(rolls: LootNumber): this {
     this.#opt.rolls = rolls;
+    return this;
+  }
+
+  getBonusRolls(): LootNumber | undefined {
+    return this.#opt.bonus_rolls;
+  }
+  setBonusRolls(bonusRolls: LootNumber): this {
+    this.#opt.bonus_rolls = bonusRolls;
+    return this;
+  }
+
+  getTiers(): unknown {
+    return this.#opt.tiers;
+  }
+  setTiers(tiers: unknown): this {
+    this.#opt.tiers = tiers;
     return this;
   }
 
@@ -293,14 +427,10 @@ class LootTableComponent {
       throw new Error('[mcx component]: loot table needs at least one pool');
     }
     const result: Record<string, unknown> = { pools };
-    const format = this.#opt.format;
-    if (typeof format === 'string' && /^\d+\.\d+(\.\d+)?$/.test(format)) {
-      result.format_version = format;
-    } else if (format !== undefined) {
-      throw new Error(
-        `[compile component]: invalid loot table format: ${String(format)}`
-      );
-    }
+    applyFormatVersion(result, {
+      component: 'loot table',
+      format: this.#opt.format,
+    });
     return result;
   }
 }

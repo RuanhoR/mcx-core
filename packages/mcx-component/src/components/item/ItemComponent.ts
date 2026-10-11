@@ -1,5 +1,18 @@
-import { PNGImageComponent } from '../lib';
-import * as t from './../types';
+import { PNGImageComponent } from '../../lib';
+import {
+  isFormatAtLeast,
+  requireFormatAtLeast,
+  requireIdentifier,
+  resolveFormatVersion,
+} from '../../shared';
+import { MenuCategoryEnum } from '../../types/MenuCategory';
+import * as t from '../../types';
+import {
+  assertFoodEffects,
+  normalizeItemIcon,
+  normalizeRepairAmount,
+} from './validators';
+
 class ItemComponent {
   #opt: t.ItemComponentOptions;
   #edit: t.BaseJson['_meta']['file_edit'] = [];
@@ -21,42 +34,31 @@ class ItemComponent {
         },
       },
     };
-    if (
-      typeof this.#opt.format == 'string' &&
-      /\d+\.\d+\.\d+/.test(this.#opt.format)
-    ) {
-      result['format_version'] = this.#opt.format;
-    } else {
-      throw new Error('[compile component]: no format');
-    }
-    if (
-      typeof this.#opt.id == 'string' &&
-      /[a-zA-Z0-9_]:[a-zA-Z0-9_]/.test(this.#opt.id)
-    ) {
-      result['minecraft:item'].description.identifier = this.#opt.id;
-    } else {
-      throw new Error('[compile component]: no id');
-    }
+    result['format_version'] = resolveFormatVersion({
+      component: 'item',
+      format: this.#opt.format,
+      required: true,
+      parts: 3,
+    })!;
+    result['minecraft:item'].description.identifier = requireIdentifier(
+      this.#opt.id,
+      'item',
+    );
     const description = result['minecraft:item'].description;
-    if (typeof this.#opt.group == 'string' && this.#opt.group.trim()) {
-      if (this.#opt.group.length > 256) {
-        throw new Error(
-          '[compile component]: description: group name limited to 256 characters',
-        );
-      }
-      description.group = this.#opt.group;
-    }
-    if (typeof this.#opt.is_hidden_in_commands == 'boolean') {
-      description.is_hidden_in_commands = this.#opt.is_hidden_in_commands;
-    }
     if (this.#opt.menu_category) {
       const menuCategory: Record<string, unknown> = {};
-      if (
-        typeof this.#opt.menu_category.category == 'string' &&
-        this.#opt.menu_category.category.trim()
-      ) {
-        menuCategory.category = this.#opt.menu_category.category;
-      }
+        if (
+          typeof this.#opt.menu_category.category == 'string' &&
+          this.#opt.menu_category.category.trim()
+        ) {
+          const category = this.#opt.menu_category.category as t.MenuCategory['category'];
+          if (!MenuCategoryEnum.includes(category as never)) {
+            throw new Error(
+              `[compile component]: menu_category: unknown category "${category}", valid: ${MenuCategoryEnum.join(', ')}`,
+            );
+          }
+          menuCategory.category = category;
+        }
       if (
         typeof this.#opt.menu_category.group == 'string' &&
         this.#opt.menu_category.group.trim()
@@ -99,34 +101,12 @@ class ItemComponent {
           value: components.canDestroyInCreative,
         };
       }
-      if (typeof components.icon == 'string' && components.icon.trim()) {
-        ApplyComponents['minecraft:icon'] = components.icon;
+      if (components.icon !== undefined) {
+        ApplyComponents['minecraft:icon'] = normalizeItemIcon(components.icon);
       }
 
       if (components.block_placer) {
-        // Validate format version for block_placer (requires 1.21.50+)
-        const formatParts = this.#opt.format.split('.');
-        const major = parseInt(formatParts[0]!);
-        const minor = parseInt(formatParts[1]!);
-        const patch = parseInt(formatParts[2] || '0');
-
-        function isVersionGE(
-          reqMajor: number,
-          reqMinor: number,
-          reqPatch: number,
-        ): boolean {
-          if (major > reqMajor) return true;
-          if (major < reqMajor) return false;
-          if (minor > reqMinor) return true;
-          if (minor < reqMinor) return false;
-          return patch >= reqPatch;
-        }
-
-        if (!isVersionGE(1, 21, 50)) {
-          throw new Error(
-            '[compile component]: block_placer component requires format version 1.21.50 or higher',
-          );
-        }
+        requireFormatAtLeast(this.#opt.format, 'block_placer', '1.21.50');
 
         const blockPlacerConfig: Record<string, unknown> = {};
 
@@ -182,29 +162,7 @@ class ItemComponent {
       }
 
       if (components.compostable) {
-        // Validate format version for compostable (requires 1.21.60+)
-        const formatParts = this.#opt.format.split('.');
-        const major = parseInt(formatParts[0]!);
-        const minor = parseInt(formatParts[1]!);
-        const patch = parseInt(formatParts[2] || '0');
-
-        function isVersionGE(
-          reqMajor: number,
-          reqMinor: number,
-          reqPatch: number,
-        ): boolean {
-          if (major > reqMajor) return true;
-          if (major < reqMajor) return false;
-          if (minor > reqMinor) return true;
-          if (minor < reqMinor) return false;
-          return patch >= reqPatch;
-        }
-
-        if (!isVersionGE(1, 21, 60)) {
-          throw new Error(
-            '[compile component]: compostable component requires format version 1.21.60 or higher',
-          );
-        }
+        requireFormatAtLeast(this.#opt.format, 'compostable', '1.21.60');
 
         const compostableConfig: Record<string, unknown> = {};
 
@@ -229,29 +187,7 @@ class ItemComponent {
       }
 
       if (components.bundle_interaction) {
-        // Validate format version for bundle_interaction (requires 1.21.40+)
-        const formatParts = this.#opt.format.split('.');
-        const major = parseInt(formatParts[0]!);
-        const minor = parseInt(formatParts[1]!);
-        const patch = parseInt(formatParts[2] || '0');
-
-        function isVersionGE(
-          reqMajor: number,
-          reqMinor: number,
-          reqPatch: number,
-        ): boolean {
-          if (major > reqMajor) return true;
-          if (major < reqMajor) return false;
-          if (minor > reqMinor) return true;
-          if (minor < reqMinor) return false;
-          return patch >= reqPatch;
-        }
-
-        if (!isVersionGE(1, 21, 40)) {
-          throw new Error(
-            '[compile component]: bundle_interaction component requires format version 1.21.40 or higher',
-          );
-        }
+        requireFormatAtLeast(this.#opt.format, 'bundle_interaction', '1.21.40');
 
         // Validate that storage_item is defined
         if (!components.storage_item) {
@@ -282,29 +218,7 @@ class ItemComponent {
       }
 
       if (components.storage_item) {
-        // Validate format version for storage_item (requires 1.21.40+)
-        const formatParts = this.#opt.format.split('.');
-        const major = parseInt(formatParts[0]!);
-        const minor = parseInt(formatParts[1]!);
-        const patch = parseInt(formatParts[2] || '0');
-
-        function isVersionGE(
-          reqMajor: number,
-          reqMinor: number,
-          reqPatch: number,
-        ): boolean {
-          if (major > reqMajor) return true;
-          if (major < reqMajor) return false;
-          if (minor > reqMinor) return true;
-          if (minor < reqMinor) return false;
-          return patch >= reqPatch;
-        }
-
-        if (!isVersionGE(1, 21, 40)) {
-          throw new Error(
-            '[compile component]: storage_item component requires format version 1.21.40 or higher',
-          );
-        }
+        requireFormatAtLeast(this.#opt.format, 'storage_item', '1.21.40');
 
         const storageItemConfig: Record<string, unknown> = {};
 
@@ -471,29 +385,7 @@ class ItemComponent {
       }
 
       if (components.durability_sensor) {
-        // Validate format version for durability_sensor (requires 1.21.50+)
-        const formatParts = this.#opt.format.split('.');
-        const major = parseInt(formatParts[0]!);
-        const minor = parseInt(formatParts[1]!);
-        const patch = parseInt(formatParts[2] || '0');
-
-        function isVersionGE(
-          reqMajor: number,
-          reqMinor: number,
-          reqPatch: number,
-        ): boolean {
-          if (major > reqMajor) return true;
-          if (major < reqMajor) return false;
-          if (minor > reqMinor) return true;
-          if (minor < reqMinor) return false;
-          return patch >= reqPatch;
-        }
-
-        if (!isVersionGE(1, 21, 50)) {
-          throw new Error(
-            '[compile component]: durability_sensor component requires format version 1.21.50 or higher',
-          );
-        }
+        requireFormatAtLeast(this.#opt.format, 'durability_sensor', '1.21.50');
 
         // Validate that durability component is defined
         if (!components.durability) {
@@ -595,29 +487,7 @@ class ItemComponent {
       }
 
       if (components.dyeable) {
-        // Validate format version for dyeable (requires 1.21.30+)
-        const formatParts = this.#opt.format.split('.');
-        const major = parseInt(formatParts[0]!);
-        const minor = parseInt(formatParts[1]!);
-        const patch = parseInt(formatParts[2] || '0');
-
-        function isVersionGE(
-          reqMajor: number,
-          reqMinor: number,
-          reqPatch: number,
-        ): boolean {
-          if (major > reqMajor) return true;
-          if (major < reqMajor) return false;
-          if (minor > reqMinor) return true;
-          if (minor < reqMinor) return false;
-          return patch >= reqPatch;
-        }
-
-        if (!isVersionGE(1, 21, 30)) {
-          throw new Error(
-            '[compile component]: dyeable component requires format version 1.21.30 or higher',
-          );
-        }
+        requireFormatAtLeast(this.#opt.format, 'dyeable', '1.21.30');
 
         const dyeableConfig: Record<string, unknown> = {};
 
@@ -700,70 +570,8 @@ class ItemComponent {
         ApplyComponents['minecraft:enchantable'] = enchantableConfig;
       }
 
-      // Helper function to validate food effects array
       const validateFoodEffects = (effects?: t.FoodEffect[]) => {
-        if (effects && Array.isArray(effects)) {
-          const validEffects = [
-            'regeneration',
-            'absorption',
-            'blindness',
-            'conduit_power',
-            'darkness',
-            'fatal_poison',
-            'fire_resistance',
-            'haste',
-            'health_boost',
-            'hunger',
-            'instant_damage',
-            'instant_health',
-            'invisibility',
-            'jump_boost',
-            'levitation',
-            'mining_fatigue',
-            'nausea',
-            'night_vision',
-            'poison',
-            'resistance',
-            'saturation',
-            'slow_falling',
-            'slowness',
-            'speed',
-            'strength',
-            'water_breathing',
-            'weakness',
-            'wither',
-          ];
-
-          for (const effect of effects) {
-            if (effect.name && !validEffects.includes(effect.name)) {
-              throw new Error(
-                `[compile component]: food: effect name must be a valid status effect. Got: ${effect.name}`,
-              );
-            }
-
-            if (typeof effect.amplifier === 'number' && effect.amplifier < 0) {
-              throw new Error(
-                '[compile component]: food: effect amplifier must be at least 0',
-              );
-            }
-
-            if (
-              typeof effect.chance === 'number' &&
-              (effect.chance < 0 || effect.chance > 1)
-            ) {
-              throw new Error(
-                '[compile component]: food: effect chance must be between 0 and 1',
-              );
-            }
-
-            if (typeof effect.duration === 'number' && effect.duration < 0) {
-              throw new Error(
-                '[compile component]: food: effect duration must be at least 0',
-              );
-            }
-          }
-          return effects;
-        }
+        if (effects && Array.isArray(effects)) assertFoodEffects(effects);
         return effects;
       };
 
@@ -776,25 +584,8 @@ class ItemComponent {
           foodConfigFinal.can_always_eat = foodConfig.can_always_eat;
         }
 
-        if (typeof foodConfig.cooldown_time === 'number') {
-          if (foodConfig.cooldown_time < 0) {
-            throw new Error(
-              '[compile component]: food: cooldown_time must be at least 0',
-            );
-          }
-          foodConfigFinal.cooldown_time = foodConfig.cooldown_time;
-        }
-
-        if (typeof foodConfig.cooldown_type === 'string') {
-          foodConfigFinal.cooldown_type = foodConfig.cooldown_type;
-        }
-
         if (foodConfig.effects) {
           foodConfigFinal.effects = validateFoodEffects(foodConfig.effects);
-        }
-
-        if (typeof foodConfig.is_meat === 'boolean') {
-          foodConfigFinal.is_meat = foodConfig.is_meat;
         }
 
         if (typeof foodConfig.nutrition === 'number') {
@@ -804,28 +595,6 @@ class ItemComponent {
             );
           }
           foodConfigFinal.nutrition = foodConfig.nutrition;
-        }
-
-        if (typeof foodConfig.on_use_action === 'string') {
-          foodConfigFinal.on_use_action = foodConfig.on_use_action;
-        }
-
-        if (
-          Array.isArray(foodConfig.on_use_range) &&
-          foodConfig.on_use_range.length === 3
-        ) {
-          const [x, y, z] = foodConfig.on_use_range;
-          if (
-            typeof x === 'number' &&
-            typeof y === 'number' &&
-            typeof z === 'number'
-          ) {
-            foodConfigFinal.on_use_range = [x, y, z];
-          } else {
-            throw new Error(
-              '[compile component]: food: on_use_range must be an array of 3 numbers',
-            );
-          }
         }
 
         if (foodConfig.saturation_modifier !== undefined) {
@@ -895,25 +664,7 @@ class ItemComponent {
       const entityPlacerConfig =
         components['minecraft:entity_placer'] || components.entity_placer;
       if (entityPlacerConfig) {
-        // Check if durability component is defined (if needed for format version validation)
-        const formatParts = this.#opt.format.split('.');
-        const major = parseInt(formatParts[0]!);
-        const minor = parseInt(formatParts[1]!);
-        const patch = parseInt(formatParts[2] || '0');
-
-        function isVersionGE(
-          reqMajor: number,
-          reqMinor: number,
-          reqPatch: number,
-        ): boolean {
-          if (major > reqMajor) return true;
-          if (major < reqMajor) return false;
-          if (minor > reqMinor) return true;
-          if (minor < reqMinor) return false;
-          return patch >= reqPatch;
-        }
-
-        if (!isVersionGE(1, 19, 80)) {
+        if (!isFormatAtLeast(this.#opt.format, 1, 19, 80)) {
           console.warn(
             '[compile component]: entity_placer: monster spawner functionality requires format version 1.19.80 or higher',
           );
@@ -1294,51 +1045,6 @@ class ItemComponent {
           }
         }
 
-        // Validate kinetic_effect_conditions if present
-        if (kineticWeaponConfig.kinetic_effect_conditions !== undefined) {
-          if (
-            typeof kineticWeaponConfig.kinetic_effect_conditions === 'object'
-          ) {
-            kineticWeaponFinal.kinetic_effect_conditions = {
-              ...kineticWeaponConfig.kinetic_effect_conditions,
-            };
-            if (
-              kineticWeaponConfig.kinetic_effect_conditions.max_duration !==
-                undefined &&
-              typeof kineticWeaponConfig.kinetic_effect_conditions
-                .max_duration !== 'number'
-            ) {
-              throw new Error(
-                '[compile component]: kinetic_weapon: kinetic_effect_conditions.max_duration must be a number',
-              );
-            }
-            if (
-              kineticWeaponConfig.kinetic_effect_conditions
-                .min_relative_speed !== undefined &&
-              typeof kineticWeaponConfig.kinetic_effect_conditions
-                .min_relative_speed !== 'number'
-            ) {
-              throw new Error(
-                '[compile component]: kinetic_weapon: kinetic_effect_conditions.min_relative_speed must be a number',
-              );
-            }
-            if (
-              kineticWeaponConfig.kinetic_effect_conditions.min_speed !==
-                undefined &&
-              typeof kineticWeaponConfig.kinetic_effect_conditions.min_speed !==
-                'number'
-            ) {
-              throw new Error(
-                '[compile component]: kinetic_weapon: kinetic_effect_conditions.min_speed must be a number',
-              );
-            }
-          } else {
-            throw new Error(
-              '[compile component]: kinetic_weapon: kinetic_effect_conditions must be an object',
-            );
-          }
-        }
-
         // Validate reach if present
         if (kineticWeaponConfig.reach !== undefined) {
           if (typeof kineticWeaponConfig.reach === 'object') {
@@ -1643,21 +1349,7 @@ class ItemComponent {
             );
           }
 
-          // Validate format version for rarity component (requires 1.21.30+)
-          const formatParts = this.#opt.format.split('.');
-          const formatVersion = parseFloat(
-            formatParts[1] + '.' + formatParts[2],
-          );
-          const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
-
-          if (
-            formatVersion < 1.21 ||
-            (formatVersion === 1.21 && patchVersion < 30)
-          ) {
-            throw new Error(
-              '[compile component]: rarity component requires format version 1.21.30 or higher',
-            );
-          }
+          requireFormatAtLeast(this.#opt.format, 'rarity', '1.21.30');
 
           ApplyComponents['minecraft:rarity'] = rarityFinal;
         } else {
@@ -1732,18 +1424,11 @@ class ItemComponent {
                     );
                   }
 
-                  // Validate repair_amount (optional)
                   if (repairItem.repair_amount !== undefined) {
-                    if (
-                      typeof repairItem.repair_amount === 'string' ||
-                      typeof repairItem.repair_amount === 'number'
-                    ) {
-                      repairItemFinal.repair_amount = repairItem.repair_amount;
-                    } else {
-                      throw new Error(
-                        '[compile component]: repairable: repair_amount must be a string or number',
-                      );
-                    }
+                    repairItemFinal.repair_amount = normalizeRepairAmount(
+                      repairItem.repair_amount,
+                      'compile component',
+                    );
                   }
 
                   repairItemsFinal.push(repairItemFinal);
@@ -1777,21 +1462,7 @@ class ItemComponent {
           const cfg = seedConfig as Record<string, unknown>;
           const seedFinal: Record<string, unknown> = {};
 
-          // Validate format version for seed component (requires 1.10.0+)
-          const formatParts = this.#opt.format.split('.');
-          const formatVersion = parseFloat(
-            formatParts[1] + '.' + formatParts[2],
-          );
-          const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
-
-          if (
-            formatVersion < 1.1 ||
-            (formatVersion === 1.1 && patchVersion < 0)
-          ) {
-            throw new Error(
-              '[compile component]: seed component requires format version 1.10.0 or higher',
-            );
-          }
+          requireFormatAtLeast(this.#opt.format, 'seed', '1.10.0');
 
           // Handle crop_result (required)
           if (cfg.crop_result !== undefined) {
@@ -1841,7 +1512,7 @@ class ItemComponent {
           if (cfg.plant_at_any_solid_surface !== undefined) {
             if (typeof cfg.plant_at_any_solid_surface === 'boolean') {
               // Check if format version supports this deprecated property
-              if (formatVersion >= 1.19) {
+              if (isFormatAtLeast(this.#opt.format, 1, 19, 0)) {
                 throw new Error(
                   '[compile component]: seed: plant_at_any_solid_surface is deprecated and no longer works after format versions of at least 1.19.0',
                 );
@@ -1857,14 +1528,21 @@ class ItemComponent {
 
           if (cfg.plant_at_face !== undefined) {
             if (typeof cfg.plant_at_face === 'string') {
-              const validFaces = ['UP', 'DOWN'] as const;
+              const validFaces = [
+                'UP',
+                'DOWN',
+                'NORTH',
+                'SOUTH',
+                'EAST',
+                'WEST',
+              ] as const;
               if (!validFaces.includes(cfg.plant_at_face as never)) {
                 throw new Error(
-                  "[compile component]: seed: plant_at_face must be either 'UP' or 'DOWN'",
+                  `[compile component]: seed: plant_at_face must be one of ${validFaces.join(', ')}`,
                 );
               }
               // Check if format version supports this deprecated property
-              if (formatVersion >= 1.19) {
+              if (isFormatAtLeast(this.#opt.format, 1, 19, 0)) {
                 throw new Error(
                   '[compile component]: seed: plant_at_face is deprecated and no longer works after format versions of at least 1.19.0',
                 );
@@ -1952,21 +1630,7 @@ class ItemComponent {
           const cfg = shooterConfig as Record<string, unknown>;
           const shooterFinal: Record<string, unknown> = {};
 
-          // Validate format version for shooter component
-          const formatParts = this.#opt.format.split('.');
-          const formatVersion = parseFloat(
-            formatParts[1] + '.' + formatParts[2],
-          );
-          const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
-
-          if (
-            formatVersion < 1.16 ||
-            (formatVersion === 1.16 && patchVersion < 100)
-          ) {
-            throw new Error(
-              '[compile component]: shooter component requires format version 1.16.100 or higher',
-            );
-          }
+          requireFormatAtLeast(this.#opt.format, 'shooter', '1.16.100');
 
           // Handle ammunition (required)
           if (cfg.ammunition === undefined) {
@@ -2012,44 +1676,37 @@ class ItemComponent {
                   );
                 }
 
-                // Handle launch_power_scale (optional)
-                if (ammunitionItem.launch_power_scale !== undefined) {
-                  if (
-                    typeof ammunitionItem.launch_power_scale === 'number' &&
-                    ammunitionItem.launch_power_scale > 0
-                  ) {
-                    ammunitionObject.launch_power_scale =
-                      ammunitionItem.launch_power_scale;
+                // Handle search_inventory (optional)
+                if (ammunitionItem.search_inventory !== undefined) {
+                  if (typeof ammunitionItem.search_inventory === 'boolean') {
+                    ammunitionObject.search_inventory =
+                      ammunitionItem.search_inventory;
                   } else {
                     throw new Error(
-                      '[compile component]: shooter: ammunition launch_power_scale must be a positive number',
+                      '[compile component]: shooter: ammunition search_inventory must be a boolean',
                     );
                   }
                 }
 
-                // Handle max_draw_duration (optional)
-                if (ammunitionItem.max_draw_duration !== undefined) {
-                  if (
-                    typeof ammunitionItem.max_draw_duration === 'number' &&
-                    ammunitionItem.max_draw_duration >= 0
-                  ) {
-                    ammunitionObject.max_draw_duration =
-                      ammunitionItem.max_draw_duration;
+                // Handle use_in_creative (optional)
+                if (ammunitionItem.use_in_creative !== undefined) {
+                  if (typeof ammunitionItem.use_in_creative === 'boolean') {
+                    ammunitionObject.use_in_creative =
+                      ammunitionItem.use_in_creative;
                   } else {
                     throw new Error(
-                      '[compile component]: shooter: ammunition max_draw_duration must be a non-negative number',
+                      '[compile component]: shooter: ammunition use_in_creative must be a boolean',
                     );
                   }
                 }
 
-                // Handle charge_on_draw (optional)
-                if (ammunitionItem.charge_on_draw !== undefined) {
-                  if (typeof ammunitionItem.charge_on_draw === 'boolean') {
-                    ammunitionObject.charge_on_draw =
-                      ammunitionItem.charge_on_draw;
+                // Handle use_offhand (optional)
+                if (ammunitionItem.use_offhand !== undefined) {
+                  if (typeof ammunitionItem.use_offhand === 'boolean') {
+                    ammunitionObject.use_offhand = ammunitionItem.use_offhand;
                   } else {
                     throw new Error(
-                      '[compile component]: shooter: ammunition charge_on_draw must be a boolean',
+                      '[compile component]: shooter: ammunition use_offhand must be a boolean',
                     );
                   }
                 }
@@ -2094,28 +1751,6 @@ class ItemComponent {
             }
           }
 
-          // Handle auto_charge (optional)
-          if (cfg.auto_charge !== undefined) {
-            if (typeof cfg.auto_charge === 'boolean') {
-              shooterFinal.auto_charge = cfg.auto_charge;
-            } else {
-              throw new Error(
-                '[compile component]: shooter: auto_charge must be a boolean',
-              );
-            }
-          }
-
-          // Handle launch_power (optional)
-          if (cfg.launch_power !== undefined) {
-            if (typeof cfg.launch_power === 'number' && cfg.launch_power >= 0) {
-              shooterFinal.launch_power = cfg.launch_power;
-            } else {
-              throw new Error(
-                '[compile component]: shooter: launch_power must be a non-negative number',
-              );
-            }
-          }
-
           // Handle scale_power_by_draw_duration (optional)
           if (cfg.scale_power_by_draw_duration !== undefined) {
             if (typeof cfg.scale_power_by_draw_duration === 'boolean') {
@@ -2145,21 +1780,11 @@ class ItemComponent {
         ) {
           const storageWeightModifierFinal: Record<string, unknown> = {};
 
-          // Validate format version (requires 1.21.40+)
-          const formatParts = this.#opt.format.split('.');
-          const formatVersion = parseFloat(
-            formatParts[1] + '.' + formatParts[2],
+          requireFormatAtLeast(
+            this.#opt.format,
+            'storage_weight_modifier',
+            '1.21.110',
           );
-          const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
-
-          if (
-            formatVersion < 1.21 ||
-            (formatVersion === 1.21 && patchVersion < 40)
-          ) {
-            throw new Error(
-              '[compile component]: storage_weight_modifier component requires format version 1.21.40 or higher',
-            );
-          }
 
           // Handle weight_in_storage_item (required)
           if (
@@ -2211,21 +1836,11 @@ class ItemComponent {
         ) {
           const storageWeightLimitFinal: Record<string, unknown> = {};
 
-          // Validate format version (requires 1.21.40+)
-          const formatParts = this.#opt.format.split('.');
-          const formatVersion = parseFloat(
-            formatParts[1] + '.' + formatParts[2],
+          requireFormatAtLeast(
+            this.#opt.format,
+            'storage_weight_limit',
+            '1.21.110',
           );
-          const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
-
-          if (
-            formatVersion < 1.21 ||
-            (formatVersion === 1.21 && patchVersion < 40)
-          ) {
-            throw new Error(
-              '[compile component]: storage_weight_limit component requires format version 1.21.40 or higher',
-            );
-          }
 
           // Handle max_weight_limit (required)
           if (storageWeightLimitConfig.max_weight_limit === undefined) {
@@ -2271,21 +1886,7 @@ class ItemComponent {
         ) {
           const storageItemFinal: Record<string, unknown> = {};
 
-          // Validate format version (requires 1.21.40+)
-          const formatParts = this.#opt.format.split('.');
-          const formatVersion = parseFloat(
-            formatParts[1] + '.' + formatParts[2],
-          );
-          const patchVersion = formatParts[3] ? parseInt(formatParts[3]) : 0;
-
-          if (
-            formatVersion < 1.21 ||
-            (formatVersion === 1.21 && patchVersion < 40)
-          ) {
-            throw new Error(
-              '[compile component]: storage_item component requires format version 1.21.40 or higher',
-            );
-          }
+          requireFormatAtLeast(this.#opt.format, 'storage_item', '1.21.40');
 
           // Handle allow_nested_storage_items (optional, defaults to true)
           if (storageItemConfig.allow_nested_storage_items === undefined) {
@@ -2372,50 +1973,6 @@ class ItemComponent {
           } else {
             throw new Error(
               '[compile component]: storage_item: max_slots must be a number',
-            );
-          }
-
-          // Handle max_weight_limit (optional, defaults to 64)
-          if (storageItemConfig.max_weight_limit === undefined) {
-            storageItemFinal.max_weight_limit = 64;
-          } else if (typeof storageItemConfig.max_weight_limit === 'number') {
-            if (
-              storageItemConfig.max_weight_limit > 0 &&
-              storageItemConfig.max_weight_limit <= 64
-            ) {
-              storageItemFinal.max_weight_limit =
-                storageItemConfig.max_weight_limit;
-            } else {
-              throw new Error(
-                '[compile component]: storage_item: max_weight_limit must be between 1 and 64',
-              );
-            }
-          } else {
-            throw new Error(
-              '[compile component]: storage_item: max_weight_limit must be a number',
-            );
-          }
-
-          // Handle weight_in_storage_item (optional, defaults to 4)
-          if (storageItemConfig.weight_in_storage_item === undefined) {
-            storageItemFinal.weight_in_storage_item = 4;
-          } else if (
-            typeof storageItemConfig.weight_in_storage_item === 'number'
-          ) {
-            if (
-              storageItemConfig.weight_in_storage_item >= 0 &&
-              storageItemConfig.weight_in_storage_item <= 64
-            ) {
-              storageItemFinal.weight_in_storage_item =
-                storageItemConfig.weight_in_storage_item;
-            } else {
-              throw new Error(
-                '[compile component]: storage_item: weight_in_storage_item must be between 0 and 64',
-              );
-            }
-          } else {
-            throw new Error(
-              '[compile component]: storage_item: weight_in_storage_item must be a number',
             );
           }
 
@@ -2685,14 +2242,9 @@ class ItemComponent {
               'slot.armor.chest',
               'slot.armor.legs',
               'slot.armor.feet',
+              'slot.armor.body',
               'slot.weapon.mainhand',
               'slot.weapon.offhand',
-              'slot.hotbar',
-              'slot.inventory',
-              'slot.enderchest',
-              'slot.saddle',
-              'slot.armor',
-              'slot.chest',
             ];
             if (validSlots.includes(wearableConfig.slot)) {
               wearableFinal.slot = wearableConfig.slot;
@@ -2793,13 +2345,35 @@ class ItemComponent {
             }
           }
 
-          // Handle has_vibration (optional, boolean)
-          if (umCfg.has_vibration !== undefined) {
-            if (typeof umCfg.has_vibration === 'boolean') {
-              useModifiersFinal.has_vibration = umCfg.has_vibration;
+          // Handle emit_vibrations (optional, boolean, default true)
+          if (umCfg.emit_vibrations !== undefined) {
+            if (typeof umCfg.emit_vibrations === 'boolean') {
+              useModifiersFinal.emit_vibrations = umCfg.emit_vibrations;
             } else {
               throw new Error(
-                '[compile component]: use_modifiers: has_vibration must be a boolean',
+                '[compile component]: use_modifiers: emit_vibrations must be a boolean',
+              );
+            }
+          }
+
+          // Handle start_using (optional, 'always' | 'on_attack')
+          if (umCfg.start_using !== undefined) {
+            if (umCfg.start_using === 'always' || umCfg.start_using === 'on_attack') {
+              useModifiersFinal.start_using = umCfg.start_using;
+            } else {
+              throw new Error(
+                '[compile component]: use_modifiers: start_using must be "always" or "on_attack"',
+              );
+            }
+          }
+
+          // Handle start_sound (optional sound event id)
+          if (umCfg.start_sound !== undefined) {
+            if (typeof umCfg.start_sound === 'string' && umCfg.start_sound.trim()) {
+              useModifiersFinal.start_sound = umCfg.start_sound.trim();
+            } else {
+              throw new Error(
+                '[compile component]: use_modifiers: start_sound must be a non-empty string',
               );
             }
           }
@@ -2824,21 +2398,23 @@ class ItemComponent {
           const ssCfg = swingSoundsConfig as Record<string, unknown>;
           const swingSoundsFinal: Record<string, unknown> = {};
 
-          // Handle sound (required)
-          if (ssCfg.sound !== undefined) {
-            if (
-              typeof ssCfg.sound === 'string' &&
-              ssCfg.sound.trim().length > 0
-            ) {
-              swingSoundsFinal.sound = ssCfg.sound.trim();
+          requireFormatAtLeast(this.#opt.format, 'swing_sounds', '1.21.130');
+
+          for (const key of ['attack_critical_hit', 'attack_hit', 'attack_miss']) {
+            const value = ssCfg[key];
+            if (value === undefined) continue;
+            if (typeof value === 'string' && value.trim()) {
+              swingSoundsFinal[key] = value.trim();
             } else {
               throw new Error(
-                '[compile component]: swing_sounds: sound must be a non-empty string',
+                `[compile component]: swing_sounds: ${key} must be a non-empty string`,
               );
             }
-          } else {
+          }
+
+          if (Object.keys(swingSoundsFinal).length === 0) {
             throw new Error(
-              '[compile component]: swing_sounds: sound is required',
+              '[compile component]: swing_sounds: at least one of attack_critical_hit, attack_hit or attack_miss is required',
             );
           }
 
@@ -2850,7 +2426,7 @@ class ItemComponent {
         }
       }
 
-      // minecraft:weapon
+      // minecraft:weapon (deprecated but still documented)
       if (
         (this.#opt.components as Record<string, unknown>)[
           'minecraft:weapon'
@@ -2861,15 +2437,34 @@ class ItemComponent {
         )['minecraft:weapon'];
       }
 
-      // minecraft:knockback_resistance
-      if (
+      // minecraft:render_offsets (deprecated but still documented)
+      const renderOffsets =
         (this.#opt.components as Record<string, unknown>)[
-          'minecraft:knockback_resistance'
-        ] !== undefined
-      ) {
-        ApplyComponents['minecraft:knockback_resistance'] = (
-          this.#opt.components as Record<string, unknown>
-        )['minecraft:knockback_resistance'];
+          'minecraft:render_offsets'
+        ];
+      if (renderOffsets !== undefined) {
+        if (
+          typeof renderOffsets !== 'object' ||
+          renderOffsets === null ||
+          Array.isArray(renderOffsets)
+        ) {
+          throw new Error(
+            '[compile component]: render_offsets: must be an object with main_hand and/or off_hand',
+          );
+        }
+        const offsets = renderOffsets as Record<string, unknown>;
+        const renderOffsetsFinal: Record<string, unknown> = {};
+        for (const hand of ['main_hand', 'off_hand'] as const) {
+          const value = offsets[hand];
+          if (value === undefined) continue;
+          if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+            throw new Error(
+              `[compile component]: render_offsets: ${hand} must be an object`,
+            );
+          }
+          renderOffsetsFinal[hand] = { ...(value as Record<string, unknown>) };
+        }
+        ApplyComponents['minecraft:render_offsets'] = renderOffsetsFinal;
       }
     }
     return result;
@@ -2998,13 +2593,17 @@ class ItemComponent {
   }
   /**
    * set creative menu category
-   * @param config {string | {category?: string, group?: string, is_hidden_in_commands?: boolean}} category or full menu_category config
+   * @param config category id, or a full menu_category config
    */
   public setMenuCategory(
     config:
-      | string
+      | 'construction'
+      | 'nature'
+      | 'equipment'
+      | 'items'
+      | 'none'
       | {
-          category?: string;
+          category?: 'construction' | 'nature' | 'equipment' | 'items' | 'none';
           group?: string;
           is_hidden_in_commands?: boolean;
         },
@@ -3024,6 +2623,11 @@ class ItemComponent {
     if (config.category !== undefined) {
       if (typeof config.category != 'string' || !config.category.trim())
         throw new TypeError('[set error]: menuCategory: category type error');
+      if (!MenuCategoryEnum.includes(config.category)) {
+        throw new Error(
+          `[set error]: menuCategory: unknown category "${config.category}", valid: ${MenuCategoryEnum.join(', ')}`,
+        );
+      }
       existing.category = config.category;
     }
     if (config.group !== undefined) {
@@ -3051,7 +2655,8 @@ class ItemComponent {
     return this.#opt.menu_category;
   }
   /**
-   * set description creative group
+   * set the creative group. The docs only expose `group` inside
+   * `description.menu_category`, so this writes there.
    * @param group {string} group name (max 256 chars)
    */
   public setGroup(group: string): void {
@@ -3059,28 +2664,32 @@ class ItemComponent {
       throw new TypeError('[set error]: group: type error');
     if (group.length > 256)
       throw new Error('[set error]: group: name limited to 256 characters');
-    this.#opt.group = group;
+    this.#opt.menu_category = { ...this.#opt.menu_category, group };
   }
   /**
-   * get description creative group
+   * get the creative group
    */
   public getGroup(): string | undefined {
-    return this.#opt.group;
+    return this.#opt.menu_category?.group;
   }
   /**
-   * set description is_hidden_in_commands
+   * set description is_hidden_in_commands. Only documented inside
+   * `description.menu_category`.
    * @param value {boolean} whether this item can be used with commands
    */
   public setIsHiddenInCommands(value: boolean): void {
     if (typeof value != 'boolean')
       throw new TypeError('[set error]: isHiddenInCommands: type error');
-    this.#opt.is_hidden_in_commands = value;
+    this.#opt.menu_category = {
+      ...this.#opt.menu_category,
+      is_hidden_in_commands: value,
+    };
   }
   /**
    * get description is_hidden_in_commands
    */
   public getIsHiddenInCommands(): boolean | undefined {
-    return this.#opt.is_hidden_in_commands;
+    return this.#opt.menu_category?.is_hidden_in_commands;
   }
   /**
    * setAllowOffHand
@@ -3591,67 +3200,8 @@ class ItemComponent {
   }) {
     // Validate food effects
     const validateFoodEffects = (effects?: t.FoodEffect[]) => {
-      if (effects && Array.isArray(effects)) {
-        const validEffects = [
-          'regeneration',
-          'absorption',
-          'blindness',
-          'conduit_power',
-          'darkness',
-          'fatal_poison',
-          'fire_resistance',
-          'haste',
-          'health_boost',
-          'hunger',
-          'instant_damage',
-          'instant_health',
-          'invisibility',
-          'jump_boost',
-          'levitation',
-          'mining_fatigue',
-          'nausea',
-          'night_vision',
-          'poison',
-          'resistance',
-          'saturation',
-          'slow_falling',
-          'slowness',
-          'speed',
-          'strength',
-          'water_breathing',
-          'weakness',
-          'wither',
-        ];
-
-        for (const effect of effects) {
-          if (effect.name && !validEffects.includes(effect.name)) {
-            throw new Error(
-              `[set error]: food: effect name must be a valid status effect. Got: ${effect.name}`,
-            );
-          }
-
-          if (typeof effect.amplifier === 'number' && effect.amplifier < 0) {
-            throw new Error(
-              '[set error]: food: effect amplifier must be at least 0',
-            );
-          }
-
-          if (
-            typeof effect.chance === 'number' &&
-            (effect.chance < 0 || effect.chance > 1)
-          ) {
-            throw new Error(
-              '[set error]: food: effect chance must be between 0 and 1',
-            );
-          }
-
-          if (typeof effect.duration === 'number' && effect.duration < 0) {
-            throw new Error(
-              '[set error]: food: effect duration must be at least 0',
-            );
-          }
-        }
-      }
+      if (effects && Array.isArray(effects)) assertFoodEffects(effects);
+      return effects;
     };
 
     // Use the main minecraft:food property for consistency
@@ -3939,11 +3489,6 @@ class ItemComponent {
       min_relative_speed?: number;
       min_speed?: number;
     };
-    kinetic_effect_conditions?: {
-      max_duration?: number;
-      min_relative_speed?: number;
-      min_speed?: number;
-    };
     reach?: { max?: number; min?: number };
   }) {
     // Use the main minecraft:kinetic_weapon property for consistency
@@ -4094,46 +3639,6 @@ class ItemComponent {
       } else {
         throw new Error(
           '[set error]: kinetic_weapon: knockback_conditions must be an object',
-        );
-      }
-    }
-
-    // Handle kinetic_effect_conditions configuration
-    if (config.kinetic_effect_conditions !== undefined) {
-      if (typeof config.kinetic_effect_conditions === 'object') {
-        this.#opt.components[
-          'minecraft:kinetic_weapon'
-        ].kinetic_effect_conditions = { ...config.kinetic_effect_conditions };
-
-        // Validate kinetic_effect_conditions properties
-        if (
-          config.kinetic_effect_conditions.max_duration !== undefined &&
-          typeof config.kinetic_effect_conditions.max_duration !== 'number'
-        ) {
-          throw new Error(
-            '[set error]: kinetic_weapon: kinetic_effect_conditions.max_duration must be a number',
-          );
-        }
-        if (
-          config.kinetic_effect_conditions.min_relative_speed !== undefined &&
-          typeof config.kinetic_effect_conditions.min_relative_speed !==
-            'number'
-        ) {
-          throw new Error(
-            '[set error]: kinetic_weapon: kinetic_effect_conditions.min_relative_speed must be a number',
-          );
-        }
-        if (
-          config.kinetic_effect_conditions.min_speed !== undefined &&
-          typeof config.kinetic_effect_conditions.min_speed !== 'number'
-        ) {
-          throw new Error(
-            '[set error]: kinetic_weapon: kinetic_effect_conditions.min_speed must be a number',
-          );
-        }
-      } else {
-        throw new Error(
-          '[set error]: kinetic_weapon: kinetic_effect_conditions must be an object',
         );
       }
     }
@@ -4606,18 +4111,11 @@ class ItemComponent {
 
             repairItemFinal.items = [...repairItem.items];
 
-            // Validate repair_amount (optional)
             if (repairItem.repair_amount !== undefined) {
-              if (
-                typeof repairItem.repair_amount === 'string' ||
-                typeof repairItem.repair_amount === 'number'
-              ) {
-                repairItemFinal.repair_amount = repairItem.repair_amount;
-              } else {
-                throw new Error(
-                  '[set error]: repairable: repair_amount must be a string or number',
-                );
-              }
+              repairItemFinal.repair_amount = normalizeRepairAmount(
+                repairItem.repair_amount,
+                'set error',
+              );
             }
 
             repairItemsFinal.push(repairItemFinal);
@@ -4656,29 +4154,7 @@ class ItemComponent {
 
     const cfg: Record<string, unknown> = {};
 
-    // Validate format version for seed component (requires 1.10.0+)
-    const formatParts = this.#opt.format.split('.');
-    const major = parseInt(formatParts[0]!);
-    const minor = parseInt(formatParts[1]!);
-    const patch = parseInt(formatParts[2] || '0');
-
-    function isVersionGE(
-      reqMajor: number,
-      reqMinor: number,
-      reqPatch: number,
-    ): boolean {
-      if (major > reqMajor) return true;
-      if (major < reqMajor) return false;
-      if (minor > reqMinor) return true;
-      if (minor < reqMinor) return false;
-      return patch >= reqPatch;
-    }
-
-    if (!isVersionGE(1, 10, 0)) {
-      throw new Error(
-        '[set error]: seed: component requires format version 1.10.0 or higher',
-      );
-    }
+    requireFormatAtLeast(this.#opt.format, 'seed:', '1.10.0', 'set');
 
     // Handle crop_result (required)
     if (typeof config.crop_result !== 'string') {
@@ -4848,29 +4324,7 @@ class ItemComponent {
 
     const cfg: Record<string, unknown> = {};
 
-    // Validate format version for shooter component
-    const formatParts = this.#opt.format.split('.');
-    const major = parseInt(formatParts[0]!);
-    const minor = parseInt(formatParts[1]!);
-    const patch = parseInt(formatParts[2] || '0');
-
-    function isVersionGE(
-      reqMajor: number,
-      reqMinor: number,
-      reqPatch: number,
-    ): boolean {
-      if (major > reqMajor) return true;
-      if (major < reqMajor) return false;
-      if (minor > reqMinor) return true;
-      if (minor < reqMinor) return false;
-      return patch >= reqPatch;
-    }
-
-    if (!isVersionGE(1, 16, 100)) {
-      throw new Error(
-        '[set error]: shooter: component requires format version 1.16.100 or higher',
-      );
-    }
+    requireFormatAtLeast(this.#opt.format, 'shooter:', '1.16.100', 'set');
 
     // Handle ammunition (required)
     if (config.ammunition === undefined) {
@@ -5033,29 +4487,7 @@ class ItemComponent {
    * @param config {{ weight_in_storage_item: number }} Storage weight modifier configuration
    */
   public setStorageWeightModifier(config: { weight_in_storage_item: number }) {
-    // Validate format version for storage_weight_modifier component
-    const formatParts = this.#opt.format.split('.');
-    const major = parseInt(formatParts[0]!);
-    const minor = parseInt(formatParts[1]!);
-    const patch = parseInt(formatParts[2] || '0');
-
-    function isVersionGE(
-      reqMajor: number,
-      reqMinor: number,
-      reqPatch: number,
-    ): boolean {
-      if (major > reqMajor) return true;
-      if (major < reqMajor) return false;
-      if (minor > reqMinor) return true;
-      if (minor < reqMinor) return false;
-      return patch >= reqPatch;
-    }
-
-    if (!isVersionGE(1, 21, 40)) {
-      throw new Error(
-        '[set error]: storage_weight_modifier: component requires format version 1.21.40 or higher',
-      );
-    }
+    requireFormatAtLeast(this.#opt.format, 'storage_weight_modifier:', '1.21.40', 'set');
 
     // Validate weight_in_storage_item (required)
     if (config.weight_in_storage_item === undefined) {
@@ -5088,59 +4520,33 @@ class ItemComponent {
 
   /**
    * setStorageWeightLimit
-   * @param config {{ storage_capacity_per_slot: number; }} Storage weight limit configuration
+   * @param config {{ max_weight_limit: number; }} Storage weight limit configuration
    */
-  public setStorageWeightLimit(config: { storage_capacity_per_slot: number }) {
-    // Validate format version for storage_weight_limit component
-    const formatParts = this.#opt.format.split('.');
-    const major = parseInt(formatParts[0]!);
-    const minor = parseInt(formatParts[1]!);
-    const patch = parseInt(formatParts[2] || '0');
+  public setStorageWeightLimit(config: { max_weight_limit: number }) {
+    requireFormatAtLeast(this.#opt.format, 'storage_weight_limit:', '1.21.110', 'set');
 
-    function isVersionGE(
-      reqMajor: number,
-      reqMinor: number,
-      reqPatch: number,
-    ): boolean {
-      if (major > reqMajor) return true;
-      if (major < reqMajor) return false;
-      if (minor > reqMinor) return true;
-      if (minor < reqMinor) return false;
-      return patch >= reqPatch;
-    }
-
-    if (!isVersionGE(1, 21, 40)) {
+    if (config.max_weight_limit === undefined) {
       throw new Error(
-        '[set error]: storage_weight_limit: component requires format version 1.21.40 or higher',
+        '[set error]: storage_weight_limit: max_weight_limit is required',
       );
     }
 
-    // Validate storage_capacity_per_slot (required)
-    if (config.storage_capacity_per_slot === undefined) {
+    if (typeof config.max_weight_limit !== 'number') {
       throw new Error(
-        '[set error]: storage_weight_limit: storage_capacity_per_slot is required',
+        '[set error]: storage_weight_limit: max_weight_limit must be a number',
       );
     }
 
-    if (typeof config.storage_capacity_per_slot !== 'number') {
+    if (config.max_weight_limit <= 0 || config.max_weight_limit > 64) {
       throw new Error(
-        '[set error]: storage_weight_limit: storage_capacity_per_slot must be a number',
-      );
-    }
-
-    if (
-      config.storage_capacity_per_slot < 0 ||
-      config.storage_capacity_per_slot > 64
-    ) {
-      throw new Error(
-        '[set error]: storage_weight_limit: storage_capacity_per_slot must be between 0 and 64',
+        '[set error]: storage_weight_limit: max_weight_limit must be between 1 and 64',
       );
     }
 
     (this.#opt.components as Record<string, unknown>)[
       'minecraft:storage_weight_limit'
     ] = {
-      storage_capacity_per_slot: config.storage_capacity_per_slot,
+      max_weight_limit: config.max_weight_limit,
     };
   }
 
@@ -5150,35 +4556,11 @@ class ItemComponent {
    */
   public setStorageItem(config: {
     max_slots?: number;
-    max_weight_limit?: number;
-    weight_in_storage_item?: number;
     allow_nested_storage_items?: boolean;
     allowed_items?: string[];
     banned_items?: string[];
   }) {
-    // Validate format version for storage_item component
-    const formatParts = this.#opt.format.split('.');
-    const major = parseInt(formatParts[0]!);
-    const minor = parseInt(formatParts[1]!);
-    const patch = parseInt(formatParts[2] || '0');
-
-    function isVersionGE(
-      reqMajor: number,
-      reqMinor: number,
-      reqPatch: number,
-    ): boolean {
-      if (major > reqMajor) return true;
-      if (major < reqMajor) return false;
-      if (minor > reqMinor) return true;
-      if (minor < reqMinor) return false;
-      return patch >= reqPatch;
-    }
-
-    if (!isVersionGE(1, 21, 40)) {
-      throw new Error(
-        '[set error]: storage_item: component requires format version 1.21.40 or higher',
-      );
-    }
+    requireFormatAtLeast(this.#opt.format, 'storage_item:', '1.21.40', 'set');
 
     if (!this.#opt.components.storage_item) {
       this.#opt.components.storage_item = {};
@@ -5192,31 +4574,6 @@ class ItemComponent {
         );
       }
       this.#opt.components.storage_item.max_slots = config.max_slots;
-    }
-
-    // Validate max_weight_limit if provided
-    if (typeof config.max_weight_limit === 'number') {
-      if (config.max_weight_limit < 0) {
-        throw new Error(
-          '[set error]: storage_item: max_weight_limit must be non-negative',
-        );
-      }
-      this.#opt.components.storage_item.max_weight_limit =
-        config.max_weight_limit;
-    }
-
-    // Validate weight_in_storage_item if provided
-    if (typeof config.weight_in_storage_item === 'number') {
-      if (
-        config.weight_in_storage_item < 0 ||
-        config.weight_in_storage_item > 64
-      ) {
-        throw new Error(
-          '[set error]: storage_item: weight_in_storage_item must be between 0 and 64',
-        );
-      }
-      this.#opt.components.storage_item.weight_in_storage_item =
-        config.weight_in_storage_item;
     }
 
     // Handle boolean properties
@@ -5545,7 +4902,10 @@ class ItemComponent {
     movement_modifier?: number;
     emit_vibrations?: boolean;
     start_sound?: string;
+    start_using?: 'always' | 'on_attack';
   }) {
+    requireFormatAtLeast(this.#opt.format, 'use_modifiers:', '1.20.50', 'set');
+
     // Validate use_duration (required, non-negative)
     if (typeof config.use_duration !== 'number' || config.use_duration < 0) {
       throw new Error(
@@ -5599,6 +4959,25 @@ class ItemComponent {
     } else if (config.start_sound === undefined) {
       delete this.#opt.components['minecraft:use_modifiers']!.start_sound;
     }
+
+    // Set start_using if provided (1.26.30+)
+    if (config.start_using !== undefined) {
+      if (config.start_using !== 'always' && config.start_using !== 'on_attack') {
+        throw new Error(
+          '[set error]: use_modifiers: start_using must be "always" or "on_attack"',
+        );
+      }
+      requireFormatAtLeast(
+        this.#opt.format,
+        'use_modifiers.start_using:',
+        '1.26.30',
+        'set',
+      );
+      this.#opt.components['minecraft:use_modifiers']!.start_using =
+        config.start_using;
+    } else {
+      delete this.#opt.components['minecraft:use_modifiers']!.start_using;
+    }
   }
 
   public setDamage(value: number) {
@@ -5609,15 +4988,12 @@ class ItemComponent {
     this.#opt.components.canDestroyInCreative = value;
   }
 
-  public setSwingSounds(
-    config:
-      | { sound: string }
-      | {
-          attack_critical_hit?: string;
-          attack_hit?: string;
-          attack_miss?: string;
-        },
-  ) {
+  public setSwingSounds(config: {
+    attack_critical_hit?: string;
+    attack_hit?: string;
+    attack_miss?: string;
+  }) {
+    requireFormatAtLeast(this.#opt.format, 'swing_sounds:', '1.21.130', 'set');
     (this.#opt.components as Record<string, unknown>)[
       'minecraft:swing_sounds'
     ] = config;
@@ -5628,13 +5004,23 @@ class ItemComponent {
       config;
   }
 
-  public setKnockbackResistance(config: {
-    value?: number;
-    protection?: number;
+  /**
+   * Set minecraft:render_offsets (deprecated but still documented).
+   * @param config {object} main_hand / off_hand transform data
+   */
+  public setRenderOffsets(config: {
+    main_hand?: Record<string, unknown>;
+    off_hand?: Record<string, unknown>;
   }) {
     (this.#opt.components as Record<string, unknown>)[
-      'minecraft:knockback_resistance'
-    ] = config;
+      'minecraft:render_offsets'
+    ] = { ...config };
+  }
+
+  public getRenderOffsets() {
+    return (this.#opt.components as Record<string, unknown>)[
+      'minecraft:render_offsets'
+    ];
   }
 
   public getIcon() {
@@ -5779,11 +5165,6 @@ class ItemComponent {
   public getWeapon() {
     return (this.#opt.components as Record<string, unknown>)[
       'minecraft:weapon'
-    ];
-  }
-  public getKnockbackResistance() {
-    return (this.#opt.components as Record<string, unknown>)[
-      'minecraft:knockback_resistance'
     ];
   }
 }

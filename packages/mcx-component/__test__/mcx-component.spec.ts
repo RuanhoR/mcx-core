@@ -50,19 +50,32 @@ describe('ItemComponent', () => {
     const item = new ItemComponent({
       id: 'test:item',
       format: '1.21.0',
-      group: 'itemGroup.name.test',
-      is_hidden_in_commands: true,
-      menu_category: { category: 'equipment', group: 'itemGroup.name.blaze' },
+      menu_category: {
+        category: 'equipment',
+        group: 'itemGroup.name.blaze',
+        is_hidden_in_commands: true,
+      },
       components: {},
     });
     const json = item.toJSON();
     const desc = json['minecraft:item'].description;
-    expect(desc.group).toBe('itemGroup.name.test');
-    expect(desc.is_hidden_in_commands).toBe(true);
     expect(desc.menu_category).toEqual({
       category: 'equipment',
       group: 'itemGroup.name.blaze',
+      is_hidden_in_commands: true,
     });
+    expect(desc).not.toHaveProperty('group');
+    expect(desc).not.toHaveProperty('is_hidden_in_commands');
+  });
+
+  it('should reject a menu_category outside the documented enum', () => {
+    const item = new ItemComponent({
+      id: 'test:item',
+      format: '1.21.0',
+      menu_category: { category: 'nope' as never },
+      components: {},
+    });
+    expect(() => item.toJSON()).toThrow('unknown category');
   });
 
   it('should get/set menu_category, group, and is_hidden_in_commands', () => {
@@ -85,11 +98,11 @@ describe('ItemComponent', () => {
     const desc = json['minecraft:item'].description;
     expect(desc.menu_category).toEqual({
       category: 'construction',
-      group: 'itemGroup.name.test',
-      is_hidden_in_commands: true,
+      group: 'itemGroup.name.another',
+      is_hidden_in_commands: false,
     });
-    expect(desc.group).toBe('itemGroup.name.another');
-    expect(desc.is_hidden_in_commands).toBe(false);
+    expect(desc).not.toHaveProperty('group');
+    expect(desc).not.toHaveProperty('is_hidden_in_commands');
   });
 
   it('should throw when group exceeds 256 characters', () => {

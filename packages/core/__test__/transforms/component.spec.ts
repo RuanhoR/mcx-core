@@ -38,7 +38,7 @@ function createMockOutput(behavior: string, resources: string) {
 
 async function compileComponentMCX(
   mcxSource: string,
-): Promise<{ code: string; behaviorDir: string }> {
+): Promise<{ code: string; behaviorDir: string; resourcesDir: string }> {
   const compileData = compileMCXFn(mcxSource);
   const cache = new Map();
   // keep temp dirs inside the package so upward module resolution finds
@@ -92,7 +92,7 @@ async function compileComponentMCX(
     {} as unknown as CompileOpt,
     output,
   );
-  return { code, behaviorDir };
+  return { code, behaviorDir, resourcesDir };
 }
 
 describe('Component Transform - blocks and recipes', () => {
@@ -145,11 +145,11 @@ describe('Component Transform - blocks and recipes', () => {
       json['minecraft:block'].components['minecraft:redstone_consumer'],
     ).toEqual({ min_power: 1 });
     expect(
-      json['minecraft:block'].components['test:controller'],
-    ).toEqual({});
-    expect(
       json['minecraft:block'].components['minecraft:custom_components'],
     ).toBeUndefined();
+    expect(
+      json['minecraft:block'].components['test:controller'],
+    ).toEqual({});
     expect(json['minecraft:block'].permutations).toHaveLength(1);
     expect(json['_meta']).toBeUndefined();
   });

@@ -163,8 +163,8 @@ importers:
   packages/mcx-component:
     dependencies:
       '@mbler/mcx-types':
-        specifier: 0.0.4-rc.8
-        version: 0.0.4-rc.8(@minecraft/server-ui@2.2.0-beta.1.26.30-preview.30(@minecraft/common@1.3.0)(@minecraft/server@2.9.0-beta.1.26.30-preview.21(@minecraft/common@1.3.0)(@minecraft/vanilla-data@1.26.33)))(@minecraft/server@2.9.0-beta.1.26.30-preview.21(@minecraft/common@1.3.0)(@minecraft/vanilla-data@1.26.33))
+        specifier: workspace:*
+        version: link:../types
 
   packages/types:
     dependencies:
@@ -616,13 +616,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
-
-  '@mbler/mcx-types@0.0.4-rc.8':
-    resolution: {integrity: sha512-SH1WYBn4bggN+B5yHYMvf42oIsHuNvDnGjhMY1TvSqbKfG3XjReROJb7vSuduXjSJyhn+rsFBSRjzU9/gOOrVw==}
-    engines: {node: '>=20'}
-    peerDependencies:
-      '@minecraft/server': ^2.6.0
-      '@minecraft/server-ui': ^2.0.0
 
   '@minecraft/common@1.3.0':
     resolution: {integrity: sha512-GLT8USFhvEyeTTFHZAgszbrnoT007hmXmK+aO4l+2A1up9/zwZ+4e8R8F0KcKrCWDjLEqkOJtPow0hQCcNJ++Q==}
@@ -2282,11 +2275,6 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
-
-  '@mbler/mcx-types@0.0.4-rc.8(@minecraft/server-ui@2.2.0-beta.1.26.30-preview.30(@minecraft/common@1.3.0)(@minecraft/server@2.9.0-beta.1.26.30-preview.21(@minecraft/common@1.3.0)(@minecraft/vanilla-data@1.26.33)))(@minecraft/server@2.9.0-beta.1.26.30-preview.21(@minecraft/common@1.3.0)(@minecraft/vanilla-data@1.26.33))':
-    dependencies:
-      '@minecraft/server': 2.9.0-beta.1.26.30-preview.21(@minecraft/common@1.3.0)(@minecraft/vanilla-data@1.26.33)
-      '@minecraft/server-ui': 2.2.0-beta.1.26.30-preview.30(@minecraft/common@1.3.0)(@minecraft/server@2.9.0-beta.1.26.30-preview.21(@minecraft/common@1.3.0)(@minecraft/vanilla-data@1.26.33))
 
   '@minecraft/common@1.3.0': {}
 

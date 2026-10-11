@@ -1,3 +1,5 @@
+import { requireIdentifier, resolveFormatVersion } from '../shared';
+
 interface FeatureReplaceRule {
   /** The block to be replaced */
   places_block?: string | string[];
@@ -37,7 +39,11 @@ class FeatureComponent {
   }
 
   getFormat(): string {
-    return this.#opt.format || '1.17.0';
+    return resolveFormatVersion({
+      component: 'feature',
+      format: this.#opt.format,
+      fallback: '1.17.0',
+    })!;
   }
 
   setFormat(value: string) {
@@ -85,10 +91,14 @@ class FeatureComponent {
     }
 
     const result: FeatureJson = {
-      format_version: this.#opt.format || '1.17.0',
+      format_version: resolveFormatVersion({
+        component: 'feature',
+        format: this.#opt.format,
+        fallback: '1.17.0',
+      })!,
       'minecraft:ore_feature': {
         description: {
-          identifier: this.#opt.identifier,
+          identifier: requireIdentifier(this.#opt.identifier, 'feature'),
         },
       },
     };

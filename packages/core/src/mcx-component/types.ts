@@ -63,7 +63,7 @@ export type FileEditOption =
 export interface BaseJson {
   format_version: string;
   _meta: {
-    type: 'item' | 'entity' | 'block';
+    type: 'item' | 'entity' | 'block' | 'clientEntity' | 'attachable';
     file_edit?: (
       | FileEditOption
       | {

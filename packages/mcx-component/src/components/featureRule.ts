@@ -1,3 +1,10 @@
+import {
+  applyFormatVersion,
+  requireField,
+  requireIdentifier,
+  resolveFormatVersion,
+} from '../shared';
+
 interface FeatureRuleBiomeFilter {
   all_of?: FeatureRuleBiomeFilter[];
   any_of?: FeatureRuleBiomeFilter[];
@@ -62,7 +69,11 @@ class FeatureRuleComponent {
   }
 
   getFormat(): string {
-    return this.#opt.format || '1.13.0';
+    return resolveFormatVersion({
+      component: 'feature rule',
+      format: this.#opt.format,
+      fallback: '1.13.0',
+    })!;
   }
 
   setFormat(value: string) {
@@ -127,16 +138,13 @@ class FeatureRuleComponent {
   }
 
   public toJSON(): Record<string, unknown> {
-    if (!this.#opt.identifier) {
-      throw new Error('[compile component]: feature_rule: identifier is required');
-    }
-    if (!this.#opt.places_feature) {
-      throw new Error('[compile component]: feature_rule: places_feature is required');
-    }
-
     const description: FeatureRuleDescription = {
-      identifier: this.#opt.identifier,
-      places_feature: this.#opt.places_feature,
+      identifier: requireIdentifier(this.#opt.identifier, 'feature_rule'),
+      places_feature: requireField(
+        this.#opt.places_feature,
+        'feature_rule',
+        'places_feature',
+      ),
     };
 
     const definition: Record<string, unknown> = {
@@ -151,10 +159,15 @@ class FeatureRuleComponent {
       definition.distribution = this.#distribution;
     }
 
-    return {
-      format_version: this.#opt.format || '1.13.0',
+    const result: Record<string, unknown> = {
       'minecraft:feature_rules': definition,
     };
+    applyFormatVersion(result, {
+      component: 'feature rule',
+      format: this.#opt.format,
+      fallback: '1.13.0',
+    });
+    return result;
   }
 }
 

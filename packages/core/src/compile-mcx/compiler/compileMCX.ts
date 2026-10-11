@@ -3,6 +3,7 @@ import {
   MCXstructureLoc,
   MCXstructureLocComponentType,
 } from '../types';
+import { normalizeComponentFileId } from '../fileName';
 import * as CompileData from './compileData';
 import { ParsedTagContentNode, ParsedTagNode } from '../../types';
 import McxAst, { MCXUtils } from '../../ast/tag';
@@ -215,7 +216,7 @@ class CompileMCX {
           subNode,
         );
       }
-      const id = _id.trim();
+      const id = normalizeComponentFileId(name, _id.trim());
       const content = subNode.content;
       if (content.length == 0) {
         throw makeError(

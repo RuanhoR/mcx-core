@@ -9,6 +9,9 @@ import type { FeatureRuleComponent as FeatureRuleComponentClass } from './compon
 import type { SpawnRuleComponent as SpawnRuleComponentClass } from './components/spawnRule';
 import type { LootTableComponent as LootTableComponentClass } from './components/lootTable';
 import type { TradeTableComponent as TradeTableComponentClass } from './components/tradeTable';
+import type { UIComponent as UIComponentClass } from './components/ui';
+import type { ClientEntityComponent as ClientEntityComponentClass } from './components/clientEntity';
+import type { AttachableComponent as AttachableComponentClass } from './components/attachable';
 import {
   ImageComponent,
   PNGImageComponent,
@@ -56,7 +59,58 @@ export const TradeTableComponent = createLazyClass<
   typeof TradeTableComponentClass
 >(() => require('./components/tradeTable').TradeTableComponent);
 
+/** resource pack `ui/*.json` */
+export const UIComponent = createLazyClass<typeof UIComponentClass>(
+  () => require('./components/ui').UIComponent,
+);
+/** resource pack `entities/*.client.json` */
+export const ClientEntityComponent = createLazyClass<
+  typeof ClientEntityComponentClass
+>(() => require('./components/clientEntity').ClientEntityComponent);
+/** resource pack `attachables/*.json` */
+export const AttachableComponent = createLazyClass<
+  typeof AttachableComponentClass
+>(() => require('./components/attachable').AttachableComponent);
+
 export { createLazyClass } from './lazy';
+
+export {
+  isFormatVersion,
+  parseFormatVersion,
+  compareFormatVersion,
+  isFormatAtLeast,
+  resolveFormatVersion,
+  applyFormatVersion,
+  requireFormatAtLeast,
+  requireField,
+  requirePresent,
+  requireIdentifier,
+} from './shared';
+export type { FormatVersionSpec } from './shared';
+
+export type {
+  UIComponentMode,
+  UIComponentOptions,
+  UINamedElement,
+  UIElement,
+  UIElementType,
+  UIBinding,
+  UIFactory,
+  UIFocusRule,
+  UIInputRule,
+  UISoundRule,
+  UIVec2,
+} from './components/ui';
+export type {
+  ClientEntityOptions,
+  ClientEntityScripts,
+} from './components/clientEntity';
+
+export type {
+  AttachableAnimateEntry,
+  AttachableOptions,
+  AttachableScripts,
+} from './components/attachable';
 
 export {
   ParticleTypeEnum,
@@ -65,6 +119,8 @@ export {
   EnchantableSlotEnum,
   AttackCriticalHitChoicesEnum,
   StartSoundChoicesEnum,
+  MenuCategoryArray,
+  MenuCategoryEnum,
   createFileEdit,
 } from './types';
 
@@ -76,6 +132,7 @@ export type {
   StartSoundChoices,
   Rarity,
   FoodEffect,
+  MenuCategoryName,
   ItemComponentOptions,
   BlockComponentOptions,
   EntityComponentOptions,

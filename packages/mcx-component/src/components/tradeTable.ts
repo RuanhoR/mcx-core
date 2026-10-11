@@ -5,12 +5,22 @@
  * https://learn.microsoft.com/en-us/minecraft/creator/documents/createtradetable
  */
 
+import { applyFormatVersion, requirePresent } from '../shared';
+
+export interface TradeItemQuantity {
+  min: number;
+  max: number;
+}
+
 export interface TradeItem {
   item: string;
-  quantity?: number | { min: number; max: number };
-  /** price multiplier for villager trades */
+  quantity?: number | TradeItemQuantity;
+  /** price multiplier for villager trades, defaults to 0.05 */
   price_multiplier?: number;
   functions?: Array<{ function: string } & Record<string, unknown>>;
+  /** alternative items that also satisfy the trade */
+  choice?: unknown[];
+  filters?: Record<string, unknown>;
 }
 
 export interface Trade {
@@ -27,11 +37,17 @@ export interface Trade {
 }
 
 export interface TradeGroup {
+  /** how many of `trades` are randomly offered, defaults to 1 */
+  num_to_select?: number;
   trades: Trade[];
 }
 
 export interface TradeTier {
-  groups: TradeGroup[];
+  /** xp needed before the tier unlocks, defaults to 0 */
+  total_exp_required?: number;
+  groups?: TradeGroup[];
+  /** trades declared directly on the tier, an alternative to `groups` */
+  trades?: Trade[];
 }
 
 export interface TradeTableComponentOptions {
@@ -75,15 +91,14 @@ class TradeTableComponent {
     if (!Array.isArray(tiers) || tiers.length === 0) {
       throw new Error('[mcx component]: trade table needs at least one tier');
     }
-    const result: Record<string, unknown> = { tiers };
-    const format = this.#opt.format;
-    if (typeof format === 'string' && /^\d+\.\d+(\.\d+)?$/.test(format)) {
-      result.format_version = format;
-    } else if (format !== undefined) {
-      throw new Error(
-        `[compile component]: invalid trade table format: ${String(format)}`
-      );
+    for (const [index, tier] of tiers.entries()) {
+      requirePresent(tier?.groups ?? tier?.trades, 'trade table', `tiers[${index}]`);
     }
+    const result: Record<string, unknown> = { tiers };
+    applyFormatVersion(result, {
+      component: 'trade table',
+      format: this.#opt.format,
+    });
     return result;
   }
 }

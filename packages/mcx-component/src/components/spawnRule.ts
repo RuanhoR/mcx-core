@@ -1,3 +1,9 @@
+import {
+  applyFormatVersion,
+  requireIdentifier,
+  resolveFormatVersion,
+} from '../shared';
+
 interface SpawnBiomeFilter {
   all_of?: SpawnBiomeFilter[];
   any_of?: SpawnBiomeFilter[];
@@ -108,7 +114,11 @@ class SpawnRuleComponent {
   }
 
   getFormat(): string {
-    return this.#opt.format || '1.21.0';
+    return resolveFormatVersion({
+      component: 'spawn rule',
+      format: this.#opt.format,
+      fallback: '1.21.0',
+    })!;
   }
 
   setFormat(value: string) {
@@ -226,25 +236,26 @@ class SpawnRuleComponent {
   }
 
   public toJSON(): Record<string, unknown> {
-    if (!this.#opt.identifier) {
-      throw new Error('[compile component]: spawn_rule: identifier is required');
-    }
-
     const description: Record<string, unknown> = {
-      identifier: this.#opt.identifier,
+      identifier: requireIdentifier(this.#opt.identifier, 'spawn_rule'),
     };
 
     if (typeof this.#opt.population_control === 'string') {
       description.population_control = this.#opt.population_control;
     }
 
-    return {
-      format_version: this.#opt.format || '1.21.0',
+    const result: Record<string, unknown> = {
       'minecraft:spawn_rules': {
         description,
         conditions: this.#conditions,
       },
     };
+    applyFormatVersion(result, {
+      component: 'spawn rule',
+      format: this.#opt.format,
+      fallback: '1.21.0',
+    });
+    return result;
   }
 }
 

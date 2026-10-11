@@ -1,3 +1,10 @@
+import {
+  applyFormatVersion,
+  requireField,
+  requireIdentifier,
+  requirePresent,
+} from '../shared';
+
 type RecipeType =
   | 'shaped'
   | 'shapeless'
@@ -7,32 +14,61 @@ type RecipeType =
   | 'brewing_container'
   | 'brewing_mix';
 
+/**
+ * An item reference accepted anywhere a recipe takes an ingredient.
+ * `item` and `tag` are mutually exclusive; `data` is deprecated from 1.20.0 on
+ * and only works on older format versions.
+ */
 interface RecipeItem {
-  item: string;
+  item?: string;
+  tag?: string;
   data?: number;
   count?: number;
 }
+
+/** A required item reference — the docs mark `result` as mandatory. */
+type RecipeResult = RecipeItem & { item: string };
+
+/** `template` / `base` / `addition` accept a bare id, an item or an item tag. */
+type RecipeItemRef =
+  | string
+  | ({ item: string } & RecipeItem)
+  | ({ tag: string } & RecipeItem);
+
+/** Recipe book unlock condition; both fields are documented. */
+interface RecipeUnlock {
+  item: string;
+  context?: 'AlwaysUnlocked' | 'PlayerInWater' | 'PlayerHasManyItems' | 'None';
+}
+
+/** `result` may be a single item or an array of them. */
+type RecipeResultField = RecipeResult | RecipeResult[];
 
 interface RecipeComponentOptions {
   format: string;
   id: string;
   type: RecipeType;
   tags?: string[];
+  /** recipe book group identifier (shaped / shapeless only) */
+  group?: string;
   priority?: number;
   assume_symmetry?: boolean;
   pattern?: string[];
   key?: Record<string, RecipeItem>;
   ingredients?: RecipeItem[];
-  result?: RecipeItem | string;
-  input?: RecipeItem | string;
+  result?: RecipeResultField | string;
+  input?: RecipeItemRef;
   output?: string;
-  template?: string;
-  base?: string;
-  addition?: string;
+  template?: RecipeItemRef;
+  base?: RecipeItemRef;
+  addition?: RecipeItemRef;
   reagent?: string;
   /** Items that unlock this recipe, e.g. [{ item: "minecraft:iron_ingot" }] */
-  unlock?: RecipeItem[];
+  unlock?: RecipeUnlock[];
 }
+
+const isSmithing = (type: RecipeType): boolean =>
+  type === 'smithing_transform' || type === 'smithing_trim';
 
 class RecipeComponent {
   #opt: RecipeComponentOptions;
@@ -68,6 +104,13 @@ class RecipeComponent {
     this.#opt.tags = value;
   }
 
+  getGroup(): string | undefined {
+    return this.#opt.group;
+  }
+  setGroup(value: string) {
+    this.#opt.group = value;
+  }
+
   getPriority(): number | undefined {
     return this.#opt.priority;
   }
@@ -100,20 +143,25 @@ class RecipeComponent {
     return this.#opt.ingredients;
   }
   setIngredients(value: RecipeItem[]) {
+    if (!Array.isArray(value)) {
+      throw new Error(
+        '[mcx component]: recipe ingredients must be an array of item objects',
+      );
+    }
     this.#opt.ingredients = value;
   }
 
-  getResult(): RecipeItem | string | undefined {
+  getResult(): RecipeResultField | string | undefined {
     return this.#opt.result;
   }
-  setResult(value: RecipeItem | string) {
+  setResult(value: RecipeResultField | string) {
     this.#opt.result = value;
   }
 
-  getInput(): RecipeItem | string | undefined {
+  getInput(): RecipeItemRef | undefined {
     return this.#opt.input;
   }
-  setInput(value: RecipeItem | string) {
+  setInput(value: RecipeItemRef) {
     this.#opt.input = value;
   }
 
@@ -124,24 +172,24 @@ class RecipeComponent {
     this.#opt.output = value;
   }
 
-  getTemplate(): string | undefined {
+  getTemplate(): RecipeItemRef | undefined {
     return this.#opt.template;
   }
-  setTemplate(value: string) {
+  setTemplate(value: RecipeItemRef) {
     this.#opt.template = value;
   }
 
-  getBase(): string | undefined {
+  getBase(): RecipeItemRef | undefined {
     return this.#opt.base;
   }
-  setBase(value: string) {
+  setBase(value: RecipeItemRef) {
     this.#opt.base = value;
   }
 
-  getAddition(): string | undefined {
+  getAddition(): RecipeItemRef | undefined {
     return this.#opt.addition;
   }
-  setAddition(value: string) {
+  setAddition(value: RecipeItemRef) {
     this.#opt.addition = value;
   }
 
@@ -152,26 +200,48 @@ class RecipeComponent {
     this.#opt.reagent = value;
   }
 
-  getUnlock(): RecipeItem[] | undefined {
+  getUnlock(): RecipeUnlock[] | undefined {
     return this.#opt.unlock;
   }
-  setUnlock(value: RecipeItem[]) {
+  setUnlock(value: RecipeUnlock[]) {
     if (!Array.isArray(value)) {
-      throw new Error('[mcx component]: unlock must be an array of { item: string } objects');
+      throw new Error(
+        '[mcx component]: unlock must be an array of { item: string } objects',
+      );
     }
     this.#opt.unlock = value;
   }
 
-  private makeShaped() {
+  /** shared `description` / `tags` / `group` preamble. */
+  private base(defaultTags: string[]) {
     const data: Record<string, unknown> = {
-      description: { identifier: this.#opt.id },
-      tags: this.#opt.tags || ['crafting_table'],
+      description: {
+        identifier: requireIdentifier(this.#opt.id, 'recipe'),
+      },
+      tags: this.#opt.tags?.length ? this.#opt.tags : defaultTags,
     };
-    if (this.#opt.assume_symmetry !== undefined) data.assume_symmetry = this.#opt.assume_symmetry;
+    if (this.#opt.group !== undefined) data.group = this.#opt.group;
+    return data;
+  }
+
+  /** every recipe that produces something must declare `result`. */
+  private result() {
+    return requirePresent(this.#opt.result, 'recipe', 'result');
+  }
+
+  /** furnace / brewing recipes produce a single item id in `output`. */
+  private output() {
+    return requireField(this.#opt.output, 'recipe', 'output');
+  }
+
+  private makeShaped() {
+    const data = this.base(['crafting_table']);
+    if (this.#opt.assume_symmetry !== undefined)
+      data.assume_symmetry = this.#opt.assume_symmetry;
     if (this.#opt.pattern) data.pattern = this.#opt.pattern;
     if (this.#opt.key) data.key = this.#opt.key;
     if (this.#opt.priority !== undefined) data.priority = this.#opt.priority;
-    if (this.#opt.result) data.result = this.#opt.result;
+    data.result = this.result();
     if (this.#opt.unlock) data.unlock = this.#opt.unlock;
     return {
       'minecraft:recipe_shaped': data,
@@ -179,13 +249,10 @@ class RecipeComponent {
   }
 
   private makeShapeless() {
-    const data: Record<string, unknown> = {
-      description: { identifier: this.#opt.id },
-      tags: this.#opt.tags || ['crafting_table'],
-    };
+    const data = this.base(['crafting_table']);
     if (this.#opt.ingredients) data.ingredients = this.#opt.ingredients;
     if (this.#opt.priority !== undefined) data.priority = this.#opt.priority;
-    if (this.#opt.result) data.result = this.#opt.result;
+    data.result = this.result();
     if (this.#opt.unlock) data.unlock = this.#opt.unlock;
     return {
       'minecraft:recipe_shapeless': data,
@@ -193,65 +260,50 @@ class RecipeComponent {
   }
 
   private makeFurnace() {
-    const data: Record<string, unknown> = {
-      description: { identifier: this.#opt.id },
-      tags: this.#opt.tags || ['furnace'],
-    };
-    if (this.#opt.input) data.input = this.#opt.input;
-    if (this.#opt.output) data.output = this.#opt.output;
+    const data = this.base(['furnace']);
+    data.input = requirePresent(this.#opt.input, 'recipe', 'input');
+    data.output = this.output();
     return {
       'minecraft:recipe_furnace': data,
     };
   }
 
   private makeSmithingTransform() {
-    const data: Record<string, unknown> = {
-      description: { identifier: this.#opt.id },
-      tags: this.#opt.tags || ['smithing_table'],
-    };
-    if (this.#opt.template) data.template = this.#opt.template;
-    if (this.#opt.base) data.base = this.#opt.base;
-    if (this.#opt.addition) data.addition = this.#opt.addition;
-    if (this.#opt.result) data.result = this.#opt.result;
+    const data = this.base(['smithing_table']);
+    data.template = requirePresent(this.#opt.template, 'recipe', 'template');
+    data.base = requirePresent(this.#opt.base, 'recipe', 'base');
+    data.addition = requirePresent(this.#opt.addition, 'recipe', 'addition');
+    data.result = this.result();
     return {
       'minecraft:recipe_smithing_transform': data,
     };
   }
 
   private makeSmithingTrim() {
-    const data: Record<string, unknown> = {
-      description: { identifier: this.#opt.id },
-      tags: this.#opt.tags || ['smithing_table'],
-    };
-    if (this.#opt.template) data.template = this.#opt.template;
-    if (this.#opt.base) data.base = this.#opt.base;
-    if (this.#opt.addition) data.addition = this.#opt.addition;
+    const data = this.base(['smithing_table']);
+    data.template = requirePresent(this.#opt.template, 'recipe', 'template');
+    data.base = requirePresent(this.#opt.base, 'recipe', 'base');
+    data.addition = requirePresent(this.#opt.addition, 'recipe', 'addition');
     return {
       'minecraft:recipe_smithing_trim': data,
     };
   }
 
   private makeBrewingContainer() {
-    const data: Record<string, unknown> = {
-      description: { identifier: this.#opt.id },
-      tags: this.#opt.tags || ['brewing_stand'],
-    };
-    if (this.#opt.input) data.input = this.#opt.input;
-    if (this.#opt.reagent) data.reagent = this.#opt.reagent;
-    if (this.#opt.output) data.output = this.#opt.output;
+    const data = this.base(['brewing_stand']);
+    data.input = requireField(this.#opt.input, 'recipe', 'input');
+    data.reagent = requireField(this.#opt.reagent, 'recipe', 'reagent');
+    data.output = this.output();
     return {
       'minecraft:recipe_brewing_container': data,
     };
   }
 
   private makeBrewingMix() {
-    const data: Record<string, unknown> = {
-      description: { identifier: this.#opt.id },
-      tags: this.#opt.tags || ['brewing_stand'],
-    };
-    if (this.#opt.input) data.input = this.#opt.input;
-    if (this.#opt.reagent) data.reagent = this.#opt.reagent;
-    if (this.#opt.output) data.output = this.#opt.output;
+    const data = this.base(['brewing_stand']);
+    data.input = requireField(this.#opt.input, 'recipe', 'input');
+    data.reagent = requireField(this.#opt.reagent, 'recipe', 'reagent');
+    data.output = this.output();
     return {
       'minecraft:recipe_brewing_mix': data,
     };
@@ -290,24 +342,27 @@ class RecipeComponent {
         );
     }
 
-    let formatVersion = '1.12';
-    if (
-      this.#opt.format &&
-      typeof this.#opt.format == 'string' &&
-      /^\d+\.\d+\.\d+$/.test(this.#opt.format)
-    ) {
-      formatVersion = this.#opt.format;
-    } else if (type === 'smithing_transform' || type === 'smithing_trim') {
-      formatVersion = '1.17';
-    } else if (typeof this.#opt.format == 'string') {
-      throw new Error('[compile component]: no format');
-    }
-
-    return {
-      format_version: formatVersion,
+    const result: { format_version: string } & Record<string, unknown> = {
+      format_version: '',
       ...recipeData,
     };
+    applyFormatVersion(result, {
+      component: 'recipe',
+      format: this.#opt.format,
+      fallback: isSmithing(type) ? '1.17' : undefined,
+      required: true,
+    });
+    return result;
   }
 }
 
 export { RecipeComponent };
+export type {
+  RecipeComponentOptions,
+  RecipeItem,
+  RecipeItemRef,
+  RecipeResult,
+  RecipeResultField,
+  RecipeType,
+  RecipeUnlock,
+};

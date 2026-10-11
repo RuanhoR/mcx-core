@@ -1,5 +1,37 @@
-import { PNGImageComponent } from '../lib';
-import * as t from '../types';
+import { PNGImageComponent } from '../../lib';
+import { requireIdentifier, resolveFormatVersion } from '../../shared';
+import { MenuCategoryEnum } from '../../types/MenuCategory';
+import * as t from '../../types';
+import {
+  FACES,
+  FRICTION_RANGE,
+  INSTRUMENT_SOUNDS,
+  LIGHT_RANGE,
+  MULTI_BLOCK_PARTS_RANGE,
+  PRECIPITATION_BEHAVIORS,
+  SLOT_COUNT_RANGE,
+  TINT_METHODS,
+  Y_ROTATION_OFFSETS,
+} from './constants';
+import {
+  assertBlockStateValues,
+  assertEnum,
+  assertFaces,
+  assertInstrumentSound,
+  assertLiquidDetection,
+  assertMaterialInstance,
+  assertMaterialInstanceCount,
+  assertParticleCount,
+  assertRange,
+  assertRedstonePower,
+  assertTransformation,
+  assertTraits,
+  assertVec3,
+  normalizeBlockSound,
+  normalizeVec3,
+  normalizeChestObstruction,
+  normalizeMapColor,
+} from './validators';
 
 class BlockComponent {
   #opt: t.BlockComponentOptions;
@@ -82,38 +114,30 @@ class BlockComponent {
     value:
       | string
       | {
-          category?: string;
+          category?: 'construction' | 'nature' | 'equipment' | 'items' | 'none';
           group?: string;
           is_hidden_in_commands?: boolean;
         },
   ) {
     if (typeof value === 'string') {
-      this.#opt.menu_category = { category: value };
+      if (!MenuCategoryEnum.includes(value as never)) {
+        throw new Error(
+          `[set error]: menu_category: unknown category "${value}", valid: ${MenuCategoryEnum.join(', ')}`,
+        );
+      }
+      this.#opt.menu_category = {
+        category: value as (typeof MenuCategoryEnum)[number],
+      };
     } else {
       this.#opt.menu_category = value;
     }
   }
 
-  getTraits():
-    | Record<
-        string,
-        {
-          enabled_states?: string[];
-          [key: string]: unknown;
-        }
-      >
-    | undefined {
+  getTraits(): t.BlockTraits | undefined {
     return this.#opt.traits;
   }
-  setTraits(
-    value: Record<
-      string,
-      {
-        enabled_states?: string[];
-        [key: string]: unknown;
-      }
-    >,
-  ) {
+  setTraits(value: t.BlockTraits) {
+    assertTraits(value as never);
     this.#opt.traits = value;
   }
   addTrait(
@@ -121,7 +145,7 @@ class BlockComponent {
     config: { enabled_states?: string[]; [key: string]: unknown },
   ): this {
     if (!this.#opt.traits) this.#opt.traits = {};
-    this.#opt.traits[name] = config;
+    this.setTraits({ ...this.#opt.traits, [name]: config });
     return this;
   }
 
@@ -167,6 +191,7 @@ class BlockComponent {
     return this.#opt.components?.light_emission;
   }
   setLightEmission(value: number) {
+    assertRange(value, 'light_emission', LIGHT_RANGE);
     if (!this.#opt.components) this.#opt.components = {};
     this.#opt.components.light_emission = value;
   }
@@ -174,6 +199,7 @@ class BlockComponent {
     return this.#opt.components?.light_dampening;
   }
   setLightDampening(value: number) {
+    assertRange(value, 'light_dampening', LIGHT_RANGE);
     if (!this.#opt.components) this.#opt.components = {};
     this.#opt.components.light_dampening = value;
   }
@@ -181,6 +207,11 @@ class BlockComponent {
     return this.#opt.components?.friction;
   }
   setFriction(value: number) {
+    if (typeof value !== 'number' || value < FRICTION_RANGE.min || value > FRICTION_RANGE.max) {
+      throw new Error(
+        `[set error]: friction: must be a number between ${FRICTION_RANGE.min}.0 and ${FRICTION_RANGE.max}.9`,
+      );
+    }
     if (!this.#opt.components) this.#opt.components = {};
     this.#opt.components.friction = value;
   }
@@ -260,10 +291,32 @@ class BlockComponent {
   setCollisionBox(
     value:
       | boolean
-      | { origin?: [number, number, number]; size?: [number, number, number] },
+      | {
+          origin?:
+            | [number, number, number]
+            | { x: number; y: number; z: number };
+          size?: [number, number, number] | { x: number; y: number; z: number };
+        }
+      | Array<{
+          origin?:
+            | [number, number, number]
+            | { x: number; y: number; z: number };
+          size?: [number, number, number] | { x: number; y: number; z: number };
+        }>,
   ) {
+    if (typeof value !== 'boolean') {
+      const boxes = Array.isArray(value) ? value : [value];
+      for (const box of boxes) {
+        if (box.origin !== undefined) {
+          normalizeVec3(box.origin, 'collision_box.origin');
+        }
+        if (box.size !== undefined) {
+          normalizeVec3(box.size, 'collision_box.size');
+        }
+      }
+    }
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.collision_box = value;
+    this.#opt.components.collision_box = value as never;
   }
   getSelectionBox():
     | boolean
@@ -274,10 +327,23 @@ class BlockComponent {
   setSelectionBox(
     value:
       | boolean
-      | { origin?: [number, number, number]; size?: [number, number, number] },
+      | {
+          origin?:
+            | [number, number, number]
+            | { x: number; y: number; z: number };
+          size?: [number, number, number] | { x: number; y: number; z: number };
+        },
   ) {
+    if (typeof value !== 'boolean') {
+      if (value.origin !== undefined) {
+        normalizeVec3(value.origin, 'selection_box.origin');
+      }
+      if (value.size !== undefined) {
+        normalizeVec3(value.size, 'selection_box.size');
+      }
+    }
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.selection_box = value;
+    this.#opt.components.selection_box = value as never;
   }
   getGeometry():
     | string
@@ -350,6 +416,7 @@ class BlockComponent {
             | 'alpha_test_to_opaque'
             | 'alpha_test_single_sided_to_opaque';
           ambient_occlusion?: number;
+          alpha_masked_tint?: boolean;
           face_dimming?: boolean | string;
           isotropic?: boolean;
           tint_method?: string | boolean;
@@ -373,7 +440,9 @@ class BlockComponent {
       } else {
         resolved[key] = val;
       }
+      assertMaterialInstance(key, resolved[key]);
     }
+    assertMaterialInstanceCount(Object.keys(value).length);
     this.#opt.components.material_instances = resolved as Record<
       string,
       | string
@@ -395,10 +464,20 @@ class BlockComponent {
         }
     >;
   }
-  getMapColor(): string | { color: string; tint_method?: string } | undefined {
+  getMapColor():
+    | string
+    | [number, number, number]
+    | { color: string | [number, number, number]; tint_method?: string }
+    | undefined {
     return this.#opt.components?.map_color;
   }
-  setMapColor(value: string | { color: string; tint_method?: string }) {
+  setMapColor(
+    value:
+      | string
+      | [number, number, number]
+      | { color: string | [number, number, number]; tint_method?: string },
+  ) {
+    normalizeMapColor(value);
     if (!this.#opt.components) this.#opt.components = {};
     this.#opt.components.map_color = value;
   }
@@ -432,15 +511,50 @@ class BlockComponent {
     rotation?:
       | [number, number, number]
       | { x?: number; y?: number; z?: number };
-    rotation_pivot?: [number, number, number];
+    rotation_pivot?:
+      | [number, number, number]
+      | { x?: number; y?: number; z?: number };
     scale?: [number, number, number] | { x?: number; y?: number; z?: number };
-    scale_pivot?: [number, number, number];
+    scale_pivot?:
+      | [number, number, number]
+      | { x?: number; y?: number; z?: number };
     translation?:
       | [number, number, number]
       | { x?: number; y?: number; z?: number };
   }) {
+    for (const key of [
+      'rotation',
+      'rotation_pivot',
+      'scale',
+      'scale_pivot',
+      'translation',
+    ] as const) {
+      const vec = value[key];
+      if (vec === undefined) continue;
+      if (Array.isArray(vec)) {
+        if (vec.length !== 3 || !vec.every(n => typeof n === 'number')) {
+          throw new Error(
+            `[set error]: transformation.${key}: must be [x, y, z] of numbers`,
+          );
+        }
+        continue;
+      }
+      if (typeof vec !== 'object' || vec === null || Array.isArray(vec)) {
+        throw new Error(
+          `[set error]: transformation.${key}: must be [x, y, z] or { x, y, z }`,
+        );
+      }
+      for (const axis of ['x', 'y', 'z'] as const) {
+        const component = vec[axis];
+        if (component !== undefined && typeof component !== 'number') {
+          throw new Error(
+            `[set error]: transformation.${key}.${axis}: must be a number`,
+          );
+        }
+      }
+    }
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.transformation = value;
+    this.#opt.components.transformation = value as never;
   }
   getTick():
     | { interval_range: [number, number]; looping?: boolean }
@@ -536,9 +650,14 @@ class BlockComponent {
   setRedstoneConsumer(value: {
     min_power?: number;
     propagates_power?: boolean;
+    /** deprecated pre-1.26.0 spelling, still accepted by the game */
+    propogates_power?: boolean;
   }) {
+    if (value.min_power !== undefined) {
+      assertRedstonePower(value.min_power, 'redstone_consumer.min_power');
+    }
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.redstone_consumer = value;
+    this.#opt.components.redstone_consumer = value as never;
   }
   getRedstoneProducer():
     | {
@@ -556,6 +675,10 @@ class BlockComponent {
     strongly_powered_face?: string;
     transform_relative?: boolean;
   }) {
+    if (value.power !== undefined) {
+      assertRedstonePower(value.power, 'redstone_producer.power');
+    }
+    assertFaces(value.connected_faces, 'redstone_producer.connected_faces');
     if (!this.#opt.components) this.#opt.components = {};
     this.#opt.components.redstone_producer = value;
   }
@@ -578,6 +701,7 @@ class BlockComponent {
     accepts_connections_from?: 'all' | 'none' | 'only_fences';
     enabled_directions?: string[];
   }) {
+    assertFaces(value.enabled_directions, 'connection_rule.enabled_directions');
     if (!this.#opt.components) this.#opt.components = {};
     this.#opt.components.connection_rule = value;
   }
@@ -613,8 +737,9 @@ class BlockComponent {
       use_liquid_clipping?: boolean;
     }>;
   }) {
+    assertLiquidDetection(value);
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.liquid_detection = value;
+    this.#opt.components.liquid_detection = value as never;
   }
   getPrecipitationInteractions():
     | {
@@ -622,7 +747,8 @@ class BlockComponent {
           | 'none'
           | 'obstruct_rain'
           | 'obstruct_rain_accumulate_snow'
-          | 'snowlogging';
+          | 'snowlogging'
+          | 'snow_log_no_collision';
       }
     | undefined {
     return this.#opt.components?.precipitation_interactions;
@@ -632,10 +758,18 @@ class BlockComponent {
       | 'none'
       | 'obstruct_rain'
       | 'obstruct_rain_accumulate_snow'
-      | 'snowlogging';
+      | 'snowlogging'
+      | 'snow_log_no_collision';
   }) {
+    if (value.precipitation_behavior !== undefined) {
+      assertEnum(
+        value.precipitation_behavior,
+        PRECIPITATION_BEHAVIORS,
+        'precipitation_interactions.precipitation_behavior',
+      );
+    }
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.precipitation_interactions = value;
+    this.#opt.components.precipitation_interactions = value as never;
   }
   getEntityFallOn():
     | { min_fall_distance?: number; minimum_fall_distance?: number }
@@ -649,47 +783,78 @@ class BlockComponent {
     if (!this.#opt.components) this.#opt.components = {};
     this.#opt.components.entity_fall_on = value;
   }
-  getReplaceable(): Record<string, never> | undefined {
+  getReplaceable(): Record<string, unknown> | undefined {
     return this.#opt.components?.replaceable;
   }
-  setReplaceable() {
+  setReplaceable(value: Record<string, unknown> = {}) {
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.replaceable = {};
+    this.#opt.components.replaceable = value;
   }
-  getFlowerPottable(): Record<string, never> | undefined {
+  getFlowerPottable(): Record<string, unknown> | undefined {
     return this.#opt.components?.flower_pottable;
   }
-  setFlowerPottable() {
+  setFlowerPottable(value: Record<string, unknown> = {}) {
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.flower_pottable = {};
+    this.#opt.components.flower_pottable = value;
   }
-  getChestObstruction(): Record<string, never> | undefined {
+  getChestObstruction(): { obstruction_rule?: string } | undefined {
     return this.#opt.components?.chest_obstruction;
   }
-  setChestObstruction() {
+  setChestObstruction(value: { obstruction_rule?: string } = {}) {
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.chest_obstruction = {};
+    this.#opt.components.chest_obstruction = value as never;
   }
-  getIcon(): string | undefined {
-    return this.#opt.components?.icon;
-  }
-  setIcon(value: string) {
-    if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.icon = value;
-  }
-  getBreathability(): 'solid' | 'air' | undefined {
+  getBreathability(): string | undefined {
     return this.#opt.components?.breathability;
   }
-  setBreathability(value: 'solid' | 'air') {
+  setBreathability(value: 'solid' | 'air' | (string & {})) {
     if (!this.#opt.components) this.#opt.components = {};
     this.#opt.components.breathability = value;
   }
-  getBlockEntity(): { dynamic_properties?: boolean } | undefined {
+  getBlockEntity():
+    | { dynamic_properties?: boolean; container?: { slot_count?: number } }
+    | undefined {
     return this.#opt.components?.block_entity;
   }
-  setBlockEntity(value: { dynamic_properties?: boolean }) {
+  setBlockEntity(value: {
+    dynamic_properties?: boolean;
+    container?: { slot_count: number };
+  }) {
+    if (value.container !== undefined) {
+      assertRange(
+        value.container.slot_count,
+        'block_entity: container.slot_count',
+        SLOT_COUNT_RANGE,
+      );
+    }
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.block_entity = value;
+    this.#opt.components.block_entity = value as never;
+  }
+  getInstrumentSound(): { up?: string; down?: string } | undefined {
+    return this.#opt.components?.instrument_sound;
+  }
+  setInstrumentSound(value: { up?: string; down?: string }) {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+      throw new TypeError(
+        '[set error]: instrument_sound: must be an object configuration',
+      );
+    }
+    if (value.up === undefined && value.down === undefined) {
+      throw new Error(
+        '[set error]: instrument_sound: at least one of up or down is required',
+      );
+    }
+    for (const face of ['up', 'down'] as const) {
+      const sound = value[face];
+      if (sound === undefined) continue;
+      if (!INSTRUMENT_SOUNDS.includes(sound as never)) {
+        throw new Error(
+          `[set error]: instrument_sound: ${face} must be one of ${INSTRUMENT_SOUNDS.join(', ')}`,
+        );
+      }
+    }
+    if (!this.#opt.components) this.#opt.components = {};
+    this.#opt.components.instrument_sound = value as never;
   }
   getItemVisual():
     | {
@@ -773,26 +938,39 @@ class BlockComponent {
     return this.#opt.components?.destruction_particles;
   }
   setDestructionParticles(value: {
-    texture: string;
+    texture?: string;
     particle_count?: number;
     tint_method?: string;
   }) {
+    if (value.particle_count !== undefined) {
+      assertParticleCount(value.particle_count);
+    }
+    if (value.tint_method !== undefined) {
+      assertEnum(value.tint_method, TINT_METHODS, 'destruction_particles.tint_method');
+    }
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.destruction_particles = value;
+    this.#opt.components.destruction_particles = value as never;
   }
-  getSound(): string | undefined {
+  getSound(): string | { sound: string } | undefined {
     return this.#opt.components?.sound;
   }
-  setSound(value: string) {
+  setSound(value: string | { sound: string }) {
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.sound = value;
+    this.#opt.components.sound = value as never;
   }
-  getLeashable(): { offset?: [number, number, number] } | undefined {
+  getLeashable():
+    | { offset?: [number, number, number] | { x: number; y: number; z: number } }
+    | undefined {
     return this.#opt.components?.leashable;
   }
-  setLeashable(value: { offset?: [number, number, number] }) {
+  setLeashable(value: {
+    offset?: [number, number, number] | { x: number; y: number; z: number };
+  }) {
+    if (value.offset !== undefined) {
+      normalizeVec3(value.offset, 'leashable.offset');
+    }
     if (!this.#opt.components) this.#opt.components = {};
-    this.#opt.components.leashable = value;
+    this.#opt.components.leashable = value as never;
   }
   getEmbeddedVisual():
     | {
@@ -873,6 +1051,7 @@ class BlockComponent {
       'minecraft:block': {
         description: {
           identifier: string;
+          states?: Record<string, unknown>;
           menu_category?: {
             category?: string;
             group?: string;
@@ -956,7 +1135,8 @@ class BlockComponent {
           >;
           'minecraft:map_color':
             | string
-            | { color: string; tint_method?: string };
+            | [number, number, number]
+            | { color: string | [number, number, number]; tint_method?: string };
           'minecraft:crafting_table': {
             crafting_tags?: string[];
             table_name?: string;
@@ -1052,11 +1232,26 @@ class BlockComponent {
             min_fall_distance?: number;
             minimum_fall_distance?: number;
           };
-          'minecraft:replaceable': Record<string, never>;
-          'minecraft:flower_pottable': Record<string, never>;
-          'minecraft:chest_obstruction': Record<string, never>;
-          'minecraft:icon': { textures: string };
-          'minecraft:breathability': 'solid' | 'air';
+          'minecraft:replaceable': Record<string, unknown>;
+          'minecraft:flower_pottable': Record<string, unknown>;
+          'minecraft:chest_obstruction': { obstruction_rule?: string };
+          'minecraft:instrument_sound': { up?: string; down?: string };
+          'minecraft:block_light_absorption': number;
+          'minecraft:block_light_emission': number;
+          'minecraft:destroy_time': number;
+          'minecraft:explosion_resistance': number;
+          'bone_visibility': Record<string, boolean>;
+          'minecraft:queued_ticking': Record<string, unknown>;
+          'minecraft:random_ticking': Record<string, unknown>;
+          'minecraft:unit_cube': Record<string, unknown>;
+          'minecraft:on_fall_on': Record<string, unknown>;
+          'minecraft:on_interact': Record<string, unknown>;
+          'minecraft:on_placed': Record<string, unknown>;
+          'minecraft:on_player_destroyed': Record<string, unknown>;
+          'minecraft:on_player_placing': Record<string, unknown>;
+          'minecraft:on_step_off': Record<string, unknown>;
+          'minecraft:on_step_on': Record<string, unknown>;
+          'minecraft:breathability': string;
           'minecraft:block_entity': { dynamic_properties?: boolean };
           'minecraft:item_visual': {
             geometry: string;
@@ -1086,8 +1281,10 @@ class BlockComponent {
             particle_count?: number;
             tint_method?: string;
           };
-          'minecraft:sound': string;
-          'minecraft:leashable': { offset?: [number, number, number] };
+          'minecraft:sound': string | { sound: string };
+          'minecraft:leashable': {
+            offset?: [number, number, number] | { x: number; y: number; z: number };
+          };
           'minecraft:embedded_visual': {
             geometry: string | { identifier: string };
             material_instances: Record<
@@ -1130,26 +1327,25 @@ class BlockComponent {
         components: {},
       },
     };
-    if (
-      typeof this.#opt.format == 'string' &&
-      /^\d+\.\d+\.\d+$/.test(this.#opt.format)
-    ) {
-      result['format_version'] = this.#opt.format;
-    } else {
-      throw new Error('[compile component]: no format');
-    }
-    if (
-      typeof this.#opt.id == 'string' &&
-      /^[a-zA-Z0-9_\/\.-]+:[a-zA-Z0-9_\/\.-]+$/.test(this.#opt.id)
-    ) {
-      result['minecraft:block'].description.identifier = this.#opt.id;
-    } else {
-      throw new Error('[compile component]: no id');
-    }
+    result['format_version'] = resolveFormatVersion({
+      component: 'block',
+      format: this.#opt.format,
+      required: true,
+      parts: 3,
+    })!;
+    result['minecraft:block'].description.identifier = requireIdentifier(
+      this.#opt.id,
+      'block',
+    );
     if (this.#opt.menu_category) {
       const mc = this.#opt.menu_category;
       const menuCategory: Record<string, unknown> = {};
       if (typeof mc.category === 'string' && mc.category.trim()) {
+        if (!MenuCategoryEnum.includes(mc.category as never)) {
+          throw new Error(
+            `[compile component]: menu_category: unknown category "${mc.category}", valid: ${MenuCategoryEnum.join(', ')}`,
+          );
+        }
         menuCategory.category = mc.category;
       }
       if (typeof mc.group === 'string' && mc.group.trim()) {
@@ -1166,8 +1362,31 @@ class BlockComponent {
         };
       }
     }
+    const states = (this.#opt.components as Record<string, unknown>)?.states;
+    if (states && typeof states === 'object' && !Array.isArray(states)) {
+      const statesOut: Record<string, unknown> = {};
+      for (const [name, value] of Object.entries(states)) {
+        if (
+          Array.isArray(value) &&
+          value.every(entry => typeof entry === 'string')
+        ) {
+          statesOut[name] = [...value];
+        } else if (
+          typeof value === 'object' &&
+          value !== null &&
+          !Array.isArray(value)
+        ) {
+          statesOut[name] = { ...(value as Record<string, unknown>) };
+        } else {
+          throw new Error(
+            `[compile component]: states["${name}"] must be a string array, { values } or { min, max }`,
+          );
+        }
+      }
+      result['minecraft:block'].description.states = statesOut;
+    }
     if (this.#opt.traits && Object.keys(this.#opt.traits).length > 0) {
-      result['minecraft:block'].description.traits = this.#opt.traits;
+      result['minecraft:block'].description.traits = this.#opt.traits as never;
     }
     if (
       Array.isArray(this.#opt.permutations) &&
@@ -1235,16 +1454,77 @@ class BlockComponent {
       if (c.entity_fall_on !== undefined)
         ApplyComponents['minecraft:entity_fall_on'] = c.entity_fall_on;
       if (c.replaceable !== undefined)
-        ApplyComponents['minecraft:replaceable'] = {};
+        ApplyComponents['minecraft:replaceable'] = { ...c.replaceable };
       if (c.flower_pottable !== undefined)
-        ApplyComponents['minecraft:flower_pottable'] = {};
+        ApplyComponents['minecraft:flower_pottable'] = { ...c.flower_pottable };
       if (c.chest_obstruction !== undefined)
-        ApplyComponents['minecraft:chest_obstruction'] = {};
-      if (typeof c.icon === 'string' && c.icon.trim()) {
-        ApplyComponents['minecraft:icon'] = { textures: c.icon.trim() };
+        ApplyComponents['minecraft:chest_obstruction'] =
+          normalizeChestObstruction(c.chest_obstruction);
+      if ((c as Record<string, unknown>).icon !== undefined) {
+        throw new Error(
+          '[compile component]: icon: minecraft:icon is an item component, not a block component. Use minecraft:item_visual instead.',
+        );
       }
       if (c.breathability !== undefined)
         ApplyComponents['minecraft:breathability'] = c.breathability;
+      if (c.instrument_sound !== undefined) {
+        const instrument = c.instrument_sound;
+        if (instrument.up === undefined && instrument.down === undefined) {
+          throw new Error(
+            '[compile component]: instrument_sound: at least one of up or down is required',
+          );
+        }
+        for (const face of ['up', 'down'] as const) {
+          const sound = instrument[face];
+          if (sound === undefined) continue;
+          if (!INSTRUMENT_SOUNDS.includes(sound as never)) {
+            throw new Error(
+              `[compile component]: instrument_sound: ${face} must be one of ${INSTRUMENT_SOUNDS.join(', ')}`,
+            );
+          }
+        }
+        const instrumentFinal: Record<string, unknown> = {};
+        if (instrument.up !== undefined) instrumentFinal.up = instrument.up;
+        if (instrument.down !== undefined) instrumentFinal.down = instrument.down;
+        ApplyComponents['minecraft:instrument_sound'] = instrumentFinal;
+      }
+      if (c.block_light_absorption !== undefined)
+        ApplyComponents['minecraft:block_light_absorption'] =
+          c.block_light_absorption;
+      if (c.block_light_emission !== undefined)
+        ApplyComponents['minecraft:block_light_emission'] =
+          c.block_light_emission;
+      if (c.destroy_time !== undefined)
+        ApplyComponents['minecraft:destroy_time'] = c.destroy_time;
+      if (c.explosion_resistance !== undefined)
+        ApplyComponents['minecraft:explosion_resistance'] =
+          c.explosion_resistance;
+      if (c.bone_visibility !== undefined)
+        ApplyComponents['bone_visibility'] = { ...c.bone_visibility };
+      if (c.queued_ticking !== undefined)
+        ApplyComponents['minecraft:queued_ticking'] = { ...c.queued_ticking };
+      if (c.random_ticking !== undefined)
+        ApplyComponents['minecraft:random_ticking'] = { ...c.random_ticking };
+      if (c.unit_cube !== undefined)
+        ApplyComponents['minecraft:unit_cube'] = { ...c.unit_cube };
+      for (const event of [
+        'on_fall_on',
+        'on_interact',
+        'on_placed',
+        'on_player_destroyed',
+        'on_player_placing',
+        'on_step_off',
+        'on_step_on',
+      ] as const) {
+        const handlers = c[event];
+        if (handlers === undefined) continue;
+        if (typeof handlers !== 'object' || handlers === null || Array.isArray(handlers)) {
+          throw new Error(
+            `[compile component]: ${event}: must be an object mapping event names to filters`,
+          );
+        }
+        ApplyComponents[`minecraft:${event}`] = { ...(handlers as Record<string, unknown>) };
+      }
       if (c.block_entity !== undefined)
         ApplyComponents['minecraft:block_entity'] = c.block_entity;
       if (c.item_visual !== undefined)
@@ -1252,17 +1532,16 @@ class BlockComponent {
       if (c.destruction_particles !== undefined)
         ApplyComponents['minecraft:destruction_particles'] =
           c.destruction_particles;
-      if (typeof c.sound == 'string')
-        ApplyComponents['minecraft:sound'] = c.sound;
+      if (c.sound !== undefined)
+        ApplyComponents['minecraft:sound'] = normalizeBlockSound(
+          c.sound,
+        ) as string | { sound: string };
       if (c.leashable !== undefined)
         ApplyComponents['minecraft:leashable'] = c.leashable;
       if (c.embedded_visual !== undefined)
         ApplyComponents['minecraft:embedded_visual'] = c.embedded_visual;
       if (Array.isArray(c.tags)) ApplyComponents['minecraft:tags'] = c.tags;
       if (Array.isArray(c.custom_components)) {
-        // v2 custom components use a named component object per entry,
-        // e.g. "myplugin:controller": {} — registered via
-        // system.beforeEvents.startup blockComponentRegistry.
         for (const name of c.custom_components) {
           if (typeof name !== 'string' || !name.includes(':')) {
             throw new Error(

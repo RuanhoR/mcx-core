@@ -2,6 +2,11 @@
 
 This changelog tracks changes committed after the v0.0.2 release tag.
 
+### 2026-10-25
+- **fix(core)**: map script error positions back to the .mcx file — TS script blocks are transpiled before babel parses them, so parse/traversal errors were reported in the transpiled coordinate space (wrong lines after reformatting and import elision). `compileMCX` now registers a TS-sourcemap + script-tag-offset mapper per compiled script and `compileJSFn` rewrites `CompileError` positions with it; `ts.transpileModule` runs with `reportDiagnostics` so real TS syntax errors (e.g. `Identifier expected.` on a trailing `expr.`) surface at the original position instead of a babel error on rewritten output (`fd6ae95`)
+- **test(core)**: `script-loc.spec.ts` covers TS syntax errors, JS offset-only scripts, traversal errors after import elision, and valid-script compilation
+- **chore(release)**: bump mcx-core 1.1.5-rc.4
+
 ### 2026-09-25
 - **feat(mcx-component)**: fill entity components and behaviors (`2ac89f6`)
 - **feat(core)**: add spawn_rules component group (`0bbbf8a`)

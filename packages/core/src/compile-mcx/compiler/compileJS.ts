@@ -3,6 +3,7 @@ import { ImportList } from '../types';
 import * as CompileData from './compileData';
 import Utils from './utils';
 import { parse } from '@babel/parser';
+import { remapScriptLoc } from './locMap';
 
 export class CompileError extends Error {
   public loc: { line: number; column: number };
@@ -279,17 +280,29 @@ export const compileJSFn = ((code: string): CompileData.JsCompileData => {
       const babelErr = err as SyntaxError & {
         loc?: { column: number; line: number };
       };
-      const loc = babelErr.loc ?? { column: -1, line: -1 };
-      throw makeError(`[babel parse error]: ${err.message}`, {
+      const raw = babelErr.loc ?? { column: -1, line: -1 };
+      // babel parsed the transpiled script; report the original .mcx position
+      const loc = remapScriptLoc(code, raw);
+      // babel embeds its own (unmapped) coordinates in the message
+      const message = err.message.replace(/\s*\(\d+:\d+\)\s*$/, '');
+      throw makeError(`[babel parse error]: ${message}`, {
         loc: { start: loc },
       });
     }
     throw makeError(`[parse error]: ${String(err)}`);
   }
-  const comiler = new CompileJS(parsedCode.program);
-  const data = comiler.getCompileData();
-  compileJSFn.cache.set(code, data);
-  return data;
+  try {
+    const comiler = new CompileJS(parsedCode.program);
+    const data = comiler.getCompileData();
+    compileJSFn.cache.set(code, data);
+    return data;
+  } catch (err: unknown) {
+    // node positions come from the transpiled script; rewrite them too
+    if (err instanceof CompileError && err.loc.line > 0) {
+      err.loc = remapScriptLoc(code, err.loc);
+    }
+    throw err;
+  }
 }) as ((code: string) => CompileData.JsCompileData) & {
   cache: Map<string, CompileData.JsCompileData>;
 };

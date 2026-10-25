@@ -9,7 +9,8 @@ import { ParsedTagContentNode, ParsedTagNode } from '../../types';
 import McxAst, { MCXUtils } from '../../ast/tag';
 import PropParser from '../../ast/prop';
 import ts from 'typescript';
-import { compileJSFn, makeError, extractLoc } from './compileJS';
+import { CompileError, compileJSFn, makeError, extractLoc } from './compileJS';
+import { createScriptLocMapper, setScriptLocMapper } from './locMap';
 
 class CompileMCX {
   constructor(public code: string) {
@@ -28,6 +29,7 @@ class CompileMCX {
     );
   }
   private mcxCode: ParsedTagNode[];
+  private scriptOpenLine: number = 1;
   private tempLoc: MCXstructureLoc = {
     script: '',
     Event: {
@@ -70,8 +72,40 @@ class CompileMCX {
     }
     throw makeError('[mcx compile]: internal error: unknown node type', node);
   }
-  private getEventOn(node: ParsedTagNode): 'before' | 'after' {
-    if (!MCXUtils.isTagNode(node))
+  /**
+   * ts.transpileModule is error-tolerant and silently rewrites broken syntax
+   * (e.g. a trailing `expr.` becomes `expr.;`), so a later babel failure would
+   * point at the wrong place. Surface the real TS syntax errors here, already
+   * mapped back to .mcx positions.
+   */
+  private reportScriptDiagnostics(
+    scriptNode: string,
+    diagnostics: readonly ts.Diagnostic[],
+  ): void {
+    const fatal = diagnostics.filter(
+      d => d.category === ts.DiagnosticCategory.Error && d.file != null,
+    );
+    if (fatal.length === 0) return;
+    const sf = ts.createSourceFile(
+      'script.ts',
+      scriptNode,
+      ts.ScriptTarget.ES2024,
+      true,
+    );
+    const d = fatal[0]!;
+    const message = ts.flattenDiagnosticMessageText(d.messageText, '\n');
+    let loc = { line: -1, column: -1 };
+    if (d.start != null) {
+      const { line, character } = ts.getLineAndCharacterOfPosition(sf, d.start);
+      loc = {
+        line: line + 1 + (this.scriptOpenLine - 1),
+        column: character,
+      };
+    }
+    throw new CompileError(`[ts error]: ${message}`, loc);
+  }
+
+  private getEventOn(node: ParsedTagNode): 'before' | 'after' {    if (!MCXUtils.isTagNode(node))
       throw makeError('[mcx compile]: internal error: not tag node', node);
     let on: 'before' | 'after' = 'after';
     const isAfter = typeof node.arr['@after'] == 'string';
@@ -107,16 +141,30 @@ class CompileMCX {
           throw makeError('[compile error]: duplicate script node', node);
         const scriptNode =
           node.content.length == 0 ? '' : this.commonTagNodeContent(node);
+        // script content starts right after the open tag, so script line 1 is
+        // the .mcx line the <script> tag sits on
+        const scriptOpenLine = node.loc?.start?.line ?? 1;
+        this.scriptOpenLine = scriptOpenLine;
         let code = scriptNode;
+        let sourceMapText: string | undefined;
         if (node.arr.lang != 'js') {
-          code = ts.transpileModule(scriptNode, {
+          const result = ts.transpileModule(scriptNode, {
             compilerOptions: {
               target: ts.ScriptTarget.ES2024,
               module: ts.ModuleKind.ESNext,
+              sourceMap: true,
             },
-          }).outputText;
+            reportDiagnostics: true,
+          });
+          this.reportScriptDiagnostics(scriptNode, result.diagnostics ?? []);
+          code = result.outputText;
+          sourceMapText = result.sourceMapText;
         }
         temp.script = code;
+        setScriptLocMapper(
+          code,
+          createScriptLocMapper(sourceMapText, scriptOpenLine),
+        );
       } else if (node.name == 'Event') {
         if (temp.Event)
           throw makeError('[compile error]: duplicate Event node', node);

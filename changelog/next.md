@@ -2,6 +2,11 @@
 
 This changelog tracks changes committed after the v0.0.2 release tag.
 
+### 2026-11-01
+- **fix(core)**: stable module ids in pnpm workspaces — the rolldown/vite `resolveId` bare-id fallback now walks up parent `node_modules` dirs (packages installed at a workspace root are found), realpaths the resolved package dir so both resolution strategies (Node `createRequire` and the manual `moduleDir` lookup) agree on the same id instead of the bundler seeing a pnpm symlink path and its realpath as two distinct modules, and root imports prefer `exports["."]` over a possibly missing `main` field
+- **test**: verified against a real pnpm addon layout; the one-project `init.spec.ts` timeout under full-suite load is a pre-existing flake
+- **chore(release)**: bump mcx-core 1.1.5-rc.5
+
 ### 2026-10-25
 - **fix(core)**: map script error positions back to the .mcx file — TS script blocks are transpiled before babel parses them, so parse/traversal errors were reported in the transpiled coordinate space (wrong lines after reformatting and import elision). `compileMCX` now registers a TS-sourcemap + script-tag-offset mapper per compiled script and `compileJSFn` rewrites `CompileError` positions with it; `ts.transpileModule` runs with `reportDiagnostics` so real TS syntax errors (e.g. `Identifier expected.` on a trailing `expr.`) surface at the original position instead of a babel error on rewritten output (`fd6ae95`)
 - **test(core)**: `script-loc.spec.ts` covers TS syntax errors, JS offset-only scripts, traversal errors after import elision, and valid-script compilation

@@ -19,6 +19,35 @@ import {
 import { resolveFileAsync } from './resolve';
 import { createImageTransformCode, IMAGE_EXTS } from './image';
 import { resetFileIdCounter } from '../../transforms/file_id';
+/**
+ * Locate `pkgName` starting at `startDir` (a node_modules dir) and walking up
+ * through every ancestor node_modules, so packages installed at a pnpm/npm
+ * workspace root are found too. The returned dir is realpathed: pnpm links
+ * node_modules entries into .pnpm, and Node's own resolver (createRequire)
+ * reports realpaths, so both resolveId strategies must agree on the id or the
+ * bundler treats one package as two distinct modules.
+ */
+async function resolvePackageDir(
+  startDir: string,
+  pkgName: string,
+): Promise<string | null> {
+  const fs = getFs();
+  let base = path.dirname(startDir);
+  for (;;) {
+    const candidate = path.join(base, 'node_modules', pkgName);
+    try {
+      if (
+        (await fs.promises.stat(path.join(candidate, 'package.json'))).isFile()
+      ) {
+        return await fs.promises.realpath(candidate);
+      }
+    } catch {}
+    const parent = path.dirname(base);
+    if (parent === base) return null;
+    base = parent;
+  }
+}
+
 function createMcxPlugin(
   opt: CompileOpt,
   output: transformCtx['output'],
@@ -84,7 +113,8 @@ function createMcxPlugin(
   ): Promise<string | null> {
     const exports = pkgJson.exports;
     if (exports) {
-      const subImport = subPath.startsWith('./') ? subPath : `./${subPath}`;
+      const subImport =
+        subPath === '.' ? '.' : subPath.startsWith('./') ? subPath : `./${subPath}`;
       if (typeof exports === 'object' && exports !== null) {
         const exp = exports as Record<string, unknown>;
         if (exp[subImport]) {
@@ -148,7 +178,12 @@ function createMcxPlugin(
         const subPath = isScopedPackage
           ? parts.slice(2).join('/')
           : parts.slice(1).join('/');
-        const d = path.join(opt.moduleDir, pkgName);
+        const d = await resolvePackageDir(opt.moduleDir, pkgName);
+        if (!d) {
+          throw new Error(
+            `[mcx resolveId]: package.json not found for '${id}' under '${opt.moduleDir}' or any parent node_modules`,
+          );
+        }
         let pkgJson: Record<string, unknown>;
         try {
           pkgJson = JSON.parse(
@@ -177,7 +212,17 @@ function createMcxPlugin(
           if (fromRoot) return fromRoot;
           return null;
         }
-        return path.join(d, pkgJson.main as string);
+        // root import: prefer exports["."] (a package may have no `main`),
+        // then the main field, then let the host resolver take over
+        const fromExports = await resolvePackageExports(d, '.', pkgJson);
+        if (fromExports) return fromExports;
+        if (pkgJson.main) {
+          const fromMain = await resolveFileAsync(
+            path.join(d, pkgJson.main as string),
+          );
+          if (fromMain) return fromMain;
+        }
+        return null;
       }
     },
     async transform(code: string, id: string) {

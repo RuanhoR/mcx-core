@@ -1,6 +1,10 @@
 import type { World, Player } from '@minecraft/server';
 import type { LanguagePlugin } from '@volar/language-core';
 import * as serverUI from '@minecraft/server-ui';
+
+/** A plugin instance, or a factory that creates one. */
+type McxPluginInput = McxPlugin | (() => McxPlugin);
+
 interface CompileOpt {
   moduleDir: string;
   tsconfigPath: string;
@@ -10,7 +14,106 @@ interface CompileOpt {
   mcxLanguagePlugin?: (
     ts: typeof import('typescript'),
   ) => LanguagePlugin<unknown>;
+  /**
+   * compiler plugins (custom root tags, transform hooks).
+   * Factories are called (without arguments) while resolving the list, so
+   * `[jsonui(), other()]` and `[jsonui, other]` are both accepted.
+   */
+  mcxPlugin?:
+    | McxPluginInput
+    | (McxPluginInput | McxPluginInput[])[]
+    | undefined;
 }
+
+// --- Compiler plugin API ---
+
+interface McxPosition {
+  line: number;
+  column: number;
+}
+interface McxLoc {
+  start: McxPosition;
+  end: McxPosition;
+}
+interface McxTagChild {
+  type: string;
+  data?: string;
+  name?: string;
+  arr?: Record<string, string | boolean>;
+  content?: McxTagChild[];
+  loc?: McxLoc;
+}
+interface McxTagNode {
+  name: string;
+  arr: Record<string, string | boolean>;
+  content: McxTagChild[];
+  loc: McxLoc;
+  type: 'TagNode';
+  start?: McxTagChild;
+  end?: McxTagChild | null;
+}
+interface McxPluginOutput {
+  dist: string;
+  behavior: string;
+  resources: string;
+}
+type McxHookResult = void | string;
+type McxTagHandler = (
+  node: McxTagNode,
+  ctx: McxPluginContext,
+) => McxHookResult | Promise<McxHookResult>;
+interface McxPluginContext {
+  /** absolute path of the .mcx file being compiled */
+  id: string;
+  /** raw .mcx source */
+  source: string;
+  /** current generated JS (source before transform, compiled JS after) */
+  code: string;
+  /** root tag nodes of this file */
+  nodes: McxTagNode[];
+  opt: CompileOpt;
+  output: McxPluginOutput;
+  /** resolved plugin list, in execution order */
+  plugins: McxPlugin[];
+  /** find the first root tag with this name */
+  tag(name: string): McxTagNode | undefined;
+  /** find every root tag with this name */
+  tags(name: string): McxTagNode[];
+  /** register a handler for a custom root tag (per file) */
+  registerTag(name: string, handler: McxTagHandler): void;
+  /** prepend raw import statements to the generated module */
+  addImport(code: string): void;
+  /** append raw top-level statements to the generated module */
+  addStatement(code: string): void;
+  /** add or replace a field on the generated default export object */
+  addExport(name: string, expression: string): void;
+  /** override the `type` field of the generated default export object */
+  setType(type: string): void;
+  /** throw a located error through the bundler */
+  error(message: string, loc?: McxPosition): never;
+}
+interface McxPlugin {
+  name: string;
+  /** handlers for custom root tags, keyed by tag name */
+  tags?: Record<string, McxTagHandler>;
+  /** before the built-in transform; return JS code to replace the whole output */
+  onTransform?: (
+    ctx: McxPluginContext,
+  ) => McxHookResult | Promise<McxHookResult>;
+  /** after the built-in transform; return JS code to replace the result */
+  onTransformed?: (
+    code: string,
+    ctx: McxPluginContext,
+  ) => McxHookResult | Promise<McxHookResult>;
+  /** when compilation or transformation throws; return JS code to recover */
+  onThrow?: (
+    error: Error,
+    ctx: McxPluginContext,
+  ) => McxHookResult | Promise<McxHookResult>;
+  onBuildStart?: () => void | Promise<void>;
+  onBuildEnd?: () => void | Promise<void>;
+}
+
 interface EventOpt {
   on: 'after' | 'before';
   data: Record<string, (event: unknown) => void>;
@@ -1636,6 +1739,16 @@ interface PreferredPathConfig {
 
 export type {
   CompileOpt,
+  McxHookResult,
+  McxLoc,
+  McxPlugin,
+  McxPluginContext,
+  McxPluginInput,
+  McxPluginOutput,
+  McxPosition,
+  McxTagChild,
+  McxTagHandler,
+  McxTagNode,
   MCXFile,
   EventOpt,
   MCXCtx,

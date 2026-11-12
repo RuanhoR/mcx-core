@@ -9,7 +9,7 @@ The core monorepo for **MCX** — a domain-specific language (DSL) for building 
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
   <a href="https://learn.microsoft.com/en-us/minecraft/creator/?view=minecraft-bedrock-stable"><img src="https://img.shields.io/badge/MCBE-Addon-7C3AED?style=for-the-badge" alt="MCBE Addon"></a>
-  <a href="https://app.codacy.com/gh/RuanhoR/mcx-core/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="hhttps://app.codacy.com/project/badge/Grade/48f0484c6291499bad7c9226f0f03679" alt="Codacy"></a>
+  <a href="https://app.codacy.com/gh/RuanhoR/mcx-core/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/48f0484c6291499bad7c9226f0f03679" alt="Codacy"></a>
 </p>
 
 </div>

@@ -23,10 +23,10 @@
     "lint:fix": "eslint . --ext .js,.ts --fix",
     "lint:packages": "pnpm -r lint",
     "lint:packages:fix": "pnpm -r lint:fix",
-    "format": "prettier ./packages/create-mbler/src ./packages/core/src ./packages/types/index.d.ts ./packages/client/src --write",
+    "format": "prettier ./packages/create-mbler/src ./packages/core/src ./packages/types/index.d.ts ./packages/client/src ./packages/official-plugin --write",
     "test": "vitest run",
     "build": "pnpm -r build",
-    "check": "pnpm test && pnpm lint:packages && pnpm -r --filter=@mbler/mcx-core --filter=@mbler/mcx --filter=create-mbler --filter=@mbler/mcx-component --filter=@mbler/eslint-plugin-mcx exec tsc --noEmit",
+    "check": "pnpm test && pnpm lint:packages && pnpm -r --filter=@mbler/mcx-core --filter=@mbler/mcx --filter=create-mbler --filter=@mbler/mcx-component --filter=@mbler/eslint-plugin-mcx --filter=@mbler/mcx-plugin-jsonui exec tsc --noEmit",
     "prepare": "simple-git-hooks"
   },
   "workspaces": [
@@ -35,7 +35,8 @@
     "packages/core",
     "packages/mcx-component",
     "packages/create-mbler",
-    "packages/eslint-plugin-mcx"
+    "packages/eslint-plugin-mcx",
+    "packages/official-plugin/*"
   ],
   "devDependencies": {
     "@eslint/js": "^9.17.0",

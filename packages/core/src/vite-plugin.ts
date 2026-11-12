@@ -6,6 +6,11 @@ import type { Plugin as RollupPlugin } from 'rollup';
 import { CompileOpt } from '@mbler/mcx-types';
 import { rollupPlugin } from './compile-mcx/index.js';
 import { setGlobalFS } from './state.js';
+import {
+  resolveMcxPlugins,
+  runMcxBuildEnd,
+  runMcxBuildStart,
+} from './plugin.js';
 import type { transformCtx } from './types';
 
 type LooseHook = (this: unknown, ...args: unknown[]) => unknown;
@@ -24,7 +29,8 @@ function unwrapHook(hook: unknown): LooseHook | undefined {
  * - `resolveId` failures fall through to the host resolver instead of throwing;
  * - the inner plugin is rebuilt when a `.mcx` file's content changes, so
  *   watch mode never serves stale results from the inner per-id cache;
- * - `buildEnd` side effects (texture JSON generation) are never forwarded.
+ * - the inner plugin's `buildEnd` side effects (texture JSON generation) are
+ *   never forwarded; compiler plugin lifecycle hooks are forwarded instead.
  */
 export function vitePlugin(
   opt: CompileOpt,
@@ -64,8 +70,12 @@ export function vitePlugin(
         return null;
       }
     },
-    buildStart() {
+    async buildStart() {
       seen.clear();
+      await runMcxBuildStart(resolveMcxPlugins(opt));
+    },
+    async buildEnd() {
+      await runMcxBuildEnd(resolveMcxPlugins(opt));
     },
   };
   // assigned separately: Vite's TransformPluginContext type is stricter than

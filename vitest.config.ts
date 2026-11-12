@@ -16,7 +16,13 @@ export default defineConfig({
       {
         test: {
           name: 'unit',
-          include: ['packages/*/__test__/**/*.spec.ts'],
+          // NOTE: root-level test.timeout is not inherited by project entries
+          // in Vitest v4, so each project must set it explicitly.
+          testTimeout: 30000,
+          include: [
+            'packages/*/__test__/**/*.spec.ts',
+            'packages/official-plugin/*/__test__/**/*.spec.ts',
+          ],
           exclude: [
             '**/node_modules/**',
             'packages/core/__test__/vite-plugin.integration.spec.ts',
@@ -40,6 +46,7 @@ export default defineConfig({
         ],
         test: {
           name: 'mcx-integration',
+          testTimeout: 30000,
           include: [
             'packages/core/__test__/vite-plugin.integration.spec.ts',
           ],

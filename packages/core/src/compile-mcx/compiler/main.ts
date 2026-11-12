@@ -19,6 +19,15 @@ import {
 import { resolveFileAsync } from './resolve';
 import { createImageTransformCode, IMAGE_EXTS } from './image';
 import { resetFileIdCounter } from '../../transforms/file_id';
+import {
+  applyMcxPluginInjections,
+  createMcxPluginContext,
+  resolveMcxPlugins,
+  runMcxBuildEnd,
+  runMcxBuildStart,
+  runMcxThrowHooks,
+} from '../../plugin';
+import type { TransformPluginContext } from 'rollup';
 /**
  * Locate `pkgName` starting at `startDir` (a node_modules dir) and walking up
  * through every ancestor node_modules, so packages installed at a pnpm/npm
@@ -46,6 +55,42 @@ async function resolvePackageDir(
     if (parent === base) return null;
     base = parent;
   }
+}
+
+/**
+ * A parse/compile failure happens before transform() builds its hook context.
+ * Give plugins the same onThrow chance here so a custom root tag (or any other
+ * compiler error) can be recovered from in one place.
+ */
+async function recoverFromCompileError(
+  err: unknown,
+  source: string,
+  id: string,
+  opt: CompileOpt,
+  output: transformCtx['output'],
+  context: TransformPluginContext,
+): Promise<string | undefined> {
+  const plugins = resolveMcxPlugins(opt);
+  if (plugins.length === 0) return undefined;
+  const { hook, state } = createMcxPluginContext({
+    id,
+    source,
+    nodes: [],
+    opt,
+    output,
+    error: (message, loc) =>
+      loc
+        ? context.error(message, { line: loc.line, column: loc.column })
+        : context.error(message),
+  });
+  const recovered = await runMcxThrowHooks(
+    err instanceof Error ? err : new Error(String(err)),
+    hook,
+    plugins,
+  );
+  return recovered === undefined
+    ? undefined
+    : applyMcxPluginInjections(recovered, state);
 }
 
 function createMcxPlugin(
@@ -236,6 +281,27 @@ function createMcxPlugin(
             : compileMCXFn(code);
           cache.set(id, compileData);
         } catch (err: unknown) {
+          const recovered = await recoverFromCompileError(
+            err,
+            code,
+            id,
+            opt,
+            output,
+            this,
+          );
+          if (recovered !== undefined) {
+            return {
+              code: recovered,
+              ...(opt.sourcemap
+                ? {
+                    map: new MagicString(code).generateMap({
+                      hires: true,
+                      source: id,
+                    }),
+                  }
+                : {}),
+            };
+          }
           if (err instanceof CompileError) {
             this.error(err.message, {
               column: err.loc.column,
@@ -258,6 +324,7 @@ function createMcxPlugin(
           this,
           opt,
           output,
+          code,
         );
         return {
           code: compiledCode,
@@ -303,11 +370,13 @@ function createMcxPlugin(
       await generateItemTextureJson(output);
       await generateTerrainTextureJson(output);
       clearCachedOptions();
+      await runMcxBuildEnd(resolveMcxPlugins(opt));
     },
-    buildStart() {
+    async buildStart() {
       cache = new Map();
       clearCompileCaches();
       resetFileIdCounter();
+      await runMcxBuildStart(resolveMcxPlugins(opt));
     },
   };
 }

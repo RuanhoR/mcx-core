@@ -18,4 +18,16 @@ export {
   vitePlugin,
 };
 export * from './state';
+export * from './plugin';
+export type {
+  McxHookResult,
+  McxLoc,
+  McxPlugin,
+  McxPluginContext,
+  McxPluginOutput,
+  McxPosition,
+  McxTagChild,
+  McxTagHandler,
+  McxTagNode,
+} from '@mbler/mcx-types';
 export * as ComponentType from './mcx-component/types';

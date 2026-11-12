@@ -139,3 +139,40 @@ This changelog tracks changes committed after the v0.0.2 release tag.
   `physics: boolean` shorthand (emitting an empty `minecraft:physics: {}`) was handled.
   The `hasComponents` detection chain also includes the key so an entity with only a physics
   config still gets a `components` section.
+
+## @mbler/mcx-core / @mbler/mcx-types (unreleased)
+
+### feat(core): compiler plugin hooks (custom layout / custom root tags)
+
+- `CompileOpt.mcxPlugin` accepts one `McxPlugin` object, a factory, or an array/nested array of
+  either (`[jsonui(), other()]` and `[jsonui, other]` both work; factories are called once, in
+  order). A plugin looks like a
+  bundler plugin: `{ name, tags, onTransform, onTransformed, onThrow, onBuildStart, onBuildEnd }`.
+  Types live in `@mbler/mcx-types` and are re-exported from `@mbler/mcx-core` together with
+  `defineMcxPlugin()` and the hook helpers in `src/plugin.ts`.
+- `tags` (or `ctx.registerTag()` from `onTransform`) handles custom root tags: the handler gets
+  the parsed tag node and a hook context with `tag()/tags()`, `addImport()`, `addStatement()`,
+  `addExport()`, `setType()`, `error()`. Injections are applied through the Babel AST to the
+  generated default export object; without plugins the output is byte-for-byte unchanged.
+- `onTransform` runs before the built-in transform and can short-circuit it by returning JS;
+  `onTransformed` chains over the generated JS; `onThrow` can recover both transform errors and
+  parse errors raised before `transform()`. Lifecycle hooks are forwarded from the
+  Rollup/Rolldown plugin and from `vitePlugin`.
+
+## @mbler/mcx-plugin-jsonui (new official plugin)
+
+- New workspace package `packages/official-plugin/jsonui`. Adds `<Ui type="jsonui" ...>` support:
+  `target` (optional), `availability` / `avail` / `use`, `namespace` / `ns`, `file` / `save`,
+  `id`; every other attribute is passed through to the generated JSON UI element, and child
+  tags become controls. Attribute values are JSON-coerced, so sizes, arrays and objects work.
+- Transform is split from attachment: the `<Ui>` is first compiled into a plain JSON UI
+  document, then an availability adapter decides where it goes. Built-ins: `file` (plain JSON +
+  `_ui_defs.json` registration), `server_form` (`ui/server_form.json` gated factory routing,
+  following the sapdon/route-shell model), `hud` (modifications on `hud_screen`), `vanilla`
+  (singleton, no `target` required, vanilla element overrides), `none`. Use
+  `defineJsonUIAvailability()` to register more; adapters declare `requiresTarget` / `singleton`.
+- Generated `.mcx` modules export a `JSONUIComponent` (runtime subpath
+  `@mbler/mcx-plugin-jsonui/component`), usable from `<Component>` files or Script API forms
+  (`component.formTitle` for `server_form` routing). `file`/`save` also dumps the raw document.
+- A `.mcx` file containing only `<Ui type="jsonui">` (no `<script>`) is recovered through
+  `onThrow`.

@@ -5,6 +5,7 @@ packages:
   - packages/client
   - packages/create-mbler
   - packages/eslint-plugin-mcx
+  - packages/official-plugin/*
 allowBuilds:
   esbuild: true
   simple-git-hooks: true

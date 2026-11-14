@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-plugin-jsonui",
-  "version": "0.0.1-alpha.2",
+  "version": "0.0.2-alpha.0",
   "description": "Official MCX compiler plugin for Minecraft Bedrock JSON UI (<Ui type=\"jsonui\">)",
   "keywords": [
     "minecraft",
@@ -24,6 +24,9 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "mcx-plugin-jsonui": "./bin/mcx-plugin-jsonui.mjs"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -33,10 +36,15 @@
       "types": "./dist/component.d.ts",
       "import": "./dist/component.js"
     },
+    "./preview": {
+      "types": "./dist/preview.d.ts",
+      "import": "./dist/preview.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
     "dist",
+    "bin",
     "README.md",
     "LICENSE"
   ],

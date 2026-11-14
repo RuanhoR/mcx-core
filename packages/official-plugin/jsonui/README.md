@@ -155,6 +155,26 @@ jsonui.bind('title', Molang.bind.view(Molang.variable('#text'), '#label'));
 `.mcx` 里可以只有 `<Ui type="jsonui">` 而没有 `<script>`：编译器会先报「缺少 script」，
 插件通过 `onThrow` 从源码里重新解析并恢复，因此仍然会输出 `.json` 与模块。
 
+## 预览
+
+不用启动游戏就能看效果：
+
+```bash
+pnpm mcx-plugin-jsonui preview                      # http://127.0.0.1:5174
+pnpm mcx-plugin-jsonui preview ./src/ui --port 6000
+```
+
+左侧列出工程里所有 `<Ui type="jsonui">` 文件，点开按游戏规则渲染（anchor、`%`/`px` 长度、`stack_panel`、`grid`、`$变量`、`#binding`），贴图从资源包里取，保存即热更新。`--port` / `--host` / `--size` / `--no-open` / `--no-watch` 可调。
+
+截图走服务端计算，不启动浏览器也不依赖原生图像库，方便工具链和 agent 调试：
+
+```bash
+curl "http://127.0.0.1:5174/api/screenshot?id=src/ui/shop.mcx&format=png&scale=2" -o shop.png
+curl "http://127.0.0.1:5174/api/screens"      # 文件树 + 元信息
+```
+
+`format=png`（默认）由内置光栅化器绘制，文字用 5×7 像素字体、图片画成占位块；需要真实字体与嵌入贴图时用 `format=svg`。
+
 ## 相关资料
 
 - JSON UI 文档：https://mcbeui.netlify.app/

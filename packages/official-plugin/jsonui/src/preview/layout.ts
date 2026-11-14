@@ -1,4 +1,5 @@
 import type { JsonUIElement, JsonUIValue } from '../types.js';
+import { measureText as measureFontText } from './font/metrics.js';
 
 /**
  * A resolved JSON UI control tree. Geometry is already in logical pixels of
@@ -24,6 +25,11 @@ export interface LayoutBox {
   texture: TextureRef | undefined;
   nineslice: number | undefined;
   tiled: boolean;
+  /**
+   * the rectangle the texture is actually painted in (relative to the box) —
+   * `keep_ratio` (default true) scales the image down to fit and centres it
+   */
+  draw: { x: number; y: number; w: number; h: number } | undefined;
   children: LayoutBox[];
   raw: JsonUIElement;
 }
@@ -36,6 +42,8 @@ export interface LayoutText {
   align: 'left' | 'center' | 'right';
   /** text came from a `#binding` / unresolved `$variable` */
   dynamic: boolean;
+  /** lines after applying the game's wrapping rules against the final width */
+  lines: string[];
 }
 
 export interface TextureRef {
@@ -66,16 +74,15 @@ export interface LayoutOptions {
   height: number;
   /** extra variables merged over the document `variables` map */
   variables?: Record<string, JsonUIValue>;
+  /** texture pixel sizes for `keep_ratio` (image default true); keyed by path */
+  textureSizes?: ((path: string) => [number, number] | undefined) | undefined;
 }
 
 /** Vanilla defaults used when a control does not declare an explicit size. */
 export const DEFAULT_BUTTON_SIZE: readonly [number, number] = [200, 20];
 export const DEFAULT_IMAGE_SIZE = 16;
-/** Minecraft's default font is 10 units tall in JSON UI space. */
+/** Minecraft's default font is 10 UI units tall in JSON UI space. */
 export const BASE_FONT_SIZE = 10;
-/** Average glyph advance as a fraction of the font size. */
-export const GLYPH_RATIO = 0.6;
-const LINE_HEIGHT = 1.18;
 const NINESLICE_DEFAULT = 4;
 
 const ANCHORS: Record<string, readonly [number, number]> = {
@@ -210,19 +217,19 @@ export function resolveLength(
   return matched ? total : undefined;
 }
 
+/**
+ * Measure a text block the way the game does: `scale` is the
+ * `font_scale_factor`, and with a finite `maxWidth` the text wraps with the
+ * game's rules (break at spaces; character-wise only when a single word
+ * cannot fit a whole line). All units are UI px.
+ */
 export function measureText(
   text: string,
-  fontSize: number,
-): { w: number; h: number } {
-  const lines = text.split('\n');
-  let width = 0;
-  for (const line of lines) {
-    width = Math.max(width, line.length * fontSize * GLYPH_RATIO);
-  }
-  return {
-    w: width,
-    h: Math.max(lines.length, 1) * fontSize * LINE_HEIGHT,
-  };
+  scale: number,
+  maxWidth = Number.POSITIVE_INFINITY,
+): { w: number; h: number; lines: string[] } {
+  const m = measureFontText(text, scale, maxWidth);
+  return { w: m.width, h: m.height, lines: m.lines };
 }
 
 export function cssColor(
@@ -315,6 +322,7 @@ function textOf(
       control['shadow'] !== false,
     align,
     dynamic,
+    lines: [],
   };
 }
 
@@ -370,7 +378,7 @@ export function layoutDocument(
     ...(options.variables ?? {}),
   };
 
-  const root = layoutControl(rootId, control, options.width, options.height, 0, vars, true);
+  const root = layoutControl(rootId, control, options.width, options.height, 0, vars, true, options.textureSizes);
   return { root, width: options.width, height: options.height };
 }
 
@@ -382,6 +390,7 @@ function layoutControl(
   depth: number,
   vars: Record<string, JsonUIValue>,
   isRoot = false,
+  textureSizes?: LayoutOptions['textureSizes'],
 ): LayoutBox {
   const type = (asString(resolveValue(control['type'], vars)) ?? 'custom').toLowerCase();
   const kind = isRoot ? 'screen' : controlKind(type);
@@ -399,7 +408,7 @@ function layoutControl(
     for (const entry of children) {
       const childParentW = w;
       const childParentH = h;
-      const box = layoutControl(entry.id, entry.control, childParentW, childParentH, depth + 1, vars);
+      const box = layoutControl(entry.id, entry.control, childParentW, childParentH, depth + 1, vars, false, textureSizes);
       const extra = resolveLength(
         asArrayPair(entry.control['offset'], vars)[vertical ? 1 : 0],
         vertical ? h : w,
@@ -428,14 +437,14 @@ function layoutControl(
     const rows = Math.max(1, Math.ceil(children.length / cols));
     const cellH = h / rows;
     children.forEach((entry, index) => {
-      const box = layoutControl(entry.id, entry.control, cellW, cellH, depth + 1, vars);
+      const box = layoutControl(entry.id, entry.control, cellW, cellH, depth + 1, vars, false, textureSizes);
       box.x = (index % cols) * cellW;
       box.y = Math.floor(index / cols) * cellH;
       boxes.push(box);
     });
   } else {
     for (const entry of children) {
-      const box = layoutControl(entry.id, entry.control, w, h, depth + 1, vars);
+      const box = layoutControl(entry.id, entry.control, w, h, depth + 1, vars, false, textureSizes);
       const [anchorX, anchorY] = anchorOf(
         resolveValue(entry.control['anchor_from'], vars),
       );
@@ -457,6 +466,43 @@ function layoutControl(
   const nineslice = asNumber(resolveValue(control['nineslice_size'], vars));
   const rotate = asNumber(resolveValue(control['rotate'], vars)) ?? 0;
 
+  // keep_ratio (image default true): scale the texture to fit and centre it;
+  // nine-slice textures stretch instead
+  let draw: LayoutBox['draw'];
+  if (kind === 'image') {
+    const keepRaw = resolveValue(control['keep_ratio'], vars);
+    const keepRatio =
+      keepRaw === undefined
+        ? true
+        : keepRaw !== false && keepRaw !== 'false';
+    const texPath = asString(resolveValue(control['texture'], vars));
+    if (keepRatio && !nineslice && texPath && !isReference(texPath) && textureSizes) {
+      const size = textureSizes(texPath);
+      if (size && size[0] > 0 && size[1] > 0 && w > 0 && h > 0) {
+        const k = Math.min(w / size[0], h / size[1]);
+        draw = {
+          x: (w - size[0] * k) / 2,
+          y: (h - size[1] * k) / 2,
+          w: size[0] * k,
+          h: size[1] * k,
+        };
+      }
+    }
+  }
+
+  const text = textOf(control, vars);
+  if (text) {
+    // wrap against the final width the way the game does (only when the
+    // width was actually resolved; `default` width fits the text instead)
+    const scale = text.fontSize / BASE_FONT_SIZE;
+    const fixedW =
+      resolveLength(sizePair(control['size'], vars)[0], parentW, undefined, vars) !==
+      undefined
+        ? w
+        : Number.POSITIVE_INFINITY;
+    text.lines = measureFontText(text.text, scale, fixedW).lines;
+  }
+
   return {
     id,
     kind,
@@ -470,10 +516,11 @@ function layoutControl(
     layer,
     clip: resolveValue(control['clip'], vars) === true,
     rotate,
-    text: textOf(control, vars),
+    text,
     texture: textureOf(control, vars),
     nineslice: nineslice ?? (kind === 'button' ? NINESLICE_DEFAULT : undefined),
     tiled: control['tiled'] === true,
+    draw,
     children: visible === false ? [] : boxes,
     raw: control,
   };
@@ -526,22 +573,23 @@ function autoWidth(
   if (kind === 'label' || kind === 'button' || kind === 'toggle') {
     const text = textOf(control, vars);
     const padding = kind === 'label' ? 0 : 8;
-    if (text) return Math.min(parentW, measureText(text.text, text.fontSize).w + padding);
+    if (text) {
+      // `default` width fits the text (the game does not clamp it to the parent)
+      const scale = text.fontSize / BASE_FONT_SIZE;
+      return measureFontText(text.text, scale).width + padding;
+    }
     return kind === 'label' ? 0 : DEFAULT_BUTTON_SIZE[0];
   }
   if (kind === 'image') return DEFAULT_IMAGE_SIZE;
   if (kind === 'stack_panel') {
-    const horizontal =
-      (asString(resolveValue(control['orientation'], vars)) ?? 'vertical') ===
-      'horizontal';
+    // real device: a stack's %c is the sum of its children in BOTH directions
+    // (use %cm to hug the widest/tallest child instead)
     let total = 0;
-    let max = 0;
     for (const entry of children) {
       const size = measureChild(entry.control, parentW, parentH, vars);
-      if (horizontal) total += size[0];
-      else max = Math.max(max, size[0]);
+      total += size[0];
     }
-    return horizontal ? total : max;
+    return total;
   }
   if (kind === 'grid') return own.w || DEFAULT_BUTTON_SIZE[0];
   return 0;
@@ -558,24 +606,24 @@ function autoHeight(
 ): number {
   if (kind === 'label') {
     const text = textOf(control, vars);
-    return text ? measureText(text.text, text.fontSize).h : 0;
+    if (!text) return 0;
+    // a fixed width wraps the text; `default` width does not wrap
+    const scale = text.fontSize / BASE_FONT_SIZE;
+    return measureFontText(text.text, scale, own.w > 0 ? own.w : Number.POSITIVE_INFINITY)
+      .height;
   }
   if (kind === 'button' || kind === 'toggle' || kind === 'slider') {
     return DEFAULT_BUTTON_SIZE[1];
   }
   if (kind === 'image') return DEFAULT_IMAGE_SIZE;
   if (kind === 'stack_panel') {
-    const horizontal =
-      (asString(resolveValue(control['orientation'], vars)) ?? 'vertical') ===
-      'horizontal';
+    // real device: a stack's %c is the sum of its children in BOTH directions
     let total = 0;
-    let max = 0;
     for (const entry of children) {
       const size = measureChild(entry.control, parentW, parentH, vars);
-      if (horizontal) max = Math.max(max, size[1]);
-      else total += size[1];
+      total += size[1];
     }
-    return horizontal ? max : total;
+    return total;
   }
   return 0;
 }
@@ -592,7 +640,14 @@ function measureChild(
   return resolveSize(control, kind, parentW, parentH, vars, controlEntries(control));
 }
 
-/** Flatten a layout tree in paint order (parents first, higher layers last). */
+/**
+ * Flatten a layout tree in paint order, following the real game's rules
+ * (bedrock 1.3.0 / 1.4.0 / 1.22.0 stacking experiments): first by layer
+ * (accumulated relative to the parent); **within one layer, drawing is
+ * batched by material** — all text is one batch, each texture is its own
+ * batch — and the batches are ordered by the first appearance of that
+ * material in document order (depth-first). Within a batch, document order.
+ */
 export function flattenLayout(root: LayoutBox): LayoutBox[] {
   const out: LayoutBox[] = [];
   const walk = (box: LayoutBox, parentX: number, parentY: number): void => {
@@ -602,9 +657,35 @@ export function flattenLayout(root: LayoutBox): LayoutBox[] {
       y: parentY + box.y,
       children: [],
     };
+    if (box.draw) {
+      absolute.draw = {
+        x: absolute.x + box.draw.x,
+        y: absolute.y + box.draw.y,
+        w: box.draw.w,
+        h: box.draw.h,
+      };
+    }
     out.push(absolute);
     for (const child of box.children) walk(child, absolute.x, absolute.y);
   };
   walk(root, 0, 0);
-  return out.sort((a, b) => a.layer - b.layer || a.depth - b.depth);
+  const first = new Map<string, number>();
+  out.forEach((box, index) => {
+    const key = batchKey(box);
+    if (key && !first.has(`${box.layer}|${key}`)) first.set(`${box.layer}|${key}`, index);
+  });
+  const batch = (box: LayoutBox): number => {
+    const key = batchKey(box);
+    return key ? (first.get(`${box.layer}|${key}`) ?? -1) : -1;
+  };
+  return out.sort(
+    (a, b) => a.layer - b.layer || batch(a) - batch(b) || a.depth - b.depth,
+  );
+}
+
+/** Draw batches: text is one batch; images batch per texture; others draw nothing. */
+function batchKey(box: LayoutBox): string | undefined {
+  if (box.text && box.text.text) return 'text';
+  if (box.texture) return `image:${box.texture.path}`;
+  return undefined;
 }

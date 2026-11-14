@@ -2,8 +2,11 @@ import * as fs from 'node:fs';
 import * as http from 'node:http';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { collectScreens, resolveTextureFile } from './collect.js';
+import { collectScreens, createTextureSizeResolver, resolveTextureFile } from './collect.js';
 import type { PreviewCollection, PreviewScreen } from './collect.js';
+import { codepointsOf } from './font/metrics.js';
+import { glyphsForCodepoints, loadGlyphFont } from './fonts.js';
+import type { GlyphMap } from './fonts.js';
 import { layoutDocument } from './layout.js';
 import { renderPng } from './png.js';
 import { renderSvg } from './svg.js';
@@ -93,6 +96,49 @@ export async function startPreviewServer(
 
   let collection = collectScreens(root, collectOptions);
   let clientBundle = candidateClientBundle();
+
+  // Unifont bitmaps for game-accurate text; `undefined` keeps system fonts.
+  const glyphFont = await loadGlyphFont();
+  const screenGlyphs = (screen: PreviewScreen): GlyphMap | undefined => {
+    if (!glyphFont) return undefined;
+    const texts: string[] = [];
+    const walk = (node: unknown): void => {
+      if (Array.isArray(node)) {
+        for (const item of node) walk(item);
+        return;
+      }
+      if (!node || typeof node !== 'object') return;
+      for (const [, value] of Object.entries(node)) {
+        if (typeof value === 'string') texts.push(value);
+        else if (value && typeof value === 'object') walk(value);
+      }
+    };
+    walk(screen.document);
+    return glyphsForCodepoints(glyphFont, codepointsOf(texts));
+  };
+
+  const textureSizesFor = (screen: PreviewScreen): Record<string, [number, number]> => {
+    const sizes = createTextureSizeResolver(collection.textureRoots);
+    const paths = new Set<string>();
+    const walk = (node: unknown): void => {
+      if (Array.isArray(node)) {
+        for (const item of node) walk(item);
+        return;
+      }
+      if (!node || typeof node !== 'object') return;
+      for (const [key, value] of Object.entries(node)) {
+        if (key === 'texture' && typeof value === 'string') paths.add(value);
+        else if (value && typeof value === 'object') walk(value);
+      }
+    };
+    walk(screen.document);
+    const out: Record<string, [number, number]> = {};
+    for (const texturePath of paths) {
+      const size = sizes(texturePath);
+      if (size) out[texturePath] = size;
+    }
+    return out;
+  };
 
   const watchersEnabled = options.watch !== false;
   const sseClients = new Set<http.ServerResponse>();
@@ -185,6 +231,8 @@ export async function startPreviewServer(
         target: screen.target ?? null,
         document: screen.document,
         warnings: screen.warnings,
+        glyphs: Object.fromEntries(screenGlyphs(screen) ?? []),
+        textureSizes: textureSizesFor(screen),
       });
       return;
     }
@@ -217,6 +265,7 @@ export async function startPreviewServer(
       const result = layoutDocument(screen.document, screen.rootId, {
         width: layoutWidth,
         height: layoutHeight,
+        textureSizes: createTextureSizeResolver(collection.textureRoots),
       });
       const download = url.searchParams.get('download') === '1';
       const disposition = download
@@ -228,6 +277,7 @@ export async function startPreviewServer(
           result,
           background,
           scale: density,
+          glyphs: screenGlyphs(screen),
           textureUri: texturePath => {
             const file = resolveTextureFile(collection.textureRoots, texturePath);
             if (!file) return undefined;
@@ -250,7 +300,12 @@ export async function startPreviewServer(
       }
 
       // PNG is rasterised in-process: no browser, no native image library.
-      const png = renderPng({ result, background, scale: density });
+      const png = renderPng({
+        result,
+        background,
+        scale: density,
+        glyphs: screenGlyphs(screen),
+      });
       res.writeHead(200, {
         'content-type': 'image/png',
         'cache-control': 'no-store',

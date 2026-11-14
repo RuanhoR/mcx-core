@@ -376,3 +376,38 @@ export function documentVariables(
     ? (variables as Record<string, JsonUIValue>)
     : {};
 }
+
+/** Read the pixel size of a PNG texture (IHDR chunk); other formats return undefined. */
+export function pngTextureSize(file: string): [number, number] | undefined {
+  try {
+    if (!/\.png$/i.test(file)) return undefined;
+    const handle = fs.openSync(file, 'r');
+    try {
+      const header = Buffer.alloc(24);
+      const read = fs.readSync(handle, header, 0, 24, 0);
+      if (read < 24) return undefined;
+      if (header.readUInt32BE(0) !== 0x89504e47) return undefined;
+      const w = header.readUInt32BE(16);
+      const h = header.readUInt32BE(20);
+      return w > 0 && h > 0 ? [w, h] : undefined;
+    } finally {
+      fs.closeSync(handle);
+    }
+  } catch {
+    return undefined;
+  }
+}
+
+/** Memoised texture size lookup over a collection's resource packs. */
+export function createTextureSizeResolver(
+  roots: PreviewTextureRoot[],
+): (texturePath: string) => [number, number] | undefined {
+  const cache = new Map<string, [number, number] | undefined>();
+  return texturePath => {
+    if (cache.has(texturePath)) return cache.get(texturePath);
+    const file = resolveTextureFile(roots, texturePath);
+    const size = file ? pngTextureSize(file) : undefined;
+    cache.set(texturePath, size);
+    return size;
+  };
+}

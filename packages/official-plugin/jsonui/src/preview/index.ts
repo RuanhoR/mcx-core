@@ -19,7 +19,6 @@ export type {
 } from './collect.js';
 export {
   BASE_FONT_SIZE,
-  GLYPH_RATIO,
   controlKind,
   cssColor,
   flattenLayout,
@@ -35,9 +34,20 @@ export type {
   LayoutText,
   TextureRef,
 } from './layout.js';
-export { renderSvg } from './svg.js';
+export { renderSvg, textSvgFragment } from './svg.js';
 export type { SvgRenderOptions } from './svg.js';
 export { renderPng } from './png.js';
 export type { PngRenderOptions } from './png.js';
+export { loadGlyphFont, glyphsForCodepoints } from './fonts.js';
+export type { GlyphMap } from './fonts.js';
+export {
+  BEDROCK_COLORS,
+  LINE_HEIGHT,
+  charWidth,
+  measureText as measureFontText,
+  parseRich,
+  textWidth,
+  usesUnifont,
+} from './font/metrics.js';
 export { startPreviewServer } from './server.js';
 export type { PreviewServerHandle, PreviewServerOptions } from './server.js';

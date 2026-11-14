@@ -166,6 +166,8 @@ pnpm mcx-plugin-jsonui preview ./src/ui --port 6000
 
 左侧列出工程里所有 `<Ui type="jsonui">` 文件，点开按游戏规则渲染（anchor、`%`/`px` 长度、`stack_panel`、`grid`、`$变量`、`#binding`），贴图从资源包里取，保存即热更新。`--port` / `--host` / `--size` / `--no-open` / `--no-watch` 可调。
 
+文字按真机校准的字宽排版（度量移植自 CUI 框架）：纯 ASCII 用 Minecraft 默认字宽，含非 ASCII 的整段用 Unifont 半像素精度，label 按游戏规则折行，`§` 格式码按基岩版颜色渲染，图片按 `keep_ratio` 缩放居中。像素字形需要 Unifont 点阵文件（约 1.6 MB）：首次使用时自动从 GNU 镜像下载到 `~/.mcx/fonts/`，`MCX_UNIFONT` 可指向本地 `unifont.hex[.gz]`；没有字体数据时回退系统字体。
+
 截图走服务端计算，不启动浏览器也不依赖原生图像库，方便工具链和 agent 调试：
 
 ```bash
@@ -173,7 +175,7 @@ curl "http://127.0.0.1:5174/api/screenshot?id=src/ui/shop.mcx&format=png&scale=2
 curl "http://127.0.0.1:5174/api/screens"      # 文件树 + 元信息
 ```
 
-`format=png`（默认）由内置光栅化器绘制，文字用 5×7 像素字体、图片画成占位块；需要真实字体与嵌入贴图时用 `format=svg`。
+`format=png`（默认）与 `format=svg` 用同一套布局与字形渲染，结果一致；SVG 额外把贴图内嵌为 data URI。
 
 ## 相关资料
 

@@ -1,14 +1,26 @@
 import { deflateSync } from 'node:zlib';
-import type { LayoutBox, LayoutResult } from './layout.js';
+import { GAME_GLYPHS } from './font/gameGlyphs.js';
+import {
+  GLYPH_TOP,
+  LINE_HEIGHT,
+  boldExtra,
+  charWidth,
+  parseRich,
+  PLAIN,
+  usesUnifont,
+  type RunStyle,
+} from './font/metrics.js';
+import type { GlyphMap } from './fonts.js';
+import { BASE_FONT_SIZE, type LayoutBox, type LayoutResult } from './layout.js';
 
 /**
  * Server side rasteriser for screenshots.
  *
  * It consumes the same `LayoutBox` tree as the browser preview, so geometry is
  * identical, and it depends on nothing but `node:zlib` — no browser, no native
- * image library, no external process. Text is drawn with the embedded 5×7
- * pixel font below (lowercase folds to uppercase, unknown glyphs become a
- * placeholder box); use `format=svg` when exact font metrics matter.
+ * image library, no external process. Text is drawn with Unifont bitmaps when
+ * glyph data is available (the same calibrated font the game uses); otherwise
+ * it falls back to the embedded 5×7 font below.
  */
 interface Rgba {
   r: number;
@@ -182,6 +194,19 @@ class Raster {
     }
   }
 
+  /** The game's dot rasterisation: floor the start, ceil the end, no anti-aliasing. */
+  rectGame(x: number, y: number, w: number, h: number, color: Rgba, alpha = 1): void {
+    const x0 = Math.max(0, Math.floor(x + 1e-6));
+    const y0 = Math.max(0, Math.floor(y + 1e-6));
+    const x1 = Math.min(this.width, Math.ceil(x + w - 1e-6));
+    const y1 = Math.min(this.height, Math.ceil(y + h - 1e-6));
+    for (let py = y0; py < y1; py += 1) {
+      for (let px = x0; px < x1; px += 1) {
+        this.blend(px, py, color, alpha);
+      }
+    }
+  }
+
   strokeRect(
     x: number,
     y: number,
@@ -296,16 +321,200 @@ const IMAGE_STROKE: Rgba = { r: 75, g: 85, b: 99, a: 1 };
 const CUSTOM_FILL: Rgba = { r: 31, g: 36, b: 48, a: 1 };
 const CUSTOM_STROKE: Rgba = { r: 107, g: 114, b: 128, a: 1 };
 
+function dimRgba(color: Rgba, factor: number): Rgba {
+  return {
+    r: Math.round(color.r * factor),
+    g: Math.round(color.g * factor),
+    b: Math.round(color.b * factor),
+    a: color.a,
+  };
+}
+
+/** Deterministic same-width substitute for §k (the game animates; previews stay stable). */
+const OBFUSCATED_POOL =
+  'abcdefghjkmnopqrsuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789#$%&+=?';
+
+function obfuscatedChar(ch: string, index: number, unifont: boolean): string {
+  if (ch === ' ') return ch;
+  if (unifont) return '.';
+  const width = charWidth(ch, false);
+  const pool = [...OBFUSCATED_POOL].filter(c => charWidth(c, false) === width);
+  if (pool.length === 0) return ch;
+  return pool[index % pool.length] ?? ch;
+}
+
+function glyphBitsFor(
+  ch: string,
+  glyphs: GlyphMap | undefined,
+): string | undefined {
+  const cp = ch.codePointAt(0) ?? 0;
+  return GAME_GLYPHS[cp] ?? glyphs?.get(cp);
+}
+
+/**
+ * Draw text with Unifont bitmaps, mirroring the SVG renderer exactly; returns
+ * `false` when the glyph data is insufficient so the caller can fall back.
+ */
+function drawTextGlyphs(
+  raster: Raster,
+  box: LayoutBox,
+  offsetX: number,
+  offsetY: number,
+  alpha: number,
+  color: Rgba,
+  glyphs: GlyphMap,
+  factor: number,
+): boolean {
+  const text = box.text;
+  if (!text || !text.text) return true;
+  const fontScale = text.fontSize / BASE_FONT_SIZE;
+  const unifont = usesUnifont(text.text);
+
+  // every codepoint must be available before anything is drawn
+  for (const ch of text.text.replace(/§./gs, '')) {
+    const cp = ch.codePointAt(0) ?? 0;
+    if (cp !== 0x20 && cp !== 0x0a && !glyphBitsFor(ch, glyphs)) return false;
+  }
+
+  const rowsCache = new Map<number, { w: number; rows: number[] }>();
+  const drawGlyph = (
+    ch: string,
+    x: number,
+    y: number,
+    fill: Rgba,
+    italic: boolean,
+  ): void => {
+    const cp = ch.codePointAt(0) ?? 0;
+    if (cp === 0x20) return;
+    const bits = glyphBitsFor(ch, glyphs);
+    if (!bits) return;
+    let parsed = rowsCache.get(cp);
+    if (!parsed) {
+      const w = bits.length === 64 ? 16 : 8;
+      const rows: number[] = [];
+      for (let i = 0; i < bits.length; i += w / 4)
+        rows.push(Number.parseInt(bits.slice(i, i + w / 4), 16));
+      parsed = { w, rows };
+      rowsCache.set(cp, parsed);
+    }
+    // ASCII (Minecraft default font): one dot cell = 1 UI px; Unifont: half
+    const cell = unifont ? fontScale / 2 : fontScale;
+    for (let r = 0; r < parsed.rows.length; r += 1) {
+      const rowBits = parsed.rows[r] ?? 0;
+      for (let c = 0; c < parsed.w; c += 1) {
+        if ((rowBits >> (parsed.w - 1 - c)) & 1) {
+          // italic: glyph top shifted right 1 UI px relative to the bottom
+          const dx = italic
+            ? fontScale * (1 - (r * cell) / (8 * fontScale))
+            : 0;
+          raster.rectGame(
+            x + c * cell + dx,
+            y + r * cell,
+            cell,
+            cell,
+            fill,
+            alpha,
+          );
+        }
+      }
+    }
+  };
+
+  const drawRuns = (
+    line: string,
+    x0: number,
+    y: number,
+    styleIn: RunStyle,
+  ): RunStyle => {
+    const { runs, end } = parseRich(line, styleIn);
+    // advances accumulate in fs=1 UI px and are scaled by fontScale when drawn
+    let x = 0;
+    let charIndex = 0;
+    for (const run of runs) {
+      const runColor = run.style.color
+        ? parseColor(run.style.color, alpha)
+        : color;
+      const shadowColor = dimRgba(runColor, 0.25);
+      const passes: { dx: number; dy: number; fill: Rgba }[] = [];
+      if (text.shadow) {
+        passes.push({ dx: fontScale, dy: fontScale, fill: shadowColor });
+      }
+      passes.push({ dx: 0, dy: 0, fill: runColor });
+      const italic = run.style.italic;
+      for (const ch of run.text) {
+        const shown = run.style.obfuscated
+          ? obfuscatedChar(ch, charIndex, unifont)
+          : ch;
+        for (const pass of passes) {
+          drawGlyph(shown, x0 + (x + pass.dx) * fontScale, y + pass.dy * fontScale, pass.fill, italic);
+          if (run.style.bold) {
+            drawGlyph(
+              shown,
+              x0 + (x + pass.dx + boldExtra(shown, unifont)) * fontScale,
+              y + pass.dy * fontScale,
+              pass.fill,
+              italic,
+            );
+          }
+        }
+        x += charWidth(shown, unifont);
+        charIndex += 1;
+      }
+    }
+    return end;
+  };
+
+  // line widths in fs=1 UI px (bold carries across runs, styles across lines)
+  const widths = text.lines.map(line => {
+    let style: RunStyle = PLAIN;
+    let w = 0;
+    for (const run of parseRich(line, style).runs) {
+      style = run.style;
+      for (const ch of run.text) {
+        w += charWidth(ch, unifont) + (run.style.bold ? boldExtra(ch, unifont) : 0);
+      }
+    }
+    return w;
+  });
+
+  const linePitch = LINE_HEIGHT * fontScale;
+  const blockHeight = text.lines.length * linePitch;
+  const vCenter = box.kind === 'button' || box.kind === 'toggle';
+  const startY = vCenter
+    ? offsetY + box.y + (box.h - blockHeight) / 2
+    : offsetY + box.y;
+
+  let style: RunStyle = PLAIN;
+  text.lines.forEach((line, index) => {
+    const lineWidth = (widths[index] ?? 0) * fontScale;
+    const x0 =
+      text.align === 'left'
+        ? offsetX + box.x
+        : text.align === 'right'
+          ? offsetX + box.x + box.w - lineWidth
+          : offsetX + box.x + (box.w - lineWidth) / 2;
+    const y = startY + index * linePitch + GLYPH_TOP * fontScale;
+    style = drawRuns(line, x0, y, style);
+  });
+  return true;
+}
+
 function drawText(
   raster: Raster,
   box: LayoutBox,
   offsetX: number,
   offsetY: number,
   alpha: number,
+  glyphs: GlyphMap | undefined,
+  factor: number,
 ): void {
   const text = box.text;
   if (!text || !text.text) return;
   const color = parseColor(text.color, text.dynamic ? alpha * 0.85 : alpha);
+  if (glyphs && drawTextGlyphs(raster, box, offsetX, offsetY, alpha, color, glyphs, factor)) {
+    return;
+  }
+  // fallback: the built-in 5x7 uppercase font (no unifont data available)
   const lines = text.text.split('\n');
   const lineHeight = text.fontSize * 1.18;
   const advance = text.fontSize * 0.6;
@@ -337,6 +546,8 @@ function drawBox(
   offsetX: number,
   offsetY: number,
   parentAlpha: number,
+  glyphs: GlyphMap | undefined,
+  factor: number,
 ): void {
   const alpha = Math.max(0, Math.min(1, box.alpha * parentAlpha));
   if (alpha <= 0.002) return;
@@ -349,32 +560,41 @@ function drawBox(
       raster.rect(x, y, box.w, box.h, BUTTON_FILL, alpha);
       raster.rect(x, y, box.w, Math.max(1, box.h * 0.45), BUTTON_LIGHT, alpha * 0.55);
       raster.strokeRect(x, y, box.w, box.h, { r: 0, g: 0, b: 0, a: 1 }, alpha);
-      drawText(raster, box, offsetX, offsetY, alpha);
+      drawText(raster, box, offsetX, offsetY, alpha, glyphs, factor);
       break;
     }
     case 'label':
-      drawText(raster, box, offsetX, offsetY, alpha);
+      drawText(raster, box, offsetX, offsetY, alpha, glyphs, factor);
       break;
-    case 'image':
-      raster.rect(x, y, box.w, box.h, IMAGE_FILL, alpha);
-      raster.strokeRect(x, y, box.w, box.h, IMAGE_STROKE, alpha, true);
+    case 'image': {
+      const draw = box.draw;
+      raster.rect(
+        x + (draw?.x ?? 0),
+        y + (draw?.y ?? 0),
+        draw?.w ?? box.w,
+        draw?.h ?? box.h,
+        IMAGE_FILL,
+        alpha,
+      );
+      raster.strokeRect(x + (draw?.x ?? 0), y + (draw?.y ?? 0), draw?.w ?? box.w, draw?.h ?? box.h, IMAGE_STROKE, alpha, true);
       break;
+    }
     case 'custom':
     case 'input':
     case 'scroll_view':
       raster.rect(x, y, box.w, box.h, CUSTOM_FILL, alpha * 0.35);
       raster.strokeRect(x, y, box.w, box.h, CUSTOM_STROKE, alpha, true);
-      drawText(raster, box, offsetX, offsetY, alpha);
+      drawText(raster, box, offsetX, offsetY, alpha, glyphs, factor);
       break;
     default:
-      if (box.text) drawText(raster, box, offsetX, offsetY, alpha);
+      if (box.text) drawText(raster, box, offsetX, offsetY, alpha, glyphs, factor);
       break;
   }
 
   const children = [...box.children].sort(
     (a, b) => a.layer - b.layer || a.depth - b.depth,
   );
-  for (const child of children) drawBox(raster, child, x, y, alpha);
+  for (const child of children) drawBox(raster, child, x, y, alpha, glyphs, factor);
 }
 
 export interface PngRenderOptions {
@@ -382,6 +602,8 @@ export interface PngRenderOptions {
   background?: 'checker' | 'dark' | 'transparent';
   /** pixel density multiplier (1 = logical pixels) */
   scale?: number;
+  /** Unifont bitmaps (codepoint → hex rows); text falls back without them */
+  glyphs?: GlyphMap | undefined;
 }
 
 function scaleBox(box: LayoutBox, factor: number): LayoutBox {
@@ -426,6 +648,6 @@ export function renderPng(options: PngRenderOptions): Buffer {
     }
   }
 
-  drawBox(raster, result.root, 0, 0, 1);
+  drawBox(raster, result.root, 0, 0, 1, options.glyphs, factor);
   return raster.toPng();
 }

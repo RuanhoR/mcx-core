@@ -1,5 +1,6 @@
 import { layoutDocument, flattenLayout } from './layout.js';
 import type { LayoutBox } from './layout.js';
+import { textSvgFragment } from './svg.js';
 import type { JsonUIValue } from '../types.js';
 
 interface ScreenMeta {
@@ -24,6 +25,10 @@ interface ScreenWarning {
 
 interface ScreenDocument extends ScreenMeta {
   document: Record<string, JsonUIValue>;
+  /** Unifont bitmaps (codepoint → hex rows) for game-accurate text */
+  glyphs?: Record<string, string> | undefined;
+  /** pixel sizes of the textures this screen uses (for keep_ratio) */
+  textureSizes?: Record<string, [number, number]> | undefined;
 }
 
 type DirNode = { kind: 'dir'; name: string; path: string; children: TreeNode[] };
@@ -70,6 +75,17 @@ const state = {
   zoom: 'fit' as 'fit' | '1' | '2',
   collapsed: new Set<string>(),
 };
+
+/** Glyph bitmaps of the active screen, or `undefined` when unavailable. */
+let activeGlyphs: Map<number, string> | undefined;
+
+function glyphsOf(screen: ScreenDocument | undefined): Map<number, string> | undefined {
+  const raw = screen?.glyphs;
+  if (!raw) return undefined;
+  const map = new Map<number, string>();
+  for (const [cp, bits] of Object.entries(raw)) map.set(Number.parseInt(cp, 10), bits);
+  return map.size > 0 ? map : undefined;
+}
 
 const els = {
   rootPath: document.getElementById('root-path') as HTMLElement,
@@ -188,6 +204,14 @@ function render(): void {
 function styledText(el: HTMLElement, box: LayoutBox): void {
   const text = box.text;
   if (!text) return;
+  if (activeGlyphs) {
+    const fragment = textSvgFragment(box, activeGlyphs);
+    if (fragment) {
+      el.classList.add('text-glyphs');
+      el.innerHTML = fragment;
+      return;
+    }
+  }
   el.textContent = text.text;
   el.style.fontSize = `${text.fontSize}px`;
   el.style.color = text.color;
@@ -220,7 +244,11 @@ function paintBox(box: LayoutBox, parent: HTMLElement, isRoot: boolean): void {
     if (texture && !texture.dynamic) {
       const url = `/texture/${texture.path.replace(/^\/+/, '')}`;
       el.style.backgroundImage = `url("${url}")`;
-      if (box.tiled) {
+      if (box.draw) {
+        el.style.backgroundSize = `${box.draw.w}px ${box.draw.h}px`;
+        el.style.backgroundPosition = `${box.draw.x}px ${box.draw.y}px`;
+        el.style.backgroundRepeat = 'no-repeat';
+      } else if (box.tiled) {
         el.style.backgroundRepeat = 'repeat';
         el.style.backgroundSize = 'auto';
       }
@@ -276,10 +304,13 @@ function applyZoom(): void {
 function paint(): void {
   const screen = state.active;
   els.canvas.textContent = '';
+  activeGlyphs = glyphsOf(screen);
   if (!screen) return;
+  const sizeMap = screen.textureSizes;
   const result = layoutDocument(screen.document, screen.rootId, {
     width: state.canvasW,
     height: state.canvasH,
+    textureSizes: sizeMap ? texturePath => sizeMap[texturePath] : undefined,
   });
   paintBox(result.root, els.canvas, true);
   applyZoom();

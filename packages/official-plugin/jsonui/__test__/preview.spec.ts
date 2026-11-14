@@ -161,8 +161,86 @@ describe('layoutDocument', () => {
     };
     const result = layoutDocument(doc, 'ns', { width: 200, height: 100 });
     const label = result.root.children[0];
+    // calibrated widths: A/B/C/D are 6 UI px each, one game line is 10 tall
     expect(label?.w).toBe(24);
-    expect(label?.h).toBe(12);
+    expect(label?.h).toBe(10);
+  });
+
+  it('measures CJK text with the calibrated Unifont widths', () => {
+    // 「中」is 6.5 UI px wide (ink 5.5 / 2 + 1), full-width comma 2
+    const result = layoutDocument(
+      { ns: { type: 'screen', controls: [{ t: { type: 'label', text: '中' } }] } },
+      'ns',
+      { width: 200, height: 100 },
+    );
+    expect(result.root.children[0]?.w).toBe(7); // Math.round(6.5)
+  });
+
+  it('wraps label text at spaces the way the game does', () => {
+    const doc: Record<string, JsonUIValue> = {
+      ns: {
+        type: 'screen',
+        controls: [
+          {
+            t: {
+              type: 'label',
+              text: 'aaa bbb ccc',
+              size: [20, 'default'],
+              text_alignment: 'left',
+            },
+          },
+        ],
+      },
+    };
+    const result = layoutDocument(doc, 'ns', { width: 200, height: 100 });
+    const label = result.root.children[0];
+    // each word fits one line (3 × 6 = 18 ≤ 20) so the wrap moves whole words
+    expect(label?.text?.lines).toEqual(['aaa', 'bbb', 'ccc']);
+    expect(label?.h).toBe(30);
+  });
+
+  it('sums stack_panel auto size in both directions (real device %c rule)', () => {
+    const doc: Record<string, JsonUIValue> = {
+      ns: {
+        type: 'screen',
+        controls: [
+          {
+            s: {
+              type: 'stack_panel',
+              orientation: 'vertical',
+              controls: [
+                { a: { type: 'panel', size: [30, 10] } },
+                { b: { type: 'panel', size: [50, 12] } },
+              ],
+            },
+          },
+        ],
+      },
+    };
+    const result = layoutDocument(doc, 'ns', { width: 200, height: 100 });
+    const stack = result.root.children[0];
+    expect(stack?.w).toBe(80); // sum, not max (50)
+    expect(stack?.h).toBe(22);
+  });
+
+  it('keeps image ratio when the texture size is known', () => {
+    const doc: Record<string, JsonUIValue> = {
+      ns: {
+        type: 'screen',
+        controls: [
+          { img: { type: 'image', texture: 'textures/ui/test', size: [40, 10] } },
+        ],
+      },
+    };
+    const result = layoutDocument(doc, 'ns', {
+      width: 200,
+      height: 100,
+      textureSizes: path =>
+        path === 'textures/ui/test' ? ([16, 8] as [number, number]) : undefined,
+    });
+    const image = result.root.children[0];
+    // k = min(40/16, 10/8) = 1.25 → drawn 20×10, centred horizontally
+    expect(image?.draw).toEqual({ x: 10, y: 0, w: 20, h: 10 });
   });
 
   it('marks binding text as dynamic', () => {
@@ -196,6 +274,61 @@ describe('renderSvg', () => {
     expect(svg).toContain('#hint_text');
     expect(svg.startsWith('<svg')).toBe(true);
     expect(svg).toContain('<rect');
+  });
+
+  it('draws text with unifont bitmaps when glyph data is available', () => {
+    const doc: Record<string, JsonUIValue> = {
+      ns: {
+        type: 'screen',
+        controls: [{ t: { type: 'label', text: 'Buy', size: [100, 20] } }],
+      },
+    };
+    const result = layoutDocument(doc, 'ns', { width: 200, height: 100 });
+    // a real unifont bitmap: 'B' (U+0042), 8 wide, 16 tall, top 8 rows inked
+    const glyphs = new Map<number, string>([
+      [0x42, 'fc6666667e666666' + '0'.repeat(16)],
+      [0x75, '0'.repeat(32)], // u
+      [0x79, '0'.repeat(32)], // y
+    ]);
+    const svg = renderSvg({ result, background: 'dark', glyphs });
+    expect(svg).toContain('<defs><path id="mcxg42"');
+    expect(svg).toContain('<use href="#mcxg42"');
+    expect(svg).not.toContain('font-family');
+  });
+
+  it('falls back to system fonts when a codepoint is missing', () => {
+    const doc: Record<string, JsonUIValue> = {
+      ns: {
+        type: 'screen',
+        controls: [{ t: { type: 'label', text: 'Buy 中', size: [100, 20] } }],
+      },
+    };
+    const result = layoutDocument(doc, 'ns', { width: 200, height: 100 });
+    const glyphs = new Map<number, string>([[0x42, '0'.repeat(32)]]);
+    const svg = renderSvg({ result, background: 'dark', glyphs });
+    // 中 (U+4E2D) is not in the map → the whole label uses the system font
+    expect(svg).toContain('font-family');
+    expect(svg).not.toContain('<use href="#mcxg');
+  });
+
+  it('renders § colour codes as styled runs', () => {
+    const doc: Record<string, JsonUIValue> = {
+      ns: {
+        type: 'screen',
+        controls: [
+          { t: { type: 'label', text: '§cRed§r rest', size: [200, 20] } },
+        ],
+      },
+    };
+    const result = layoutDocument(doc, 'ns', { width: 200, height: 100 });
+    const glyphs = new Map<number, string>();
+    for (const ch of 'Red rest')
+      glyphs.set(ch.codePointAt(0) ?? 0, 'ff'.repeat(16));
+    const svg = renderSvg({ result, background: 'dark', glyphs });
+    // §c → bedrock red #FF5555; the codes themselves take no width
+    expect(svg).toContain('fill="#FF5555"');
+    expect(svg).toContain('fill="#ffffff"');
+    expect(svg).not.toContain('§');
   });
 });
 
@@ -237,7 +370,10 @@ describe('preview server', () => {
         `${base}/api/screenshot?id=${encodeURIComponent('src/ui/shop.mcx')}&format=svg`,
       );
       expect(shot.headers.get('content-type')).toContain('image/svg+xml');
-      expect(await shot.text()).toContain('>Buy<');
+      const svg = await shot.text();
+      // text is drawn with unifont glyph paths when the font is available
+      expect(svg).toContain('<use href="#mcxg42"'); // 'B' of Buy
+
 
       const png = await fetch(
         `${base}/api/screenshot?id=${encodeURIComponent('src/ui/shop.mcx')}`,

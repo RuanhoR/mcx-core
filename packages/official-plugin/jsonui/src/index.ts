@@ -2,7 +2,9 @@ import type { McxPlugin } from '@mbler/mcx-types';
 import { jsonUiPlugin } from './plugin.js';
 import type { JsonUIPluginOptions } from './types.js';
 
-export { jsonUiPlugin } from './plugin.js';
+export { jsonUiPlugin, extractScript } from './plugin.js';
+export type { JsonUiScript } from './plugin.js';
+export { jsonuiCompletion } from './completion.js';
 export {
   defineJsonUIAvailability,
   createAvailabilityRegistry,
@@ -14,7 +16,12 @@ export {
   noneAvailability,
 } from './availability.js';
 export { JSONUIComponent } from './component.js';
-export type { JsonUIComponentInit } from './component.js';
+export type {
+  AddBindingOptions,
+  JsonUIBinding,
+  JsonUIBindingInput,
+  JsonUIComponentInit,
+} from './component.js';
 export {
   buildDocument,
   nodeFromMcx,

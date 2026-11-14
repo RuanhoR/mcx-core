@@ -1,6 +1,6 @@
 {
   "name": "@mbler/mcx-plugin-jsonui",
-  "version": "0.0.1-rc.1",
+  "version": "0.0.1-alpha.2",
   "description": "Official MCX compiler plugin for Minecraft Bedrock JSON UI (<Ui type=\"jsonui\">)",
   "keywords": [
     "minecraft",

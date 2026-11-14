@@ -92,10 +92,59 @@ interface McxPluginContext {
   /** throw a located error through the bundler */
   error(message: string, loc?: McxPosition): never;
 }
+/** Attribute offered by completion inside an open tag. */
+interface McxCompletionAttribute {
+  /** attribute name as written in the template, e.g. `@after` or `:value` */
+  name: string;
+  /** short description shown next to the entry */
+  detail?: string;
+  /** snippet inserted instead of the bare name, e.g. `lang="ts"` */
+  insertText?: string;
+  /** enum values offered while completing the attribute value */
+  values?: string[];
+  /** markdown documentation, when the consumer supports it */
+  documentation?: string;
+}
+/** Tag offered by completion, with its children and attributes. */
+interface McxCompletionTag {
+  name: string;
+  detail?: string;
+  /** tags suggested directly inside this tag */
+  children?: string[];
+  attributes?: McxCompletionAttribute[];
+  /** shared attribute sets or parent tags whose attributes are inherited */
+  extends?: string[];
+  /** container tags keep child-context on the following line */
+  container?: boolean;
+  snippet?: string;
+  documentation?: string;
+}
+/**
+ * Completion data a plugin contributes to editors. mbler collects these into
+ * `.mbler/mcx-completion.json`, which the MCX language server merges into its
+ * built-in tag/attribute tables.
+ */
+interface McxCompletionContribution {
+  /** contributor id, normally the plugin package name */
+  name: string;
+  /** tags offered when the file has no enclosing tag */
+  rootTags?: string[];
+  tags?: McxCompletionTag[];
+  /** attribute sets referenced through `McxCompletionTag.extends` */
+  attributeSets?: Record<string, McxCompletionAttribute[]>;
+  /** values offered for `<script lang="...">` */
+  scriptLangs?: string[];
+}
+
 interface McxPlugin {
   name: string;
   /** handlers for custom root tags, keyed by tag name */
   tags?: Record<string, McxTagHandler>;
+  /**
+   * tags/attributes this plugin adds to editor completion. Collected by mbler
+   * into `.mbler/mcx-completion.json` for the language server.
+   */
+  completion?: McxCompletionContribution;
   /** before the built-in transform; return JS code to replace the whole output */
   onTransform?: (
     ctx: McxPluginContext,
@@ -1745,6 +1794,9 @@ export type {
   McxPluginContext,
   McxPluginInput,
   McxPluginOutput,
+  McxCompletionAttribute,
+  McxCompletionContribution,
+  McxCompletionTag,
   McxPosition,
   McxTagChild,
   McxTagHandler,

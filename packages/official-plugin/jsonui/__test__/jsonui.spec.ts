@@ -3,11 +3,19 @@ import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import ts from 'typescript';
 import type { McxPlugin } from '@mbler/mcx-types';
 import * as MCX from '../../../core/src/index.js';
-import { defineJsonUIAvailability, jsonUiPlugin } from '../src/index.js';
+import { Molang } from '../../../mcx-component/src/index.js';
+import {
+  defineJsonUIAvailability,
+  jsonui,
+  jsonuiCompletion,
+  jsonUiPlugin,
+  extractScript,
+} from '../src/index.js';
 import { JSONUIComponent } from '../src/component.js';
-import type { JsonUIPluginOptions } from '../src/types.js';
+import type { JsonUIElement, JsonUIPluginOptions } from '../src/types.js';
 
 const fixtureTsconfig = path.resolve(
   'packages/core/__test__/vite-plugin-fixture/tsconfig.json',
@@ -63,6 +71,7 @@ async function compile(
       moduleDir: '/dev/null',
       tsconfigPath: fixtureTsconfig,
       sourcemap: false,
+      ts,
       mcxPlugin: plugin,
     },
     { dist: '', behavior: '', resources: tmpDir },
@@ -320,6 +329,151 @@ describe('@mbler/mcx-plugin-jsonui', () => {
     await plugin.onBuildEnd?.();
     expect(readJson('ui/_ui_defs.json')['ui_defs']).toEqual(
       expect.arrayContaining(['ui/existing.json', 'ui/merged.json']),
+    );
+  });
+});
+
+describe('jsonui editor completion', () => {
+  it('attaches completion data to the plugin instance', () => {
+    const plugin = jsonui();
+    expect(plugin.completion).toBe(jsonuiCompletion);
+    expect(plugin.completion?.name).toBe('@mbler/mcx-plugin-jsonui');
+  });
+
+  it('contributes <JsonUi> and the <Ui type="jsonui"> attributes', () => {
+    expect(jsonuiCompletion.rootTags).toContain('JsonUi');
+    const jsonuiTag = jsonuiCompletion.tags?.find(tag => tag.name === 'JsonUi');
+    expect(jsonuiTag?.extends).toEqual(['jsonui-root', 'jsonui-control']);
+    const attributes = jsonuiCompletion.attributeSets?.['jsonui-root'] ?? [];
+    expect(attributes.map(attr => attr.name)).toEqual(
+      expect.arrayContaining(['target', 'availability', 'namespace', 'file']),
+    );
+    expect(
+      attributes.find(attr => attr.name === 'availability')?.values,
+    ).toEqual(['file', 'server_form', 'hud', 'vanilla', 'none']);
+    const uiTag = jsonuiCompletion.tags?.find(tag => tag.name === 'Ui');
+    expect(uiTag?.attributes?.some(attr => attr.name === 'type')).toBe(true);
+  });
+});
+
+describe('jsonui <script> support', () => {
+  it('extracts the script block and its lang', () => {
+    expect(extractScript('<script lang="js">const a = 1</script>')).toEqual({
+      code: 'const a = 1',
+      lang: 'js',
+    });
+    expect(extractScript('<script>export const a = 1</script>')).toEqual({
+      code: 'export const a = 1',
+      lang: 'ts',
+    });
+    expect(extractScript('<script>   </script>')).toBeUndefined();
+    expect(extractScript('<Ui type="jsonui" />')).toBeUndefined();
+  });
+
+  it('appends the transpiled script to the generated module', async () => {
+    const plugin = makePlugin();
+    const source = [
+      '<Ui type="jsonui" target="hud" availability="file">',
+      '  <label id="hp" text="HP" />',
+      '</Ui>',
+      '<script lang="ts">',
+      "import { Molang } from '@mbler/mcx-component';",
+      'const hp: string = Molang.query("get_health").toString();',
+      "jsonui.text('hp', hp);",
+      "export const label = 'hp';",
+      '</script>',
+    ].join('\n');
+    const code = await compile(source, plugin, 'hud.mcx');
+
+    // `const hp: string` proves the TypeScript compiler ran.
+    expect(code).not.toContain('const hp: string');
+    expect(code).toContain('const hp = Molang.query("get_health").toString();');
+    expect(code).toContain("jsonui.text('hp', hp);");
+    expect(code).toContain("export const label = 'hp';");
+    // The document export stays, so the module is still a valid jsonui module.
+    expect(code).toContain("type: 'jsonui'");
+  });
+
+  it('rejects export default inside the script', async () => {
+    const plugin = makePlugin();
+    await expect(
+      compile(
+        '<Ui type="jsonui"><label text="x" /></Ui><script>export default 1</script>',
+        plugin,
+      ),
+    ).rejects.toThrow(/export default/);
+  });
+});
+
+describe('JSONUIComponent bindings', () => {
+  function component(): JSONUIComponent {
+    // Mirrors buildDocument(): the root controls list and the top-level key
+    // share one element object, so a binding shows up in both views.
+    const hp: JsonUIElement = { type: 'label', text: 'HP' };
+    return new JSONUIComponent({
+      availability: 'file',
+      namespace: 'demo',
+      root: 'demo',
+      document: {
+        namespace: 'demo',
+        demo: { type: 'screen', controls: [{ hp }] },
+        hp,
+      },
+    });
+  }
+
+  it('adds Molang bindings to an element', () => {
+    const ui = component();
+    ui.bind('hp', Molang.bind.view(Molang.query('get_health'), '#text'));
+    expect(ui.getBindings('hp')).toEqual([
+      {
+        binding_type: 'view',
+        binding_condition: 'always',
+        source_property_name: 'query.get_health',
+        target_property_name: '#text',
+      },
+    ]);
+    // The same object is reachable from the root controls list.
+    const controls = ui.getControls() as Array<Record<string, unknown>>;
+    const inline = controls[0]?.['hp'] as Record<string, unknown>;
+    expect(inline['bindings']).toHaveLength(1);
+  });
+
+  it('accepts plain JSON UI bindings and #-prefixed ids', () => {
+    const ui = component();
+    ui.addBinding('#hp', {
+      binding_type: 'view',
+      source_property_name: '#text',
+      target_property_name: '#visible',
+    });
+    expect(ui.getBindings('hp')[0]?.['target_property_name']).toBe('#visible');
+  });
+
+  it('replaces and clears bindings', () => {
+    const ui = component();
+    ui.text('hp', Molang.query('get_health'));
+    expect(ui.getBindings('hp')).toHaveLength(1);
+    ui.setBindings('hp', Molang.bind.view('#text', '#label'));
+    expect(ui.getBindings('hp')).toHaveLength(1);
+    expect(ui.getBindings('hp')[0]?.['target_property_name']).toBe('#label');
+    ui.clearBindings('hp');
+    expect(ui.getBindings('hp')).toHaveLength(0);
+  });
+
+  it('creates elements and controls on demand', () => {
+    const ui = component();
+    ui.bind('rows', Molang.bind.view('#text', '#text'), { create: true });
+    expect(ui.findElement('rows')?.['type']).toBe('panel');
+    ui.addControl('rows', 'row_1', { type: 'label', text: 'Row' });
+    expect(ui.findElement('row_1')?.['text']).toBe('Row');
+    ui.removeControl('rows', 'row_1');
+    expect(ui.findElement('row_1')).toBeUndefined();
+  });
+
+  it('throws for unknown elements unless create is set', () => {
+    const ui = component();
+    expect(() => ui.bind('missing', { binding_type: 'view' })).toThrow(
+      /unknown element "missing"/,
     );
   });
 });

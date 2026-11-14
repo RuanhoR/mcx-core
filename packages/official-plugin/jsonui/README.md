@@ -1,5 +1,7 @@
 # @mbler/mcx-plugin-jsonui
 
+[![npm](https://img.shields.io/npm/v/@mbler/mcx-plugin-jsonui?label=npm&color=blue)](https://www.npmjs.com/package/@mbler/mcx-plugin-jsonui)
+
 MCX 官方插件：把 `<Ui type="jsonui">` 编译成 [JSON UI](https://mcbeui.netlify.app/) 资源文件。
 
 它只依赖上一版加入的编译器插件钩子，不改动 mcx-core 内置的 `<Ui>` 表单逻辑：
@@ -13,8 +15,11 @@ MCX 官方插件：把 `<Ui type="jsonui">` 编译成 [JSON UI](https://mcbeui.n
 ## 安装
 
 ```bash
-pnpm add -D @mbler/mcx-plugin-jsonui
+# 0.0.1 仍是预览版，需要显式指定 alpha 标签
+pnpm add -D @mbler/mcx-plugin-jsonui@alpha
 ```
+
+包地址：https://www.npmjs.com/package/@mbler/mcx-plugin-jsonui
 
 在 `mbler.config.js` 中启用（`script.lang` 必须是 `mcx`）：
 
@@ -73,7 +78,7 @@ export default defineConfig({
 | `vanilla`      | `ui/<namespace>_vanilla.json`，子控件按 id 覆盖原版元素            | 可选                      | **是**   |
 | `none`         | 不写文件，只在模块里保留 JSON 文档                                 | 可选                      | 否       |
 
-- `server_form` 采用 Bedrock Wiki 的 “Modifying Server Forms” 路由（与 sapdon 一致）：
+- `server_form` 采用 Bedrock Wiki 的 “Modifying Server Forms” 路由：
   `main_screen_content` 里插入 gated factory → `@<ns>.root`，`long_form` 用标题前缀隐藏原生表单。
   脚本侧用 `component.getFormTitle()` 作为 `ActionFormData().title(...)` 即可点亮自定义屏。
 - `vanilla` 用于原版组件重载，不需要 `target`，且一次构建中只能出现一次（由插件校验）。
@@ -129,6 +134,22 @@ import shop from './shop.mcx';
 new ActionFormData().title(shop.jsonui.getFormTitle()).body('...').show(player);
 ```
 
+## `<script>` 与 Molang binding
+
+`<script>` 会被追加到生成的模块里（TS 会用编译器自带的 TypeScript 转译），与 `jsonui` 共享作用域，因此可以直接给控件建 binding：
+
+```ts
+import { Molang } from '@mbler/mcx-component';
+
+jsonui.text('hp', Molang.query('get_health').div(20).mul(100));
+jsonui.visible('low_hp', Molang.query('get_health').lt(5), 'always_when_visible');
+jsonui.bind('title', Molang.bind.view(Molang.variable('#text'), '#label'));
+```
+
+`Molang` 提供 `query` / `variable` / `context` / `math` / `when` / `concat` 以及 `add`、`gt`、`and` 等运算符，`Molang.bind.{view,global,collection}` 产出 `binding_type`、`source_property_name`、`target_property_name` 等字段，`toJSON()` 可直接塞进 `bindings`。
+
+`JSONUIComponent` 还有 `addBinding` / `setBindings` / `clearBindings` / `text` / `visible` / `addControl` / `removeControl` / `findElement`，`{ create: true }` 可以就地声明缺失的控件。脚本里不能用 `export default`（已被 jsonui 描述对象占用）。
+
 ## 纯 JSON UI 文件
 
 `.mcx` 里可以只有 `<Ui type="jsonui">` 而没有 `<script>`：编译器会先报「缺少 script」，
@@ -138,4 +159,3 @@ new ActionFormData().title(shop.jsonui.getFormTitle()).body('...').show(player);
 
 - JSON UI 文档：https://mcbeui.netlify.app/
 - `_ui_defs.json`：https://mcbeui.netlify.app/document/ui_defs
-- sapdon 的 `server_form` 路由实现：`src/core/ui/systems/sapdon/serverFormUI.ts`

@@ -28,6 +28,26 @@ export {
   GIFImageComponent,
 };
 
+/**
+ * Molang expressions and JSON UI bindings.
+ *
+ * Exported eagerly (not through `createLazyClass`): the classes are tiny and
+ * pure, and `<script>` code inside a JSON UI file uses them directly to build
+ * bindings for the generated controls.
+ */
+export {
+  Molang,
+  MolangBinding,
+  MolangExpression,
+  toMolangSource,
+} from './components/ui/molang';
+export type {
+  MolangBindingCondition,
+  MolangBindingInit,
+  MolangBindingType,
+  MolangInput,
+} from './components/ui/molang';
+
 export const ItemComponent = createLazyClass<typeof ItemComponentClass>(
   () => require('./components/item').ItemComponent,
 );

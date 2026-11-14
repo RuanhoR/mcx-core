@@ -29,7 +29,7 @@ export const fileAvailability: JsonUIAvailability = {
 
 /**
  * Custom form routed through `ui/server_form.json`.
- * Follows the Bedrock Wiki "Modifying Server Forms" route used by sapdon:
+ * Follows the Bedrock Wiki "Modifying Server Forms" route:
  * a gated factory in `main_screen_content` points to `@<ns>.root`, and the
  * root panel only becomes visible when the ActionForm title carries the marker.
  */

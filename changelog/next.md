@@ -2,6 +2,14 @@
 
 This changelog tracks changes committed after the v0.0.2 release tag.
 
+### 2026-11-14
+
+- **feat(mcx-component)**: Molang API for JSON UI — `MolangExpression` (query / variable / context / math / call / ternary / concat plus arithmetic, comparison and logical operators), `MolangBinding` (`view` / `global` / `collection`, `toJSON()` produces a JSON UI `bindings` entry) and a `Molang` facade; exported from `@mbler/mcx-component` so `<script>` code can build bindings instead of hand-writing Molang strings
+- **feat(jsonui)**: `<script>` blocks in `@mbler/mcx-plugin-jsonui` files now reach the generated module — the plugin short-circuits the built-in transform, so it extracts the script, transpiles it with the compiler's own TypeScript (honouring `lang="js"`) and appends it after the document export; script code shares the module scope and can call `jsonui` / `Molang`. `export default` is rejected with a compile error because the descriptor owns that export
+- **feat(jsonui)**: `JSONUIComponent` gained runtime control helpers — `bind` / `addBinding` / `setBindings` / `clearBindings` / `getBindings`, `text` / `visible` shortcuts, `addControl` / `removeControl`, `findElement` (nested controls included) and `{ create: true }` to declare a missing control on demand
+- **feat(jsonui)**: completion data now describes the JSON UI control set (`image`, `panel`, `stack_panel`, `grid`, `scroll_view`, `collection`, `custom`, `factory`, `screen`, `edit_box`) with `size` / `offset` / `anchor_from` / `bindings` / text properties, and `<JsonUi>` suggests those children; names shared with classic `<Ui>` leaves contribute no attributes so CustomForm completion is unchanged
+- **chore(release)**: bump mcx-component 0.0.4-rc.7, mcx-plugin-jsonui 0.0.1-alpha.2
+
 ### 2026-11-01
 - **fix(core)**: stable module ids in pnpm workspaces — the rolldown/vite `resolveId` bare-id fallback now walks up parent `node_modules` dirs (packages installed at a workspace root are found), realpaths the resolved package dir so both resolution strategies (Node `createRequire` and the manual `moduleDir` lookup) agree on the same id instead of the bundler seeing a pnpm symlink path and its realpath as two distinct modules, and root imports prefer `exports["."]` over a possibly missing `main` field
 - **test**: verified against a real pnpm addon layout; the one-project `init.spec.ts` timeout under full-suite load is a pre-existing flake
@@ -168,7 +176,7 @@ This changelog tracks changes committed after the v0.0.2 release tag.
 - Transform is split from attachment: the `<Ui>` is first compiled into a plain JSON UI
   document, then an availability adapter decides where it goes. Built-ins: `file` (plain JSON +
   `_ui_defs.json` registration), `server_form` (`ui/server_form.json` gated factory routing,
-  following the sapdon/route-shell model), `hud` (modifications on `hud_screen`), `vanilla`
+  following the Bedrock Wiki route-shell model), `hud` (modifications on `hud_screen`), `vanilla`
   (singleton, no `target` required, vanilla element overrides), `none`. Use
   `defineJsonUIAvailability()` to register more; adapters declare `requiresTarget` / `singleton`.
 - Generated `.mcx` modules export a `JSONUIComponent` (runtime subpath

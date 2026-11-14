@@ -14,6 +14,7 @@ import {
   stringAttr,
 } from './parse.js';
 import { createAvailabilityRegistry } from './availability.js';
+import { jsonuiCompletion } from './completion.js';
 import {
   createState,
   flushBuild,
@@ -25,7 +26,45 @@ import {
 
 const MISSING_SCRIPT_RE = /mcx must has a script|not found mcx script tag/i;
 
-function generateModule(meta: JsonUIRuntimeMeta): string {
+/** `<script>` block of a jsonui file, already split from the template. */
+export interface JsonUiScript {
+  code: string;
+  /** `lang` attribute, lower-cased; defaults to `ts` like the compiler does */
+  lang: string;
+}
+
+const SCRIPT_RE = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/i;
+
+/** Pull the `<script>` block out of a `.mcx` source, if there is one. */
+export function extractScript(source: string): JsonUiScript | undefined {
+  const match = SCRIPT_RE.exec(source);
+  if (!match) return undefined;
+  const code = (match[2] ?? '').trim();
+  if (!code) return undefined;
+  const lang = /lang\s*=\s*["']?([\w-]+)/i.exec(match[1] ?? '')?.[1] ?? 'ts';
+  return { code, lang: lang.toLowerCase() };
+}
+
+/**
+ * The plugin short-circuits the built-in transform, so the script block never
+ * reaches the MCX transpiler — run it through TypeScript here instead.
+ */
+function transpileScript(hook: McxPluginContext, script: JsonUiScript): string {
+  if (script.lang === 'js' || script.lang === 'javascript') return script.code;
+  const ts = hook.opt?.ts;
+  if (!ts) return script.code;
+  return ts.transpileModule(script.code, {
+    compilerOptions: {
+      target: ts.ScriptTarget.ES2022,
+      module: ts.ModuleKind.ESNext,
+      sourceMap: false,
+    },
+    fileName: hook.id.replace(/\.mcx$/i, '.ts'),
+    reportDiagnostics: false,
+  }).outputText;
+}
+
+function generateModule(meta: JsonUIRuntimeMeta, script?: string): string {
   const init = JSON.stringify({
     availability: meta.availability,
     namespace: meta.namespace,
@@ -53,6 +92,7 @@ function generateModule(meta: JsonUIRuntimeMeta): string {
     `  document: __mcx_jsonui.document,`,
     `  jsonui: __mcx_jsonui,`,
     `};`,
+    ...(script ? ['', '// ---- <script> ----', script] : []),
     '',
   ].join('\n');
 }
@@ -95,6 +135,22 @@ export function jsonUiPlugin(options: JsonUIPluginOptions = {}): McxPlugin {
         ]),
       ];
     }
+  };
+
+  /**
+   * Script code appended to the generated module. It shares the module scope,
+   * so it can reach `jsonui` / `JSONUIComponent` and build bindings with the
+   * Molang helpers from `@mbler/mcx-component`.
+   */
+  const resolveScript = (hook: McxPluginContext): string | undefined => {
+    const script = extractScript(hook.source);
+    if (!script) return undefined;
+    if (/export\s+default\b/.test(script.code)) {
+      hook.error(
+        '[jsonui]: <script> must not use `export default` — the jsonui module already exports the document (use named exports)',
+      );
+    }
+    return transpileScript(hook, script);
   };
 
   const compile = (hook: McxPluginContext, root: UiNode): string => {
@@ -184,11 +240,12 @@ export function jsonUiPlugin(options: JsonUIPluginOptions = {}): McxPlugin {
       files: [...new Set([...written, ...uiDefs])],
       document: parts.document,
     };
-    return generateModule(meta);
+    return generateModule(meta, resolveScript(hook));
   };
 
   return {
     name: 'mbler-official-jsonui',
+    completion: jsonuiCompletion,
     onBuildStart() {
       resetState(state, options);
     },

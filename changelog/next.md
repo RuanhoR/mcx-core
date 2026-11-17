@@ -2,6 +2,11 @@
 
 This changelog tracks changes committed after the v0.0.2 release tag.
 
+### 2026-11-17
+
+- **fix(core)**: export the compiler's DSL metadata tables (`_MCXstructureLocComponentTypes`, `_MCXComponentGroupOutputDir`, `_MCXComponentGroupOutputPack`, `UI_TAGS`, `FORM_TAGS`, `COMMON_ATTRS`, `TAG_ATTRS`) from the package entry so editors and tools can consume the authoritative tag/attribute set without duplicating it
+- **chore(release)**: bump mcx-core 1.1.5-rc.6
+
 ### 2026-11-14
 
 - **feat(mcx-component)**: Molang API for JSON UI — `MolangExpression` (query / variable / context / math / call / ternary / concat plus arithmetic, comparison and logical operators), `MolangBinding` (`view` / `global` / `collection`, `toJSON()` produces a JSON UI `bindings` entry) and a `Molang` facade; exported from `@mbler/mcx-component` so `<script>` code can build bindings instead of hand-writing Molang strings

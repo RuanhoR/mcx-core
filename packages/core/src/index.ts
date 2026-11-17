@@ -19,6 +19,17 @@ export {
 };
 export * from './state';
 export * from './plugin';
+export {
+  _MCXstructureLocComponentTypes,
+  _MCXComponentGroupOutputDir,
+  _MCXComponentGroupOutputPack,
+} from './compile-mcx/types';
+export {
+  UI_TAGS,
+  FORM_TAGS,
+  COMMON_ATTRS,
+  TAG_ATTRS,
+} from './transforms/transform/layout';
 export type {
   McxHookResult,
   McxLoc,

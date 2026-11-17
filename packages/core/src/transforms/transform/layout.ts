@@ -3,7 +3,7 @@ import * as t from '@babel/types';
 
 const SETUP_CTX_INDEX = 0;
 
-const UI_TAGS = new Set([
+export const UI_TAGS = new Set([
   'input',
   'textField',
   'toggle',
@@ -19,7 +19,7 @@ const UI_TAGS = new Set([
   'close-button',
 ]);
 
-const FORM_TAGS = new Set([
+export const FORM_TAGS = new Set([
   'input',
   'dropdown',
   'submit',
@@ -32,7 +32,7 @@ const FORM_TAGS = new Set([
   'title',
 ]);
 
-const COMMON_ATTRS = new Set([
+export const COMMON_ATTRS = new Set([
   'id',
   'for',
   'if',
@@ -49,7 +49,7 @@ const COMMON_ATTRS = new Set([
   ':description',
 ]);
 
-const TAG_ATTRS: Record<string, Set<string>> = {
+export const TAG_ATTRS: Record<string, Set<string>> = {
   input: new Set([
     'placeholderText',
     'default',
